@@ -1,0 +1,36 @@
+{
+  "name": "novelforge-app",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "python scripts/dev.py",
+    "dev:engine": "python scripts/dev.py",
+    "dev:desktop": "python scripts/dev.py",
+    "install:engine": "cd apps/engine && python -m venv .venv && ./.venv/Scripts/pip install -r requirements.txt",
+    "build": "npm run build -w apps/desktop && cd apps/engine && python -m uvicorn server:app --host 127.0.0.1 --port 9000",
+    "setup": "npm install && npm run setup -w apps/engine && npm run setup -w apps/desktop",
+    "start": "npm run dev",
+    "win": "scripts\\win-dev.bat",
+    "test": "pytest"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^25.9.3",
+    "@types/ws": "^8.18.1",
+    "concurrently": "^9.2.1",
+    "pytest": "^8.3.4"
+  },
+  "dependencies": {
+    "cross-env": "^10.1.0",
+    "lucide-react": "^0.468.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.28.0",
+    "ws": "^8.21.0",
+    "zustand": "^4.5.5"
+  }
+}
