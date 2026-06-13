@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Text, DateTime, ForeignKey
+from sqlalchemy import Column, String, Text, DateTime, ForeignKey, Integer
 from sqlalchemy.sql import func
 from db.base import Base
 
@@ -10,7 +10,7 @@ class TimelineEvent(Base):
     project_id = Column(String, ForeignKey("projects.id"), nullable=False)
     title = Column(String, nullable=False)
     event_date = Column(String, nullable=True)
-    sort_order = Column(int, nullable=False, default=0)
+    sort_order = Column(Integer, nullable=False, default=0)
     description = Column(Text, nullable=True)
     character_ids = Column(Text, nullable=True)
     chapter_ids = Column(Text, nullable=True)

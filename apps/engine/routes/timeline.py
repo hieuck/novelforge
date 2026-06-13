@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from db.session import SessionLocal
-from models.timeline import TimelineItem
+from models.extra import TimelineItem
 import uuid
 from datetime import datetime
 

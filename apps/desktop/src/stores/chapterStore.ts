@@ -1,59 +1,46 @@
 import { create } from 'zustand'
+import { api } from '../lib/api'
+import type { Chapter } from '../types'
 
-type Chapter = {
-  id: string
-  project_id: string
-  title: string
-  content?: string
-  word_count?: number
-  status?: string
-  scene_order?: number
-  summary?: string
-  notes?: string
-  is_deleted?: boolean
-  created_at?: string
-  updated_at?: string
-}
-
-type ChapterStore = {
+interface ChapterStore {
   chapters: Chapter[]
   activeChapterId?: string
   setActiveChapter: (id?: string) => void
   fetchChapters: (projectId: string) => Promise<void>
   createChapter: (values: Partial<Chapter>) => Promise<Chapter>
   updateChapter: (id: string, values: Partial<Chapter>) => Promise<void>
+  deleteChapter: (id: string) => Promise<void>
 }
 
-export const useChapterStore = create<ChapterStore>((set) => ({
+export const useChapterStore = create<ChapterStore>((set, get) => ({
   chapters: [],
   activeChapterId: undefined,
+
   setActiveChapter: (id) => set({ activeChapterId: id }),
+
   fetchChapters: async (projectId) => {
-    const res = await fetch(`/api/projects/${projectId}/chapters`)
-    const data = await res.json()
+    const data = await api.get<Chapter[]>(`/projects/${projectId}/chapters`)
     set({ chapters: Array.isArray(data) ? data : [] })
   },
+
   createChapter: async (values) => {
-    const res = await fetch('/api/chapters', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(values),
-    })
-    const data = await res.json()
-    if (!res.ok) throw new Error(data.detail || 'Create chapter failed')
-    set((s) => ({ chapters: [data, ...s.chapters] }))
+    const data = await api.post<Chapter>('/chapters/', values)
+    set((s) => ({ chapters: [...s.chapters, data] }))
     return data
   },
+
   updateChapter: async (id, values) => {
-    const res = await fetch(`/api/chapters/${id}`, {
-      method: 'PATCH',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(values),
-    })
-    const data = await res.json()
-    if (!res.ok) throw new Error(data.detail || 'Update chapter failed')
+    const data = await api.patch<Chapter>(`/chapters/${id}`, values)
     set((s) => ({
       chapters: s.chapters.map((c) => (c.id === id ? { ...c, ...data } : c)),
+    }))
+  },
+
+  deleteChapter: async (id) => {
+    await api.delete(`/chapters/${id}`)
+    set((s) => ({
+      chapters: s.chapters.filter((c) => c.id !== id),
+      activeChapterId: get().activeChapterId === id ? undefined : get().activeChapterId,
     }))
   },
 }))

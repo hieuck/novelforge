@@ -1,60 +1,83 @@
 import { create } from 'zustand'
+import { api } from '../lib/api'
+import type { AIAction } from '../types'
 
-export type Message = {
+export interface Message {
   id: string
   role: 'user' | 'assistant'
   content: string
   createdAt: string
 }
 
-export type AIState = {
-  messages: Message[]
-  loading: boolean
-  sendMessage: (text: string, meta?: { projectId?: string; chapterId?: string; action?: string }) => Promise<void>
+interface AIMeta {
+  projectId?: string | null
+  chapterId?: string | null
+  action?: AIAction
+  instruction?: string
 }
 
-export const useAiStore = create<AIState>((set, _get) => ({
+interface AIStore {
+  messages: Message[]
+  loading: boolean
+  clearMessages: () => void
+  addUserMessage: (text: string) => void
+  addAssistantMessage: (text: string) => void
+  /** HTTP fallback — also used to build history for WS sends */
+  sendMessage: (text: string, meta?: AIMeta) => Promise<void>
+  /** Returns the last N turn-pairs as history for the backend */
+  getHistory: () => Array<{ role: string; content: string }>
+}
+
+function makeMsg(role: 'user' | 'assistant', content: string): Message {
+  return {
+    id: `${role}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    role,
+    content,
+    createdAt: new Date().toISOString(),
+  }
+}
+
+const MAX_HISTORY_MSGS = 12 // 6 turns × 2
+
+export const useAiStore = create<AIStore>((set, get) => ({
   messages: [],
   loading: false,
-  sendMessage: async (text, meta) => {
-    const next: Message = {
-      id: String(Date.now()),
-      role: 'user',
-      content: text,
-      createdAt: new Date().toISOString(),
-    }
-    set((s) => ({ messages: [...s.messages, next], loading: true }))
+
+  clearMessages: () => set({ messages: [] }),
+
+  addUserMessage: (text) =>
+    set((s) => ({ messages: [...s.messages, makeMsg('user', text)] })),
+
+  addAssistantMessage: (text) =>
+    set((s) => ({ messages: [...s.messages, makeMsg('assistant', text)] })),
+
+  /** Returns recent history excluding the most recent user message (which is sent as `text`). */
+  getHistory: () => {
+    const { messages } = get()
+    // Take all but the last message (the current user turn hasn't been added yet)
+    const prior = messages.slice(-MAX_HISTORY_MSGS)
+    return prior.map((m) => ({ role: m.role, content: m.content }))
+  },
+
+  sendMessage: async (text, meta = {}) => {
+    const history = get().getHistory()
+    set((s) => ({ messages: [...s.messages, makeMsg('user', text)], loading: true }))
     try {
-      const res = await fetch('/api/ai/run', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          project_id: meta?.projectId,
-          chapter_id: meta?.chapterId,
-          action: meta?.action || 'continue',
-          text,
-          instruction: '',
-        }),
-      }),
-        data = await res.json()
-        const reply: Message = {
-          id: String(Date.now() + 1),
-          role: 'assistant',
-          content: data.result || data.detail || '[no response]',
-          createdAt: new Date().toISOString(),
-        }
-        set((s) => ({ messages: [...s.messages, reply] }))
-    } catch (e) {
+      const res = await api.post<{ result: string }>('/ai/run', {
+        project_id: meta.projectId ?? null,
+        chapter_id: meta.chapterId ?? null,
+        action: meta.action ?? 'continue',
+        text,
+        instruction: meta.instruction ?? '',
+        history,
+      })
       set((s) => ({
-        messages: [
-          ...s.messages,
-          {
-            id: String(Date.now() + 2),
-            role: 'assistant',
-            content: 'Không thể kết nối AI.',
-            createdAt: new Date().toISOString(),
-          },
-        ],
+        messages: [...s.messages, makeMsg('assistant', res.result ?? '[no response]')],
+      }))
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Không kết nối được AI'
+      set((s) => ({
+        messages: [...s.messages, makeMsg('assistant', `Lỗi: ${msg}`)],
       }))
     } finally {
       set({ loading: false })

@@ -1,10 +1,86 @@
+import { useCallback, useEffect, useState } from 'react'
+import { ArrowRight, Loader2, RefreshCw } from 'lucide-react'
+import { api } from '../lib/api'
 import { useProjectStore } from '../stores/projectStore'
+
+type AppInfo = {
+  app: string
+  version: string
+  python: string
+  description: string
+  repo: string
+  error?: string
+}
+
+type UpdateSummary = {
+  readonly update_available: boolean
+  readonly new_commits: number
+  readonly latest_commit?: string
+  readonly error?: string
+}
+
+type UpdateApplyResult = {
+  readonly success: boolean
+  readonly message: string
+  readonly commit?: string
+}
 
 export default function Dashboard() {
   const { projects, fetchProjects, createProject } = useProjectStore()
+  const [appInfo, setAppInfo] = useState<AppInfo | null>(null)
+  const [updateSummary, setUpdateSummary] = useState<UpdateSummary | null>(null)
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false)
+  const [isApplyingUpdate, setIsApplyingUpdate] = useState(false)
+  const [updateMessage, setUpdateMessage] = useState<string | null>(null)
+
+  const checkForUpdates = useCallback(async () => {
+    setIsCheckingUpdate(true)
+    setUpdateMessage(null)
+    try {
+      const response = await api.get<UpdateSummary>('/update/check')
+      setUpdateSummary(response)
+    } catch (err) {
+      setUpdateMessage(err instanceof Error ? err.message : 'Không kiểm tra được cập nhật.')
+    } finally {
+      setIsCheckingUpdate(false)
+    }
+  }, [])
+
+  const applyUpdate = useCallback(async () => {
+    setIsApplyingUpdate(true)
+    setUpdateMessage(null)
+    try {
+      const response = await api.post<UpdateApplyResult>('/update/apply', {})
+      if (!response.success) throw new Error(response.message)
+      setUpdateMessage('Đã cập nhật. Vui lòng khởi động lại NovelForge để áp dụng phiên bản mới.')
+      setUpdateSummary({ update_available: false, new_commits: 0, latest_commit: response.commit })
+    } catch (err) {
+      setUpdateMessage(err instanceof Error ? err.message : 'Cập nhật thất bại.')
+    } finally {
+      setIsApplyingUpdate(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    api.get<AppInfo>('/settings/about').then(setAppInfo).catch(() => setAppInfo({
+      app: 'NovelForge',
+      version: '?',
+      python: '?',
+      description: 'Offline-first AI writing studio',
+      repo: 'https://github.com/hieuck/novelforge',
+      error: 'Failed to load',
+    }))
+    checkForUpdates()
+    const interval = setInterval(checkForUpdates, 5 * 60 * 1000)
+    return () => clearInterval(interval)
+  }, [checkForUpdates])
+
+  useEffect(() => {
+    fetchProjects()
+  }, [fetchProjects])
 
   const newProject = async () => {
-    await createProject({ title: 'Untitled project', status: 'active' })
+    await createProject({ title: 'Untitled project', status: 'active' } as any)
     await fetchProjects()
   }
 

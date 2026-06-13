@@ -1,81 +1,241 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
+import { Plus, Trash2, X, Edit2, Check, Bot } from 'lucide-react'
+import { api } from '../lib/api'
+import type { LoreItem } from '../types'
+import AgentPanel from '../components/AgentPanel'
+
+const LORE_TYPES = ['location', 'organization', 'rule', 'magic', 'technology', 'term', 'other']
+
+const EMPTY = { lore_type: 'location', name: '', description: '', tags: '' }
 
 export default function Lore() {
   const { projectId } = useParams()
-  const [items, setItems] = useState<{id: string; name: string; lore_type: string; description?: string}[]>([])
-  const [form, setForm] = useState({ lore_type: 'location', name: '', description: '' })
+  const [items, setItems] = useState<LoreItem[]>([])
+  const [filter, setFilter] = useState('all')
+  const [form, setForm] = useState({ ...EMPTY })
+  const [showForm, setShowForm] = useState(false)
+  const [editId, setEditId] = useState<string | null>(null)
+  const [editForm, setEditForm] = useState({ ...EMPTY })
   const [loading, setLoading] = useState(false)
+  const [showAgent, setShowAgent] = useState(false)
 
-  useEffect(() => {
+  const load = async () => {
     if (!projectId) return
     setLoading(true)
-    fetch(`/api/projects/${projectId}/lore`)
-      .then((r) => r.json())
-      .then(setItems)
-      .finally(() => setLoading(false))
-  }, [projectId])
-
-  useEffect(() => {
-    if (!projectId) return
-    setLoading(true)
-    fetch(`/api/projects/${projectId}/lore`)
-      .then((r) => r.json())
-      .then(setItems)
-      .finally(() => setLoading(false))
-  }, [projectId])
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!projectId) return
-    const payload = { ...form, project_id: projectId }
-    const res = await fetch('/api/lore', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(payload),
-    })
-    if (res.ok) {
-      setForm({ lore_type: form.lore_type, name: '', description: '' })
-      const r = await fetch(`/api/projects/${projectId}/lore`)
-      setItems(await r.json())
+    try {
+      const data = await api.get<LoreItem[]>(`/projects/${projectId}/lore`)
+      setItems(data)
+    } finally {
+      setLoading(false)
     }
   }
 
+  useEffect(() => { load() }, [projectId])
+
+  const create = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!form.name.trim() || !projectId) return
+    await api.post('/lore/', {
+      project_id: projectId,
+      lore_type: form.lore_type,
+      name: form.name,
+      description: form.description,
+      tags: form.tags ? form.tags.split(',').map((t) => t.trim()).filter(Boolean) : [],
+    })
+    setForm({ ...EMPTY })
+    setShowForm(false)
+    load()
+  }
+
+  const remove = async (id: string) => {
+    if (!confirm('Xóa lore item này?')) return
+    await api.delete(`/lore/${id}`)
+    setItems((l) => l.filter((x) => x.id !== id))
+  }
+
+  const saveEdit = async (id: string) => {
+    await api.patch(`/lore/${id}`, {
+      lore_type: editForm.lore_type,
+      name: editForm.name,
+      description: editForm.description,
+      tags: editForm.tags ? editForm.tags.split(',').map((t) => t.trim()).filter(Boolean) : [],
+    })
+    setEditId(null)
+    load()
+  }
+
+  const filtered = filter === 'all' ? items : items.filter((i) => i.lore_type === filter)
+
   return (
-    <div className="mx-auto max-w-5xl p-6">
-      <h1 className="mb-4 text-2xl font-bold">Worldbuilding / Lore</h1>
-      <form onSubmit={submit} className="mb-6 grid gap-3 rounded-lg border border-slate-800 bg-slate-900/60 p-4">
-        <input
-          className="rounded-md bg-slate-800 p-2"
-          placeholder="Loại lore"
-          value={form.lore_type}
-          onChange={(e) => setForm({ ...form, lore_type: e.target.value })}
-        />
-        <input
-          className="rounded-md bg-slate-800 p-2"
-          placeholder="Tên"
-          value={form.name}
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
-        />
-        <textarea
-          className="rounded-md bg-slate-800 p-2"
-          placeholder="Mô tả"
-          value={form.description}
-          onChange={(e) => setForm({ ...form, description: e.target.value })}
-        />
-        <button type="submit" className="rounded-md bg-slate-800 px-3 py-2 text-sm text-slate-100">Thêm lore</button>
-      </form>
-      {loading ? (
-        <div className="text-sm text-slate-500">Đang tải...</div>
-      ) : (
-        <div className="grid gap-3">
-          {items.map((item) => (
-            <div key={item.id} className="rounded-lg border border-slate-800 bg-slate-900/60 p-4">
-              <div className="font-medium">{item.name}</div>
-              <div className="text-xs text-slate-400">{item.lore_type}</div>
-              {item.description && <div className="mt-1 text-sm text-slate-300">{item.description}</div>}
+    <div className="flex h-full overflow-hidden">
+      {/* Main content */}
+      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex items-center justify-between border-b border-slate-800 px-6 py-3">
+        <h1 className="text-lg font-semibold text-slate-100">Worldbuilding / Lore</h1>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowAgent((v) => !v)}
+            title="AI Agent"
+            className={`flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm transition-colors ${
+              showAgent
+                ? 'border-indigo-700 bg-indigo-900/40 text-indigo-300'
+                : 'border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+            }`}
+          >
+            <Bot className="h-3.5 w-3.5" />
+            Agent
+          </button>
+          <button
+            onClick={() => setShowForm((v) => !v)}
+            className="flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-1.5 text-sm text-white hover:bg-indigo-700"
+          >
+            <Plus className="h-4 w-4" />
+            Thêm lore
+          </button>
+        </div>
+      </div>
+
+      <div className="flex gap-2 overflow-x-auto border-b border-slate-800 px-6 py-2">
+        <button
+          onClick={() => setFilter('all')}
+          className={`rounded-full px-3 py-1 text-xs ${filter === 'all' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-slate-200'}`}
+        >
+          All
+        </button>
+        {LORE_TYPES.map((t) => (
+          <button
+            key={t}
+            onClick={() => setFilter(t)}
+            className={`rounded-full px-3 py-1 text-xs capitalize ${filter === t ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-slate-200'}`}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-6">
+        {showForm && (
+          <form onSubmit={create} className="mb-4 rounded-lg border border-slate-800 bg-slate-900 p-4 space-y-3">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-sm font-medium text-slate-300">Lore mới</span>
+              <button type="button" onClick={() => setShowForm(false)} className="text-slate-500 hover:text-slate-300">
+                <X className="h-4 w-4" />
+              </button>
             </div>
-          ))}
+            <div className="grid grid-cols-2 gap-3">
+              <select
+                className="rounded-md border border-slate-800 bg-slate-800 px-3 py-1.5 text-sm text-slate-200 focus:border-indigo-600 focus:outline-none"
+                value={form.lore_type}
+                onChange={(e) => setForm({ ...form, lore_type: e.target.value })}
+              >
+                {LORE_TYPES.map((t) => <option key={t} value={t} className="capitalize">{t}</option>)}
+              </select>
+              <input
+                required
+                className="rounded-md border border-slate-800 bg-slate-800 px-3 py-1.5 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-600 focus:outline-none"
+                placeholder="Tên *"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+              />
+            </div>
+            <textarea
+              rows={3}
+              className="w-full rounded-md border border-slate-800 bg-slate-800 px-3 py-1.5 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-600 focus:outline-none"
+              placeholder="Mô tả chi tiết..."
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+            />
+            <input
+              className="w-full rounded-md border border-slate-800 bg-slate-800 px-3 py-1.5 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-600 focus:outline-none"
+              placeholder="Tags (phân cách bằng dấu phẩy)"
+              value={form.tags}
+              onChange={(e) => setForm({ ...form, tags: e.target.value })}
+            />
+            <button type="submit" className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
+              Lưu
+            </button>
+          </form>
+        )}
+
+        {loading ? (
+          <div className="text-sm text-slate-500">Đang tải...</div>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2">
+            {filtered.map((item) => (
+              <div key={item.id} className="rounded-lg border border-slate-800 bg-slate-900 p-4">
+                {editId === item.id ? (
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-2 gap-2">
+                      <select
+                        className="rounded border border-slate-800 bg-slate-800 px-2 py-1 text-sm text-slate-200"
+                        value={editForm.lore_type}
+                        onChange={(e) => setEditForm({ ...editForm, lore_type: e.target.value })}
+                      >
+                        {LORE_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                      </select>
+                      <input
+                        className="rounded border border-slate-800 bg-slate-800 px-2 py-1 text-sm text-slate-200"
+                        value={editForm.name}
+                        onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                      />
+                    </div>
+                    <textarea rows={3}
+                      className="w-full rounded border border-slate-800 bg-slate-800 px-2 py-1 text-sm text-slate-200"
+                      value={editForm.description}
+                      onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                    />
+                    <input
+                      className="w-full rounded border border-slate-800 bg-slate-800 px-2 py-1 text-sm text-slate-200"
+                      value={editForm.tags}
+                      onChange={(e) => setEditForm({ ...editForm, tags: e.target.value })}
+                      placeholder="Tags"
+                    />
+                    <div className="flex gap-2">
+                      <button onClick={() => saveEdit(item.id)} className="flex items-center gap-1 rounded bg-indigo-600 px-3 py-1 text-xs text-white hover:bg-indigo-700">
+                        <Check className="h-3 w-3" /> Lưu
+                      </button>
+                      <button onClick={() => setEditId(null)} className="rounded border border-slate-700 px-3 py-1 text-xs text-slate-400">Hủy</button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <div className="font-medium text-slate-100">{item.name}</div>
+                        <span className="text-[10px] uppercase text-indigo-400">{item.lore_type}</span>
+                      </div>
+                      <div className="flex gap-1.5">
+                        <button onClick={() => { setEditId(item.id); setEditForm({ lore_type: item.lore_type, name: item.name, description: item.description ?? '', tags: (item.tags ?? []).join(', ') }) }} className="p-1 text-slate-600 hover:text-slate-300">
+                          <Edit2 className="h-3.5 w-3.5" />
+                        </button>
+                        <button onClick={() => remove(item.id)} className="p-1 text-slate-600 hover:text-red-400">
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                    {item.description && <div className="mt-2 text-sm text-slate-400 leading-relaxed">{item.description}</div>}
+                    {item.tags && item.tags.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {item.tags.map((t) => (
+                          <span key={t} className="rounded-full bg-slate-800 px-2 py-0.5 text-[10px] text-slate-400">{t}</span>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            ))}
+            {!filtered.length && <div className="text-sm text-slate-500 col-span-2">Chưa có lore nào.</div>}
+          </div>
+        )}
+      </div>
+      </div>{/* end main content */}
+
+      {/* Agent panel */}
+      {showAgent && (
+        <div className="border-l border-slate-800">
+          <AgentPanel projectId={projectId} />
         </div>
       )}
     </div>
