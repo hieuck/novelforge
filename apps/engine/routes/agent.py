@@ -892,6 +892,18 @@ async def agent_ws(ws: WebSocket) -> None:
                                     params = {**params, "character_id": m.group(1)}
                                     break
                     result = _update_character(pid, params)
+                    # Auto-recover: if character not found, re-read and retry
+                    if result.get("error") and "not found" in result["error"].lower():
+                        fresh = _read_characters(pid)
+                        if fresh and not fresh.get("error"):
+                            memory.append("[read_characters] Refreshed list: " + json.dumps(fresh, ensure_ascii=False)[:500])
+                            name_hint2 = (params.get("name") or "").strip()
+                            if name_hint2:
+                                for item in (fresh.get("characters") or fresh if isinstance(fresh, list) else []):
+                                    if isinstance(item, dict) and name_hint2.lower() in (item.get("name") or "").lower():
+                                        params["character_id"] = item["id"]
+                                        result = _update_character(pid, params)
+                                        break
 
                 elif tool == "create_lore" and pid:
                     if not params.get("description"):
