@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   Plus, Trash2, CheckCircle, Save, Loader2,
   FileText, Bot,
@@ -18,6 +19,7 @@ const STATUS_COLOR: Record<string, string> = {
 const AUTOSAVE_MS = 1500
 
 export default function Chapters() {
+  const { t } = useTranslation()
   const { projectId, chapterId } = useParams()
   const navigate = useNavigate()
   const { chapters, fetchChapters, createChapter, updateChapter, deleteChapter } =
@@ -122,7 +124,7 @@ export default function Chapters() {
     if (!projectId) return
     const next = await createChapter({
       project_id: projectId,
-      title: `Chương ${chapters.length + 1}`,
+      title: t('chapters.new_title', { n: chapters.length + 1 }),
       content: '',
       status: 'draft',
       scene_order: chapters.length,
@@ -132,7 +134,7 @@ export default function Chapters() {
 
   const removeChapter = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation()
-    if (!confirm('Xóa chương này?')) return
+    if (!confirm(t('chapters.delete_confirm'))) return
     await deleteChapter(id)
     if (id === chapterId) navigate(`/projects/${projectId}/chapters`)
   }
@@ -144,10 +146,10 @@ export default function Chapters() {
       {/* ── Chapter list sidebar ── */}
       <aside className="flex w-60 flex-col border-r border-slate-800/70 bg-slate-900/60">
         <div className="flex items-center justify-between border-b border-slate-800/70 px-3 py-2">
-          <span className="text-xs font-semibold text-slate-300">Chapters</span>
+          <span className="text-xs font-semibold text-slate-300">{t('chapters.sidebar_title')}</span>
           <button
             onClick={newChapter}
-            title="New chapter"
+            title={t('chapters.new_chapter_tooltip')}
             className="rounded p-1 text-slate-400 hover:bg-slate-800 hover:text-slate-200"
           >
             <Plus className="h-4 w-4" />
@@ -166,7 +168,7 @@ export default function Chapters() {
           ))}
           {!chapters.length && (
             <p className="px-3 py-4 text-center text-xs text-slate-600">
-              Chưa có chương nào.
+              {t('chapters.empty_list')}
             </p>
           )}
         </div>
@@ -181,7 +183,7 @@ export default function Chapters() {
               className="flex-1 bg-transparent text-base font-semibold text-slate-100 placeholder:text-slate-600 outline-none"
               value={title}
               onChange={(e) => onTitleChange(e.target.value)}
-              placeholder="Tên chương"
+              placeholder={t('chapters.title_placeholder')}
             />
 
             <select
@@ -203,13 +205,13 @@ export default function Chapters() {
               ) : (
                 <Save className="h-3.5 w-3.5 text-yellow-500" />
               )}
-              <span>{saving ? 'Lưu…' : saved ? 'Đã lưu' : 'Chưa lưu'}</span>
+              <span>{saving ? t('chapters.saving') : saved ? t('chapters.saved') : t('chapters.unsaved')}</span>
             </div>
 
             {/* AI toggle */}
             <button
               onClick={() => setShowAi((v) => !v)}
-              title="AI Panel"
+              title={t('chapters.ai_panel_tooltip')}
               className={`rounded p-1.5 transition-colors ${
                 showAi
                   ? 'bg-indigo-900/50 text-indigo-300'
@@ -225,26 +227,26 @@ export default function Chapters() {
             className="flex-1 resize-none bg-transparent px-6 py-5 font-serif text-[15px] leading-relaxed text-slate-200 placeholder:text-slate-700 outline-none"
             value={content}
             onChange={(e) => onContentChange(e.target.value)}
-            placeholder="Bắt đầu viết…  (Ctrl+S để lưu)"
+            placeholder={t('chapters.content_placeholder')}
             spellCheck={false}
           />
 
           {/* Status bar */}
           <div className="flex items-center justify-between border-t border-slate-800/70 bg-slate-950 px-4 py-1.5 text-xs text-slate-600">
-            <span>{wordCount.toLocaleString()} từ</span>
+            <span>{t('chapters.word_count', { count: wordCount })}</span>
             <span className={STATUS_COLOR[status] ?? 'text-slate-500'}>{status}</span>
           </div>
         </div>
       ) : (
         <div className="flex flex-1 flex-col items-center justify-center gap-3 text-slate-600">
           <FileText className="h-12 w-12 opacity-20" />
-          <p className="text-sm">Chọn chương từ danh sách hoặc tạo chương mới</p>
+          <p className="text-sm">{t('chapters.no_selection')}</p>
           <button
             onClick={newChapter}
             className="mt-1 flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
           >
             <Plus className="h-4 w-4" />
-            Tạo chương đầu tiên
+            {t('chapters.create_first')}
           </button>
         </div>
       )}
@@ -277,6 +279,7 @@ function ChapterItem({
   onClick: () => void
   onDelete: (e: React.MouseEvent) => void
 }) {
+  const { t } = useTranslation()
   return (
     <button
       onClick={onClick}
@@ -288,16 +291,16 @@ function ChapterItem({
     >
       <FileText className="h-3.5 w-3.5 shrink-0 text-slate-600" />
       <div className="min-w-0 flex-1">
-        <div className="truncate text-sm">{chapter.title || 'Untitled'}</div>
+        <div className="truncate text-sm">{chapter.title || t('chapters.untitled')}</div>
         <div className={`text-[10px] ${STATUS_COLOR[chapter.status ?? 'draft'] ?? 'text-slate-500'}`}>
           {chapter.status ?? 'draft'}
-          {chapter.word_count ? ` · ${chapter.word_count.toLocaleString()} từ` : ''}
+          {chapter.word_count ? ` · ${t('chapters.word_count', { count: chapter.word_count })}` : ''}
         </div>
       </div>
       <button
         onClick={onDelete}
         className="hidden shrink-0 rounded p-0.5 text-slate-600 hover:text-red-400 group-hover:block"
-        title="Xóa chương"
+        title={t('chapters.delete_tooltip')}
       >
         <Trash2 className="h-3 w-3" />
       </button>

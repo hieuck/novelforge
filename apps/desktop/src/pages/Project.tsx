@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Save, CheckCircle, Loader2, BookOpen, AlignLeft, Paintbrush, Sparkles } from 'lucide-react'
 import { useProjectStore } from '../stores/projectStore'
 import { api, wsUrl } from '../lib/api'
@@ -10,6 +11,7 @@ type Tab = 'overview' | 'style'
 const AUTOSAVE_DELAY = 1500
 
 export default function ProjectPage() {
+  const { t } = useTranslation()
   const { projectId } = useParams()
   const { projects, fetchProjects, updateProject } = useProjectStore()
 
@@ -119,7 +121,7 @@ export default function ProjectPage() {
     return (
       <div className="flex h-full items-center justify-center text-slate-500">
         <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-        Đang tải...
+        {t('project.loading')}
       </div>
     )
   }
@@ -146,24 +148,24 @@ export default function ProjectPage() {
           ) : (
             <Save className="h-3.5 w-3.5 text-yellow-500" />
           )}
-          {saving ? 'Đang lưu...' : saved ? 'Đã lưu' : 'Chưa lưu'}
+          {saving ? t('project.saving') : saved ? t('project.saved') : t('project.unsaved')}
         </div>
       </div>
 
       {/* Tabs */}
       <div className="flex gap-1 border-b border-slate-800 px-6 py-0">
-        {(['overview', 'style'] as Tab[]).map((t) => (
+        {(['overview', 'style'] as Tab[]).map((tabName) => (
           <button
-            key={t}
-            onClick={() => setTab(t)}
+            key={tabName}
+            onClick={() => setTab(tabName)}
             className={`flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-xs font-medium transition-colors ${
-              tab === t
+              tab === tabName
                 ? 'border-indigo-500 text-indigo-400'
                 : 'border-transparent text-slate-500 hover:text-slate-300'
             }`}
           >
-            {t === 'overview' ? <AlignLeft className="h-3.5 w-3.5" /> : <Paintbrush className="h-3.5 w-3.5" />}
-            {t === 'overview' ? 'Thông tin' : 'Văn phong'}
+            {tabName === 'overview' ? <AlignLeft className="h-3.5 w-3.5" /> : <Paintbrush className="h-3.5 w-3.5" />}
+            {tabName === 'overview' ? t('project.tab_overview') : t('project.tab_style')}
           </button>
         ))}
       </div>
@@ -172,54 +174,54 @@ export default function ProjectPage() {
         {tab === 'overview' && (
           <div className="mx-auto max-w-2xl space-y-4">
             <div>
-              <label className={labelCls}>Tên truyện *</label>
+              <label className={labelCls}>{t('project.title_label')}</label>
               <input
                 className={inputCls}
                 value={form.title ?? ''}
                 onChange={(e) => change('title', e.target.value)}
-                placeholder="Tên truyện"
+                placeholder={t('project.title_placeholder')}
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className={labelCls}>Thể loại</label>
+                <label className={labelCls}>{t('project.genre_label')}</label>
                 <input
                   className={inputCls}
                   value={form.genre ?? ''}
                   onChange={(e) => change('genre', e.target.value)}
-                  placeholder="Fantasy, Sci-Fi, Romance..."
+                  placeholder={t('project.genre_placeholder')}
                 />
               </div>
               <div>
-                <label className={labelCls}>Ngôn ngữ</label>
+                <label className={labelCls}>{t('project.language_label')}</label>
                 <select
                   className={inputCls}
                   value={form.language ?? 'vi'}
                   onChange={(e) => change('language', e.target.value)}
                 >
-                  <option value="vi">Tiếng Việt</option>
-                  <option value="en">English</option>
+                  <option value="vi">{t('project.lang_vi')}</option>
+                  <option value="en">{t('project.lang_en')}</option>
                 </select>
               </div>
             </div>
 
             <div>
-              <label className={labelCls}>Mô tả ngắn</label>
+              <label className={labelCls}>{t('project.description_label')}</label>
               <textarea
                 className={inputCls}
                 rows={3}
                 value={form.description ?? ''}
                 onChange={(e) => change('description', e.target.value)}
-                placeholder="Giới thiệu ngắn về câu chuyện..."
+                placeholder={t('project.description_placeholder')}
               />
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className={labelCls}>
-                  Tóm tắt tổng quan{' '}
-                  <span className="text-slate-600">(AI sẽ dùng để hiểu context)</span>
+                  {t('project.summary_label')}{' '}
+                  <span className="text-slate-600">{t('project.summary_hint')}</span>
                 </label>
                 <button
                   type="button"
@@ -230,7 +232,7 @@ export default function ProjectPage() {
                   {generatingSummary
                     ? <Loader2 className="h-3 w-3 animate-spin" />
                     : <Sparkles className="h-3 w-3" />}
-                  {generatingSummary ? 'Đang tạo…' : 'AI Generate'}
+                  {generatingSummary ? t('project.summary_generating') : t('project.summary_generate')}
                 </button>
               </div>
               {summaryStream ? (
@@ -244,17 +246,17 @@ export default function ProjectPage() {
                   rows={5}
                   value={form.summary ?? ''}
                   onChange={(e) => change('summary', e.target.value)}
-                  placeholder="Tóm tắt cốt truyện, nhân vật chính, mâu thuẫn trung tâm..."
+                  placeholder={t('project.summary_placeholder')}
                 />
               )}
             </div>
 
             <div className="rounded-lg border border-slate-800 bg-slate-900 p-3 text-xs text-slate-500">
-              <div className="font-medium text-slate-400 mb-1">Thống kê</div>
+              <div className="font-medium text-slate-400 mb-1">{t('project.stats_label')}</div>
               <div className="grid grid-cols-3 gap-3">
-                <Stat label="Tạo lúc" value={project.created_at ? new Date(project.created_at).toLocaleDateString('vi-VN') : '—'} />
-                <Stat label="Cập nhật" value={project.updated_at ? new Date(project.updated_at).toLocaleDateString('vi-VN') : '—'} />
-                <Stat label="Ngôn ngữ" value={project.language?.toUpperCase() ?? 'VI'} />
+                <Stat label={t('project.stat_created')} value={project.created_at ? new Date(project.created_at).toLocaleDateString('vi-VN') : '—'} />
+                <Stat label={t('project.stat_updated')} value={project.updated_at ? new Date(project.updated_at).toLocaleDateString('vi-VN') : '—'} />
+                <Stat label={t('project.stat_language')} value={project.language?.toUpperCase() ?? 'VI'} />
               </div>
             </div>
           </div>
@@ -263,38 +265,32 @@ export default function ProjectPage() {
         {tab === 'style' && (
           <div className="mx-auto max-w-2xl space-y-4">
             <div className="rounded-lg border border-indigo-900/40 bg-indigo-950/20 p-3 text-xs text-indigo-300">
-              <strong>Style Guide</strong> được đính kèm vào mọi yêu cầu AI — giúp AI giữ đúng giọng văn,
-              nhịp điệu, và phong cách của bạn.
+              <strong>{t('project.style_guide_heading')}</strong>{' '}
+              {t('project.style_guide_info')}
             </div>
 
             <div>
-              <label className={labelCls}>Style Guide</label>
+              <label className={labelCls}>{t('project.style_guide_label')}</label>
               <textarea
                 className={`${inputCls} font-mono text-xs leading-relaxed`}
                 rows={14}
                 value={form.style_guide ?? ''}
                 onChange={(e) => change('style_guide', e.target.value)}
-                placeholder={`Ví dụ:
-- Văn phong: súc tích, không lê thê
-- Góc nhìn: ngôi thứ ba, limited POV nhân vật chính
-- Đoạn hội thoại ngắn, có action beats
-- Tránh dùng từ: "đột nhiên", "rõ ràng", "thực ra"
-- Mỗi chương kết thúc bằng hook
-- Tone: dark fantasy, không quá trẻ con`}
+                placeholder={t('project.style_guide_placeholder')}
               />
             </div>
 
             <div>
               <label className={labelCls}>
-                Ghi chú tác giả{' '}
-                <span className="text-slate-600">(không gửi cho AI)</span>
+                {t('project.notes_label')}{' '}
+                <span className="text-slate-600">{t('project.notes_hint')}</span>
               </label>
               <textarea
                 className={`${inputCls} leading-relaxed`}
                 rows={6}
                 value={form.description ?? ''}
                 onChange={(e) => change('description', e.target.value)}
-                placeholder="Ghi chú cá nhân, ý tưởng chưa hoàn thiện, TODO..."
+                placeholder={t('project.notes_placeholder')}
               />
             </div>
           </div>
@@ -312,4 +308,3 @@ function Stat({ label, value }: { label: string; value: string }) {
     </div>
   )
 }
-

@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { api } from '../lib/api'
+import i18n from '../i18n'
 import type { AIAction } from '../types'
 
 export interface Message {
@@ -72,12 +73,12 @@ export const useAiStore = create<AIStore>((set, get) => ({
         history,
       })
       set((s) => ({
-        messages: [...s.messages, makeMsg('assistant', res.result ?? '[no response]')],
+        messages: [...s.messages, makeMsg('assistant', res.result ?? i18n.t('ai.no_response'))],
       }))
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'Không kết nối được AI'
+      const msg = e instanceof Error ? e.message : i18n.t('ai.connection_error')
       set((s) => ({
-        messages: [...s.messages, makeMsg('assistant', `Lỗi: ${msg}`)],
+        messages: [...s.messages, makeMsg('assistant', i18n.t('ai.error_prefix', { msg }))],
       }))
     } finally {
       set({ loading: false })

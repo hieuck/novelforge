@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   Send, Trash2, Bot, Zap, Square, ClipboardCopy,
   Brain, ChevronDown, ChevronUp, Copy, Check, Search,
@@ -23,13 +24,14 @@ const ACTION_GROUPS = Array.from(
 // ── Context badge ─────────────────────────────────────────────────────────────
 
 function ContextBadge({ hasChapter, hasProject }: { hasChapter: boolean; hasProject: boolean }) {
+  const { t } = useTranslation()
   if (!hasChapter && !hasProject) return null
   return (
     <div className="flex items-center gap-1.5 px-3 py-1.5 border-b border-slate-800 bg-slate-900/60">
       <Brain className="h-3 w-3 text-indigo-400 shrink-0" />
       <span className="text-[10px] text-slate-500">
-        Context:{' '}
-        {[hasProject && 'project', hasChapter && 'chapter']
+        {t('ai.context_badge')}{' '}
+        {[hasProject && t('ai.context_project'), hasChapter && t('ai.context_chapter')]
           .filter(Boolean)
           .join(' + ')}
       </span>
@@ -46,6 +48,13 @@ function ActionSelector({
   value: AIAction
   onChange: (v: AIAction) => void
 }) {
+  const { t } = useTranslation()
+  const groupKey: Record<string, string> = {
+    'Viết': 'write',
+    'Phân tích': 'analyze',
+    'Tạo mới': 'create',
+    'Dịch': 'translate',
+  }
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const ref = useRef<HTMLDivElement>(null)
@@ -86,7 +95,7 @@ function ActionSelector({
         onClick={() => setOpen((v) => !v)}
         className="flex w-full items-center justify-between rounded-md border border-slate-800 bg-slate-900 px-2.5 py-1.5 text-xs text-slate-300 hover:border-slate-700 focus:outline-none"
       >
-        <span>{selected?.label ?? 'Chọn action'}</span>
+        <span>{selected ? t(`ai_actions.${selected.value}`) : t('ai.action_placeholder')}</span>
         <ChevronDown className="h-3 w-3 text-slate-500 shrink-0" />
       </button>
 
@@ -98,7 +107,7 @@ function ActionSelector({
             <input
               autoFocus
               className="w-full bg-transparent text-xs text-slate-300 placeholder:text-slate-600 focus:outline-none"
-              placeholder="Tìm action…"
+              placeholder={t('ai.action_search')}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
@@ -111,16 +120,16 @@ function ActionSelector({
                   <ActionItem key={a.value} action={a} current={value} onSelect={select} />
                 ))
               ) : (
-                <p className="px-3 py-2 text-[11px] text-slate-600">Không tìm thấy</p>
+                <p className="px-3 py-2 text-[11px] text-slate-600">{t('ai.action_not_found')}</p>
               )
             ) : (
               ACTION_GROUPS.map(([group, actions]) => (
                 <div key={group}>
                   <p className="px-3 pt-2 pb-0.5 text-[9px] font-semibold uppercase tracking-wider text-slate-600">
-                    {group}
-                  </p>
-                  {actions.map((a) => (
-                    <ActionItem key={a.value} action={a} current={value} onSelect={select} />
+{t(`ai_actions.group_${groupKey[group] ?? group}`)}
+                    </p>
+                    {actions.map((a) => (
+                      <ActionItem key={a.value} action={a} current={value} onSelect={select} />
                   ))}
                 </div>
               ))
@@ -141,6 +150,7 @@ function ActionItem({
   current: AIAction
   onSelect: (v: AIAction) => void
 }) {
+  const { t } = useTranslation()
   return (
     <button
       type="button"
@@ -151,7 +161,7 @@ function ActionItem({
           : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
       }`}
     >
-      {action.label}
+      {t(`ai_actions.${action.value}`)}
     </button>
   )
 }
@@ -159,6 +169,7 @@ function ActionItem({
 // ── Copy button ───────────────────────────────────────────────────────────────
 
 function CopyButton({ text }: { text: string }) {
+  const { t } = useTranslation()
   const [copied, setCopied] = useState(false)
   const copy = () => {
     navigator.clipboard.writeText(text)
@@ -174,11 +185,11 @@ function CopyButton({ text }: { text: string }) {
     <button
       type="button"
       onClick={copy}
-      title="Copy"
+      title={t('agent.copy_tooltip')}
       className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-slate-500 hover:bg-slate-700 hover:text-slate-300 transition-colors"
     >
       {copied ? <Check className="h-3 w-3 text-green-400" /> : <Copy className="h-3 w-3" />}
-      {copied ? 'Copied' : 'Copy'}
+      {copied ? t('agent.copied') : t('agent.copy_tooltip')}
     </button>
   )
 }
@@ -194,6 +205,7 @@ function MessageBubble({
   content: string
   onInsert?: (text: string) => void
 }) {
+  const { t } = useTranslation()
   const [expanded, setExpanded] = useState(true)
   const isLong = content.length > 600
   const displayContent = expanded ? content : content.slice(0, 600) + '…'
@@ -208,7 +220,7 @@ function MessageBubble({
     >
       <div className="mb-1.5 flex items-center justify-between">
         <span className="text-[10px] uppercase tracking-wide text-slate-500">
-          {role === 'user' ? 'Bạn' : 'AI Assistant'}
+          {role === 'user' ? t('ai.label_you') : t('ai.label_assistant')}
         </span>
         {role === 'assistant' && (
           <div className="flex items-center gap-1">
@@ -217,11 +229,11 @@ function MessageBubble({
               <button
                 type="button"
                 onClick={() => onInsert(content)}
-                title="Chèn vào editor"
+                title={t('ai.insert_tooltip')}
                 className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-slate-500 hover:bg-slate-700 hover:text-slate-300 transition-colors"
               >
                 <ClipboardCopy className="h-3 w-3" />
-                Chèn
+                {t('ai.insert_label')}
               </button>
             )}
           </div>
@@ -235,8 +247,8 @@ function MessageBubble({
           className="mt-1.5 flex items-center gap-1 text-[10px] text-slate-500 hover:text-slate-400"
         >
           {expanded
-            ? <><ChevronUp className="h-3 w-3" /> Thu gọn</>
-            : <><ChevronDown className="h-3 w-3" /> Xem thêm</>}
+            ? <><ChevronUp className="h-3 w-3" /> {t('ai.collapse')}</>
+            : <><ChevronDown className="h-3 w-3" /> {t('ai.expand')}</>}
         </button>
       )}
     </div>
@@ -257,6 +269,7 @@ export default function AiPanel({
   chapterId: propChapterId,
   onInsertText,
 }: AiPanelProps) {
+  const { t } = useTranslation()
   const params = useParams()
   const projectId = propProjectId ?? params.projectId ?? null
   const { messages, loading, clearMessages, addUserMessage, addAssistantMessage, getHistory } =
@@ -318,7 +331,7 @@ export default function AiPanel({
             error?: string
           }
           if (msg.error) {
-            addAssistantMessage(`Lỗi: ${msg.error}`)
+            addAssistantMessage(t('ai.error_prefix', { msg: msg.error }))
             setStreamText('')
             streamBuf.current = ''
             setStreaming(false)
@@ -387,11 +400,11 @@ export default function AiPanel({
       <header className="flex items-center justify-between border-b border-slate-800 px-3 py-2">
         <div className="flex items-center gap-2">
           <Bot className="h-4 w-4 text-indigo-400" />
-          <span className="text-sm font-semibold text-slate-200">AI Agent</span>
+          <span className="text-sm font-semibold text-slate-200">{t('ai.panel_title')}</span>
           {streaming && <Zap className="h-3.5 w-3.5 animate-pulse text-yellow-400" />}
           {turnCount > 0 && (
             <span className="rounded-full bg-indigo-900/60 px-1.5 py-0.5 text-[10px] text-indigo-300">
-              {turnCount} turns
+              {t('ai.turns', { count: turnCount })}
             </span>
           )}
         </div>
@@ -399,7 +412,7 @@ export default function AiPanel({
           <button
             type="button"
             onClick={clearMessages}
-            title="Xóa hội thoại"
+            title={t('ai.clear_tooltip')}
             className="rounded p-1 text-slate-500 hover:bg-slate-800 hover:text-slate-300"
           >
             <Trash2 className="h-3.5 w-3.5" />
@@ -416,10 +429,10 @@ export default function AiPanel({
           <div className="mt-6 space-y-2 text-center">
             <Bot className="mx-auto h-8 w-8 text-slate-700" />
             <p className="text-xs text-slate-600">
-              Chọn action, nhập yêu cầu, nhấn Ctrl+Enter
+              {t('ai.empty_instruction')}
             </p>
             <p className="text-[10px] text-slate-700">
-              Hội thoại nhiều lượt — AI nhớ ngữ cảnh cuộc trò chuyện
+              {t('ai.empty_hint')}
             </p>
           </div>
         )}
@@ -438,7 +451,7 @@ export default function AiPanel({
           <div className="rounded-lg border border-indigo-900/40 bg-slate-900 p-3 text-sm">
             <div className="mb-1.5 flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-indigo-400">
               <Zap className="h-3 w-3" />
-              AI Agent (đang viết…)
+              {t('ai.streaming')}
             </div>
             <div className="whitespace-pre-wrap leading-relaxed text-slate-200">
               {streamText}
@@ -457,7 +470,7 @@ export default function AiPanel({
 
         {loading && !streaming && (
           <div className="rounded-lg border border-slate-800 bg-slate-900 p-3">
-            <div className="mb-1 text-[10px] text-slate-500">AI Agent</div>
+            <div className="mb-1 text-[10px] text-slate-500">{t('ai.loading')}</div>
             <div className="flex gap-1">
               {[0, 1, 2].map((i) => (
                 <span
@@ -486,13 +499,13 @@ export default function AiPanel({
             className="flex items-center gap-1 text-[10px] text-slate-600 hover:text-slate-400 transition-colors"
           >
             {showInstruction
-              ? <><ChevronUp className="h-3 w-3" /> Ẩn hướng dẫn thêm</>
-              : <><ChevronDown className="h-3 w-3" /> Thêm hướng dẫn cụ thể…</>}
+              ? <><ChevronUp className="h-3 w-3" /> {t('ai.hide_instruction')}</>
+              : <><ChevronDown className="h-3 w-3" /> {t('ai.show_instruction')}</>}
           </button>
           {showInstruction && (
             <textarea
               className="mt-1.5 h-14 w-full resize-none rounded-md border border-slate-800 bg-slate-900 p-2 text-xs text-slate-300 placeholder:text-slate-600 focus:border-indigo-700 focus:outline-none"
-              placeholder="VD: Giữ ngôn ngữ trang trọng, tránh từ Hán-Việt…"
+              placeholder={t('ai.instruction_placeholder')}
               value={instruction}
               onChange={(e) => setInstruction(e.target.value)}
             />
@@ -502,7 +515,7 @@ export default function AiPanel({
         {/* Main input */}
         <textarea
           className="h-20 w-full resize-none rounded-md border border-slate-800 bg-slate-900 p-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-700 focus:outline-none disabled:opacity-50"
-          placeholder="Nhập yêu cầu hoặc paste đoạn văn… (Ctrl+Enter)"
+          placeholder={t('ai.input_placeholder')}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={onKeyDown}
@@ -516,7 +529,7 @@ export default function AiPanel({
             className="flex w-full items-center justify-center gap-2 rounded-md bg-red-900/80 px-3 py-2 text-sm font-medium text-red-200 hover:bg-red-800"
           >
             <Square className="h-3.5 w-3.5" />
-            Dừng
+            {t('ai.stop')}
           </button>
         ) : (
           <button
@@ -525,7 +538,7 @@ export default function AiPanel({
             className="flex w-full items-center justify-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-40"
           >
             <Send className="h-3.5 w-3.5" />
-            {loading ? 'Đang xử lý…' : 'Gửi'}
+            {loading ? t('ai.processing') : t('ai.send')}
           </button>
         )}
       </form>

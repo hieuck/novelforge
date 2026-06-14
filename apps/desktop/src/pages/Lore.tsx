@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router-dom'
 import { Plus, Trash2, X, Edit2, Check, Bot } from 'lucide-react'
 import { api } from '../lib/api'
@@ -10,6 +11,7 @@ const LORE_TYPES = ['location', 'organization', 'rule', 'magic', 'technology', '
 const EMPTY = { lore_type: 'location', name: '', description: '', tags: '' }
 
 export default function Lore() {
+  const { t } = useTranslation()
   const { projectId } = useParams()
   const [items, setItems] = useState<LoreItem[]>([])
   const [filter, setFilter] = useState('all')
@@ -49,7 +51,7 @@ export default function Lore() {
   }
 
   const remove = async (id: string) => {
-    if (!confirm('Xóa lore item này?')) return
+    if (!confirm(t('lore.delete_confirm'))) return
     await api.delete(`/lore/${id}`)
     setItems((l) => l.filter((x) => x.id !== id))
   }
@@ -72,11 +74,11 @@ export default function Lore() {
       {/* Main content */}
       <div className="flex flex-1 flex-col overflow-hidden">
       <div className="flex items-center justify-between border-b border-slate-800 px-6 py-3">
-        <h1 className="text-lg font-semibold text-slate-100">Worldbuilding / Lore</h1>
+        <h1 className="text-lg font-semibold text-slate-100">{t('lore.page_title')}</h1>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowAgent((v) => !v)}
-            title="AI Agent"
+            title={t('lore.ai_tooltip')}
             className={`flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm transition-colors ${
               showAgent
                 ? 'border-indigo-700 bg-indigo-900/40 text-indigo-300'
@@ -84,14 +86,14 @@ export default function Lore() {
             }`}
           >
             <Bot className="h-3.5 w-3.5" />
-            Agent
+            {t('lore.agent_toggle')}
           </button>
           <button
             onClick={() => setShowForm((v) => !v)}
             className="flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-1.5 text-sm text-white hover:bg-indigo-700"
           >
             <Plus className="h-4 w-4" />
-            Thêm lore
+            {t('lore.add')}
           </button>
         </div>
       </div>
@@ -101,7 +103,7 @@ export default function Lore() {
           onClick={() => setFilter('all')}
           className={`rounded-full px-3 py-1 text-xs ${filter === 'all' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-slate-200'}`}
         >
-          All
+          {t('lore.filter_all')}
         </button>
         {LORE_TYPES.map((t) => (
           <button
@@ -118,7 +120,7 @@ export default function Lore() {
         {showForm && (
           <form onSubmit={create} className="mb-4 rounded-lg border border-slate-800 bg-slate-900 p-4 space-y-3">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-sm font-medium text-slate-300">Lore mới</span>
+              <span className="text-sm font-medium text-slate-300">{t('lore.new_heading')}</span>
               <button type="button" onClick={() => setShowForm(false)} className="text-slate-500 hover:text-slate-300">
                 <X className="h-4 w-4" />
               </button>
@@ -134,7 +136,7 @@ export default function Lore() {
               <input
                 required
                 className="rounded-md border border-slate-800 bg-slate-800 px-3 py-1.5 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-600 focus:outline-none"
-                placeholder="Tên *"
+                placeholder={t('lore.field_name')}
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
               />
@@ -142,24 +144,24 @@ export default function Lore() {
             <textarea
               rows={3}
               className="w-full rounded-md border border-slate-800 bg-slate-800 px-3 py-1.5 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-600 focus:outline-none"
-              placeholder="Mô tả chi tiết..."
+              placeholder={t('lore.field_description')}
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
             />
             <input
               className="w-full rounded-md border border-slate-800 bg-slate-800 px-3 py-1.5 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-600 focus:outline-none"
-              placeholder="Tags (phân cách bằng dấu phẩy)"
+              placeholder={t('lore.field_tags')}
               value={form.tags}
               onChange={(e) => setForm({ ...form, tags: e.target.value })}
             />
             <button type="submit" className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
-              Lưu
+              {t('lore.save')}
             </button>
           </form>
         )}
 
         {loading ? (
-          <div className="text-sm text-slate-500">Đang tải...</div>
+          <div className="text-sm text-slate-500">{t('lore.loading')}</div>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2">
             {filtered.map((item) => (
@@ -189,13 +191,13 @@ export default function Lore() {
                       className="w-full rounded border border-slate-800 bg-slate-800 px-2 py-1 text-sm text-slate-200"
                       value={editForm.tags}
                       onChange={(e) => setEditForm({ ...editForm, tags: e.target.value })}
-                      placeholder="Tags"
+                      placeholder={t('lore.field_tags')}
                     />
                     <div className="flex gap-2">
                       <button onClick={() => saveEdit(item.id)} className="flex items-center gap-1 rounded bg-indigo-600 px-3 py-1 text-xs text-white hover:bg-indigo-700">
-                        <Check className="h-3 w-3" /> Lưu
+                        <Check className="h-3 w-3" /> {t('lore.save_edit')}
                       </button>
-                      <button onClick={() => setEditId(null)} className="rounded border border-slate-700 px-3 py-1 text-xs text-slate-400">Hủy</button>
+                      <button onClick={() => setEditId(null)} className="rounded border border-slate-700 px-3 py-1 text-xs text-slate-400">{t('lore.cancel_edit')}</button>
                     </div>
                   </div>
                 ) : (
@@ -226,7 +228,7 @@ export default function Lore() {
                 )}
               </div>
             ))}
-            {!filtered.length && <div className="text-sm text-slate-500 col-span-2">Chưa có lore nào.</div>}
+            {!filtered.length && <div className="text-sm text-slate-500 col-span-2">{t('lore.empty_state')}</div>}
           </div>
         )}
       </div>

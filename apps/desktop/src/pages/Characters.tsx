@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router-dom'
 import { Plus, X, ChevronDown, ChevronUp, Trash2, Edit2, Check, Bot } from 'lucide-react'
 import { api } from '../lib/api'
@@ -11,6 +12,7 @@ const EMPTY: Omit<Character, 'id' | 'project_id' | 'created_at' | 'updated_at'> 
 }
 
 export default function Characters() {
+  const { t } = useTranslation()
   const { projectId } = useParams()
   const [list, setList] = useState<Character[]>([])
   const [form, setForm] = useState({ ...EMPTY })
@@ -44,7 +46,7 @@ export default function Characters() {
   }
 
   const remove = async (id: string) => {
-    if (!confirm('Xóa nhân vật này?')) return
+    if (!confirm(t('characters.delete_confirm'))) return
     await api.delete(`/characters/${id}`)
     setList((l) => l.filter((c) => c.id !== id))
   }
@@ -70,11 +72,11 @@ export default function Characters() {
       {/* Main content */}
       <div className="flex flex-1 flex-col overflow-hidden">
         <div className="flex items-center justify-between border-b border-slate-800 px-6 py-3">
-        <h1 className="text-lg font-semibold text-slate-100">Character Bible</h1>
+        <h1 className="text-lg font-semibold text-slate-100">{t('characters.page_title')}</h1>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowAgent((v) => !v)}
-            title="AI Agent"
+            title={t('characters.ai_tooltip')}
             className={`flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm transition-colors ${
               showAgent
                 ? 'border-indigo-700 bg-indigo-900/40 text-indigo-300'
@@ -82,14 +84,14 @@ export default function Characters() {
             }`}
           >
             <Bot className="h-3.5 w-3.5" />
-            Agent
+            {t('characters.agent_toggle')}
           </button>
           <button
             onClick={() => setShowForm((v) => !v)}
             className="flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-1.5 text-sm text-white hover:bg-indigo-700"
           >
             <Plus className="h-4 w-4" />
-            Thêm nhân vật
+            {t('characters.add')}
           </button>
         </div>
       </div>
@@ -98,7 +100,7 @@ export default function Characters() {
         {showForm && (
           <form onSubmit={create} className="mb-4 rounded-lg border border-slate-800 bg-slate-900 p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-slate-300">Nhân vật mới</span>
+              <span className="text-sm font-medium text-slate-300">{t('characters.new_heading')}</span>
               <button type="button" onClick={() => setShowForm(false)} className="text-slate-500 hover:text-slate-300">
                 <X className="h-4 w-4" />
               </button>
@@ -108,7 +110,7 @@ export default function Characters() {
                 <input
                   key={f}
                   className="rounded-md border border-slate-800 bg-slate-800 px-3 py-1.5 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-600 focus:outline-none"
-                  placeholder={f === 'name' ? 'Tên *' : f === 'alias' ? 'Bí danh' : f === 'role' ? 'Vai trò' : f === 'age' ? 'Tuổi' : 'Xuất hiện lần đầu'}
+                  placeholder={f === 'name' ? t('characters.field_name') : f === 'alias' ? t('characters.field_alias') : f === 'role' ? t('characters.field_role') : f === 'age' ? t('characters.field_age') : t('characters.field_first_appearance')}
                   required={f === 'name'}
                   value={form[f]}
                   onChange={(e) => setForm({ ...form, [f]: e.target.value })}
@@ -120,19 +122,19 @@ export default function Characters() {
                 key={f}
                 rows={2}
                 className="w-full rounded-md border border-slate-800 bg-slate-800 px-3 py-1.5 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-600 focus:outline-none"
-                placeholder={f === 'personality' ? 'Tính cách' : f === 'appearance' ? 'Ngoại hình' : f === 'goals' ? 'Mục tiêu' : f === 'secrets' ? 'Bí mật' : 'Ghi chú'}
+                placeholder={f === 'personality' ? t('characters.field_personality') : f === 'appearance' ? t('characters.field_appearance') : f === 'goals' ? t('characters.field_goals') : f === 'secrets' ? t('characters.field_secrets') : t('characters.field_notes')}
                 value={form[f]}
                 onChange={(e) => setForm({ ...form, [f]: e.target.value })}
               />
             ))}
             <button type="submit" className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
-              Lưu nhân vật
+              {t('characters.save')}
             </button>
           </form>
         )}
 
         {loading ? (
-          <div className="text-sm text-slate-500">Đang tải...</div>
+          <div className="text-sm text-slate-500">{t('characters.loading')}</div>
         ) : (
           <div className="space-y-2">
             {list.map((c) => (
@@ -181,29 +183,29 @@ export default function Characters() {
                         ))}
                         <div className="flex gap-2">
                           <button onClick={() => saveEdit(c.id)} className="flex items-center gap-1 rounded bg-indigo-600 px-3 py-1.5 text-xs text-white hover:bg-indigo-700">
-                            <Check className="h-3 w-3" /> Lưu
+                            <Check className="h-3 w-3" /> {t('characters.save_edit')}
                           </button>
                           <button onClick={() => setEditId(null)} className="rounded border border-slate-700 px-3 py-1.5 text-xs text-slate-400 hover:text-slate-200">
-                            Hủy
+                            {t('characters.cancel_edit')}
                           </button>
                         </div>
                       </div>
                     ) : (
                       <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
-                        {c.age && <Field label="Tuổi" value={c.age} />}
-                        {c.first_appearance && <Field label="Xuất hiện" value={c.first_appearance} />}
-                        {c.personality && <Field label="Tính cách" value={c.personality} full />}
-                        {c.appearance && <Field label="Ngoại hình" value={c.appearance} full />}
-                        {c.goals && <Field label="Mục tiêu" value={c.goals} full />}
-                        {c.secrets && <Field label="Bí mật" value={c.secrets} full />}
-                        {c.notes && <Field label="Ghi chú" value={c.notes} full />}
+                        {c.age && <Field label={t('characters.label_age')} value={c.age} />}
+                        {c.first_appearance && <Field label={t('characters.label_first_appearance')} value={c.first_appearance} />}
+                        {c.personality && <Field label={t('characters.field_personality')} value={c.personality} full />}
+                        {c.appearance && <Field label={t('characters.field_appearance')} value={c.appearance} full />}
+                        {c.goals && <Field label={t('characters.field_goals')} value={c.goals} full />}
+                        {c.secrets && <Field label={t('characters.field_secrets')} value={c.secrets} full />}
+                        {c.notes && <Field label={t('characters.field_notes')} value={c.notes} full />}
                       </div>
                     )}
                   </div>
                 )}
               </div>
             ))}
-            {!list.length && <div className="text-sm text-slate-500">Chưa có nhân vật nào.</div>}
+            {!list.length && <div className="text-sm text-slate-500">{t('characters.empty_state')}</div>}
           </div>
         )}
       </div>

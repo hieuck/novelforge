@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import i18n from '../i18n'
 import {
   Bot, Play, Square, Trash2, CheckCircle, Loader2, Zap,
   AlertCircle, User, Globe, FileText, Sparkles, Calendar,
@@ -27,25 +29,7 @@ interface ToolOutput {
 }
 
 // ── Preset tasks ──────────────────────────────────────────────────────────────
-
-function getPresets(chapterTitle?: string | null) {
-  return [
-    { label: '3 nhân vật', task: 'Tạo 3 nhân vật cho truyện fantasy: anh hùng, phản diện, và người thầy. Mỗi nhân vật cần tính cách, mục tiêu và bí mật riêng.' },
-    { label: 'Chương mở đầu', task: 'Viết chương mở đầu hấp dẫn, giới thiệu thế giới và nhân vật chính. Khoảng 500 từ.' },
-    { label: 'Mở rộng lore', task: 'Đọc các nhân vật hiện có rồi tạo 3 lore items phù hợp: 1 địa điểm, 1 tổ chức, 1 yếu tố magic.' },
-    { label: 'Tóm tắt project', task: 'Đọc toàn bộ thông tin project rồi viết tóm tắt cốt truyện súc tích, cập nhật vào project summary.' },
-    { label: 'Timeline sự kiện', task: 'Đọc các chương hiện có và tạo 3-5 timeline events quan trọng theo thứ tự thời gian.' },
-    { label: 'Kiểm tra nhất quán', task: 'Kiểm tra toàn bộ project để tìm mâu thuẫn về nhân vật, timeline và cốt truyện. Liệt kê mọi vấn đề tìm thấy.' },
-    ...(chapterTitle
-      ? [
-          { label: 'Cải thiện chương này', task: `Đọc chương "${chapterTitle}", phân tích điểm yếu, viết lại để tăng chất lượng văn phong, nhịp độ và cảm xúc. Lưu lại chương sau khi hoàn thành.` },
-          { label: 'Viết tiếp chương', task: `Đọc chương "${chapterTitle}" hiện tại, đọc characters và lore để nắm bối cảnh, rồi viết tiếp nội dung mới mạch lạc.` },
-          { label: 'Kiểm tra continuity', task: `Đọc chương "${chapterTitle}", characters, lore và timeline. Phát hiện mọi mâu thuẫn về nhân vật, sự kiện, thế giới. Sửa chương nếu cần.` },
-          { label: 'Mở rộng cảnh', task: `Đọc chương "${chapterTitle}", chọn một cảnh có tiềm năng và mở rộng với chi tiết giác quan, cảm xúc, hội thoại.` },
-        ]
-      : []),
-  ]
-}
+// (getPresets moved inside AgentPanel to access useTranslation)
 
 // ── Tool metadata ─────────────────────────────────────────────────────────────
 
@@ -131,41 +115,42 @@ function ResultFields({
   result: Record<string, any>
   onInsert?: (text: string) => void
 }) {
+  const { t } = useTranslation()
   if (result.error) {
-    return <p className="text-xs text-red-400">Error: {String(result.error)}</p>
+    return <p className="text-xs text-red-400">{t('agent.error')}: {String(result.error)}</p>
   }
   if (tool === 'create_character' || tool === 'update_character') {
     return (
       <div className="text-xs text-slate-300 space-y-0.5">
-        {result.name && <p><span className="text-slate-500">Name:</span> {String(result.name)}</p>}
-        {result.role && <p><span className="text-slate-500">Role:</span> {String(result.role)}</p>}
-        {tool === 'update_character' && result.updated && <p className="text-amber-300">✓ Updated</p>}
+        {result.name && <p><span className="text-slate-500">{t('agent.field_name')}</span> {String(result.name)}</p>}
+        {result.role && <p><span className="text-slate-500">{t('agent.field_role')}</span> {String(result.role)}</p>}
+        {tool === 'update_character' && result.updated && <p className="text-amber-300">{t('agent.field_updated_mark')}</p>}
       </div>
     )
   }
   if (tool === 'create_lore' || tool === 'update_lore') {
     return (
       <div className="text-xs text-slate-300 space-y-0.5">
-        {result.name && <p><span className="text-slate-500">Name:</span> {String(result.name)}</p>}
-        {result.lore_type && <p><span className="text-slate-500">Type:</span> {String(result.lore_type)}</p>}
-        {tool === 'update_lore' && result.updated && <p className="text-emerald-300">✓ Updated</p>}
+        {result.name && <p><span className="text-slate-500">{t('agent.field_name')}</span> {String(result.name)}</p>}
+        {result.lore_type && <p><span className="text-slate-500">{t('agent.field_type')}</span> {String(result.lore_type)}</p>}
+        {tool === 'update_lore' && result.updated && <p className="text-emerald-300">{t('agent.field_updated_mark')}</p>}
       </div>
     )
   }
   if (tool === 'create_chapter' || tool === 'update_chapter') {
     return (
       <div className="text-xs text-slate-300 space-y-0.5">
-        {result.title && <p><span className="text-slate-500">Title:</span> {String(result.title)}</p>}
-        {result.word_count != null && <p><span className="text-slate-500">Words:</span> {String(result.word_count)}</p>}
-        {tool === 'update_chapter' && result.updated && <p className="text-blue-400">✓ Saved</p>}
+        {result.title && <p><span className="text-slate-500">{t('agent.field_name')}</span> {String(result.title)}</p>}
+        {result.word_count != null && <p><span className="text-slate-500">{t('agent.field_words')}</span> {String(result.word_count)}</p>}
+        {tool === 'update_chapter' && result.updated && <p className="text-blue-400">{t('agent.field_saved_mark')}</p>}
       </div>
     )
   }
   if (tool === 'create_timeline_event') {
     return (
       <div className="text-xs text-slate-300 space-y-0.5">
-        {result.title && <p><span className="text-slate-500">Event:</span> {String(result.title)}</p>}
-        {result.event_date && <p><span className="text-slate-500">Date:</span> {String(result.event_date)}</p>}
+        {result.title && <p><span className="text-slate-500">{t('agent.field_event')}</span> {String(result.title)}</p>}
+        {result.event_date && <p><span className="text-slate-500">{t('agent.field_date')}</span> {String(result.event_date)}</p>}
       </div>
     )
   }
@@ -173,16 +158,16 @@ function ResultFields({
     return (
       <div className="text-xs text-slate-300 space-y-0.5">
         {result.answer
-          ? <p><span className="text-slate-500">Answer:</span> {String(result.answer)}</p>
-          : <p className="text-slate-600 italic">No answer received</p>}
+          ? <p><span className="text-slate-500">{t('agent.field_answer')}</span> {String(result.answer)}</p>
+          : <p className="text-slate-600 italic">{t('agent.field_no_answer')}</p>}
       </div>
     )
   }
   if (tool === 'read_chapter') {
     return (
       <div className="text-xs text-slate-300 space-y-0.5">
-        {result.title && <p><span className="text-slate-500">Title:</span> {String(result.title)}</p>}
-        {result.word_count != null && <p><span className="text-slate-500">Words:</span> {String(result.word_count)}</p>}
+        {result.title && <p><span className="text-slate-500">{t('agent.field_name')}</span> {String(result.title)}</p>}
+        {result.word_count != null && <p><span className="text-slate-500">{t('agent.field_words')}</span> {String(result.word_count)}</p>}
       </div>
     )
   }
@@ -190,7 +175,7 @@ function ResultFields({
     const chars = result.characters as Array<{ name: string }> | undefined
     return (
       <div className="text-xs text-slate-300 space-y-0.5">
-        <p><span className="text-slate-500">Found:</span> {String(result.count)} character(s)</p>
+        <p><span className="text-slate-500">{t('agent.field_found')}</span> {String(result.count)} {t('agent.field_chars_suffix')}</p>
         {chars && chars.length > 0 && (
           <p className="text-slate-500">{chars.slice(0, 4).map((c) => c.name).join(', ')}{chars.length > 4 ? '…' : ''}</p>
         )}
@@ -201,7 +186,7 @@ function ResultFields({
     const items = result.lore as Array<{ name: string }> | undefined
     return (
       <div className="text-xs text-slate-300 space-y-0.5">
-        <p><span className="text-slate-500">Found:</span> {String(result.count)} lore item(s)</p>
+        <p><span className="text-slate-500">{t('agent.field_found')}</span> {String(result.count)} {t('agent.field_lore_suffix')}</p>
         {items && items.length > 0 && (
           <p className="text-slate-500">{items.slice(0, 4).map((i) => i.name).join(', ')}{items.length > 4 ? '…' : ''}</p>
         )}
@@ -212,7 +197,7 @@ function ResultFields({
     const events = result.events as Array<{ title: string }> | undefined
     return (
       <div className="text-xs text-slate-300 space-y-0.5">
-        <p><span className="text-slate-500">Found:</span> {String(result.count)} event(s)</p>
+        <p><span className="text-slate-500">{t('agent.field_found')}</span> {String(result.count)} {t('agent.field_events_suffix')}</p>
         {events && events.length > 0 && (
           <p className="text-slate-500">{events.slice(0, 3).map((e) => e.title).join(', ')}{events.length > 3 ? '…' : ''}</p>
         )}
@@ -223,8 +208,8 @@ function ResultFields({
     const hits = result.results as Array<{ title: string; kind: string }> | undefined
     return (
       <div className="text-xs text-slate-300 space-y-0.5">
-        <p><span className="text-slate-500">Query:</span> {String(result.query)}</p>
-        <p><span className="text-slate-500">Found:</span> {String(result.count)} result(s)</p>
+        <p><span className="text-slate-500">{t('agent.field_query')}</span> {String(result.query)}</p>
+        <p><span className="text-slate-500">{t('agent.field_found')}</span> {String(result.count)} {t('agent.field_results_suffix')}</p>
         {hits && hits.length > 0 && (
           <p className="text-slate-500">
             {hits.slice(0, 4).map((h) => `${h.title} (${h.kind})`).join(', ')}
@@ -248,7 +233,7 @@ function ResultFields({
             className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-slate-500 hover:bg-slate-700 hover:text-slate-300 transition-colors"
           >
             <ClipboardCopy className="h-3 w-3" />
-            Chèn vào editor
+            {t('agent.insert_into_editor')}
           </button>
         )}
       </div>
@@ -257,8 +242,8 @@ function ResultFields({
   if (tool === 'read_project_summary') {
     return (
       <div className="text-xs text-slate-300 space-y-0.5">
-        {result.title && <p><span className="text-slate-500">Project:</span> {String(result.title)}</p>}
-        {result.chapter_count != null && <p><span className="text-slate-500">Chapters:</span> {String(result.chapter_count)}</p>}
+        {result.title && <p><span className="text-slate-500">{t('agent.field_project')}</span> {String(result.title)}</p>}
+        {result.chapter_count != null && <p><span className="text-slate-500">{t('agent.field_chapters_label')}</span> {String(result.chapter_count)}</p>}
       </div>
     )
   }
@@ -275,14 +260,14 @@ function ResultFields({
             className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-slate-500 hover:bg-slate-700 hover:text-slate-300 transition-colors"
           >
             <ClipboardCopy className="h-3 w-3" />
-            Chèn vào editor
+            {t('agent.insert_into_editor')}
           </button>
         )}
       </div>
     )
   }
   if (result.updated) {
-    return <p className="text-xs text-slate-400">Updated.</p>
+    return <p className="text-xs text-slate-400">{t('agent.updated')}</p>
   }
   return null
 }
@@ -290,13 +275,14 @@ function ResultFields({
 // ── Progress bar ──────────────────────────────────────────────────────────────
 
 function ProgressBar({ completed, total }: { completed: number; total: number }) {
+  const { t } = useTranslation()
   if (total === 0) return null
   const pct = Math.round((completed / total) * 100)
   return (
     <div className="space-y-1">
       <div className="flex justify-between text-[10px] text-slate-500">
-        <span>{completed}/{total} steps</span>
-        <span>{pct}%</span>
+        <span>{t('agent.step_progress', { current: completed, total })}</span>
+        <span>{t('agent.percent', { value: pct })}</span>
       </div>
       <div className="h-1 w-full overflow-hidden rounded-full bg-slate-800">
         <div
@@ -310,9 +296,9 @@ function ProgressBar({ completed, total }: { completed: number; total: number })
 
 // ── Preset quick-tasks ────────────────────────────────────────────────────────
 
-function PresetList({ onSelect, chapterTitle }: { onSelect: (task: string) => void; chapterTitle?: string | null }) {
+function PresetList({ onSelect, presets }: { onSelect: (task: string) => void; presets: Array<{ label: string; task: string }> }) {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
-  const presets = getPresets(chapterTitle)
   return (
     <div>
       <button
@@ -320,7 +306,7 @@ function PresetList({ onSelect, chapterTitle }: { onSelect: (task: string) => vo
         onClick={() => setOpen((v) => !v)}
         className="flex w-full items-center justify-between rounded-md border border-slate-800 bg-slate-900 px-2.5 py-1.5 text-xs text-slate-400 hover:bg-slate-800"
       >
-        <span>Gợi ý nhanh</span>
+        <span>{t('agent.presets_label')}</span>
         {open ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
       </button>
       {open && (
@@ -344,6 +330,7 @@ function PresetList({ onSelect, chapterTitle }: { onSelect: (task: string) => vo
 // ── Copy button ───────────────────────────────────────────────────────────────
 
 function CopyButton({ text }: { text: string }) {
+  const { t } = useTranslation()
   const [copied, setCopied] = useState(false)
   const copy = () => {
     navigator.clipboard.writeText(text).then(() => {
@@ -357,11 +344,11 @@ function CopyButton({ text }: { text: string }) {
     <button
       type="button"
       onClick={copy}
-      title="Copy"
+      title={t('agent.copy_tooltip')}
       className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-slate-500 hover:bg-slate-700 hover:text-slate-300 transition-colors"
     >
       {copied ? <Check className="h-3 w-3 text-green-400" /> : <Copy className="h-3 w-3" />}
-      {copied ? 'Copied' : 'Copy'}
+      {copied ? t('agent.copied') : t('agent.copy_tooltip')}
     </button>
   )
 }
@@ -375,6 +362,7 @@ function AskUserCard({
   question: string
   onAnswer: (answer: string) => void
 }) {
+  const { t } = useTranslation()
   const [answer, setAnswer] = useState('')
   const submit = () => {
     if (!answer.trim()) return
@@ -384,14 +372,14 @@ function AskUserCard({
     <div className="rounded-lg border border-yellow-800/60 bg-yellow-950/30 p-3 space-y-2">
       <div className="flex items-center gap-1.5">
         <HelpCircle className="h-3.5 w-3.5 text-yellow-400 shrink-0" />
-        <span className="text-xs font-semibold text-yellow-400">Agent cần thêm thông tin</span>
+        <span className="text-xs font-semibold text-yellow-400">{t('agent.ask_heading')}</span>
       </div>
       <p className="text-xs text-slate-300 leading-relaxed">{question}</p>
       <textarea
         autoFocus
         className="w-full resize-none rounded border border-slate-700 bg-slate-900 p-2 text-xs text-slate-200 placeholder:text-slate-600 focus:border-yellow-700 focus:outline-none"
         rows={2}
-        placeholder="Nhập câu trả lời…"
+        placeholder={t('agent.ask_placeholder')}
         value={answer}
         onChange={(e) => setAnswer(e.target.value)}
         onKeyDown={(e) => {
@@ -408,7 +396,7 @@ function AskUserCard({
         className="flex w-full items-center justify-center gap-1.5 rounded bg-yellow-700/80 px-3 py-1.5 text-xs font-medium text-yellow-100 hover:bg-yellow-700 disabled:opacity-40"
       >
         <RefreshCw className="h-3 w-3" />
-        Trả lời & tiếp tục (Ctrl+Enter)
+        {t('agent.ask_submit')}
       </button>
     </div>
   )
@@ -427,12 +415,13 @@ function HistoryPanel({
   onClear: () => void
   onClose: () => void
 }) {
+  const { t } = useTranslation()
   return (
     <div className="absolute inset-0 z-10 flex flex-col bg-slate-950">
       <header className="flex items-center justify-between border-b border-slate-800 px-3 py-2">
         <div className="flex items-center gap-2">
           <History className="h-4 w-4 text-slate-400" />
-          <span className="text-sm font-semibold text-slate-200">Lịch sử Agent</span>
+          <span className="text-sm font-semibold text-slate-200">{t('agent.history_title')}</span>
         </div>
         <div className="flex items-center gap-1">
           {runs.length > 0 && (
@@ -441,7 +430,7 @@ function HistoryPanel({
               onClick={onClear}
               className="rounded px-2 py-1 text-[10px] text-slate-600 hover:bg-slate-800 hover:text-red-400"
             >
-              Xóa tất cả
+              {t('agent.history_clear')}
             </button>
           )}
           <button
@@ -455,7 +444,7 @@ function HistoryPanel({
       </header>
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
         {runs.length === 0 ? (
-          <p className="text-center text-xs text-slate-600 mt-6">Chưa có lần chạy nào được lưu.</p>
+          <p className="text-center text-xs text-slate-600 mt-6">{t('agent.history_empty')}</p>
         ) : (
           runs.map((run) => (
             <div
@@ -467,17 +456,17 @@ function HistoryPanel({
                 <button
                   type="button"
                   onClick={() => onRerun(run.task)}
-                  title="Chạy lại task này"
+                  title={t('agent.history_rerun_tooltip')}
                   className="shrink-0 rounded px-1.5 py-0.5 text-[10px] text-indigo-400 hover:bg-indigo-900/40 transition-colors"
                 >
-                  ↺ Chạy lại
+                  {t('agent.history_rerun')}
                 </button>
               </div>
               <p className="text-[10px] text-slate-500 leading-relaxed">{run.summary}</p>
               <div className="flex items-center gap-2 text-[10px] text-slate-600">
-                <span>{run.stepsCompleted} bước</span>
+                <span>{t('agent.history_steps', { count: run.stepsCompleted })}</span>
                 <span>·</span>
-                <span>{new Date(run.timestamp).toLocaleString('vi-VN')}</span>
+                <span>{new Date(run.timestamp).toLocaleString(i18n.language)}</span>
               </div>
             </div>
           ))
@@ -502,9 +491,29 @@ export default function AgentPanel({
   chapterTitle,
   onInsertText,
 }: AgentPanelProps) {
+  const { t } = useTranslation()
   const params = useParams()
   const projectId = propProjectId ?? params.projectId ?? null
   const chapterId = propChapterId ?? null
+
+  function getPresets() {
+    return [
+      { label: t('agent.preset_3chars'), task: t('agent.preset_3chars_desc') },
+      { label: t('agent.preset_opening'), task: t('agent.preset_opening_desc') },
+      { label: t('agent.preset_lore'), task: t('agent.preset_lore_desc') },
+      { label: t('agent.preset_summary'), task: t('agent.preset_summary_desc') },
+      { label: t('agent.preset_timeline'), task: t('agent.preset_timeline_desc') },
+      { label: t('agent.preset_consistency'), task: t('agent.preset_consistency_desc') },
+      ...(chapterTitle
+        ? [
+            { label: t('agent.preset_improve'), task: t('agent.preset_improve_desc', { title: chapterTitle }) },
+            { label: t('agent.preset_continue'), task: t('agent.preset_continue_desc', { title: chapterTitle }) },
+            { label: t('agent.preset_continuity'), task: t('agent.preset_continuity_desc', { title: chapterTitle }) },
+            { label: t('agent.preset_expand'), task: t('agent.preset_expand_desc', { title: chapterTitle }) },
+          ]
+        : []),
+    ]
+  }
 
   const { history, addRun, clearHistory } = useAgentHistory(projectId)
   const [showHistory, setShowHistory] = useState(false)
@@ -688,7 +697,7 @@ export default function AgentPanel({
       <header className="flex items-center justify-between border-b border-slate-800 px-3 py-2">
         <div className="flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-indigo-400" />
-          <span className="text-sm font-semibold text-slate-200">AI Agent</span>
+          <span className="text-sm font-semibold text-slate-200">{t('agent.panel_title')}</span>
           {(agentStatus === 'planning' || agentStatus === 'running') && (
             <Zap className="h-3.5 w-3.5 animate-pulse text-yellow-400" />
           )}
@@ -704,13 +713,13 @@ export default function AgentPanel({
             disabled={isRunning}
             className="rounded border border-slate-800 bg-slate-900 px-1.5 py-0.5 text-[10px] text-slate-400 focus:outline-none disabled:opacity-40"
           >
-            <option value="vi">VI</option>
-            <option value="en">EN</option>
+            <option value="vi">{t('agent.lang_vi')}</option>
+            <option value="en">{t('agent.lang_en')}</option>
           </select>
           <button
             type="button"
             onClick={() => setShowHistory((v) => !v)}
-            title="Lịch sử"
+            title={t('agent.history_tooltip')}
             className="relative rounded p-1 text-slate-500 hover:bg-slate-800 hover:text-slate-300"
           >
             <History className="h-3.5 w-3.5" />
@@ -720,7 +729,7 @@ export default function AgentPanel({
           </button>
           <button
             onClick={reset}
-            title="Reset"
+            title={t('agent.reset_tooltip')}
             className="rounded p-1 text-slate-500 hover:bg-slate-800 hover:text-slate-300"
           >
             <Trash2 className="h-3.5 w-3.5" />
@@ -735,10 +744,10 @@ export default function AgentPanel({
         {agentStatus === 'idle' && (
           <div className="rounded-lg border border-slate-800 bg-slate-900 p-3">
             <p className="text-xs text-slate-500 leading-relaxed">
-              Mô tả nhiệm vụ bằng ngôn ngữ tự nhiên. Agent sẽ tự lập kế hoạch và thực thi.
+              {t('agent.idle_hint')}
             </p>
             <p className="mt-2 text-xs text-slate-400 italic">
-              "Tạo 3 nhân vật fantasy, viết chương mở đầu, và cập nhật tóm tắt project."
+              {t('agent.idle_example')}
             </p>
           </div>
         )}
@@ -747,7 +756,7 @@ export default function AgentPanel({
         {agentStatus === 'planning' && (
           <div className="flex items-center gap-2 text-slate-400 text-xs">
             <Loader2 className="h-4 w-4 animate-spin text-indigo-400" />
-            <span>Đang lập kế hoạch…</span>
+            <span>{t('agent.planning')}</span>
           </div>
         )}
 
@@ -760,7 +769,7 @@ export default function AgentPanel({
         {plan.length > 0 && (
           <div className="rounded-lg border border-slate-800 bg-slate-900 p-3 space-y-2">
             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-              Kế hoạch · {plan.length} bước
+              {t('agent.plan_heading', { count: plan.length })}
             </p>
             {plan.map((s) => {
               const done = completedSteps.has(s.step)
@@ -810,7 +819,7 @@ export default function AgentPanel({
           <div className="rounded-lg border border-indigo-900/50 bg-indigo-950/30 p-3 space-y-1.5">
             <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-indigo-400">
               <Zap className="h-3 w-3" />
-              Đang viết…
+              {t('agent.streaming')}
             </div>
             <p className="whitespace-pre-wrap text-xs leading-relaxed text-slate-300">{streamText}</p>
             <div className="flex gap-1 pt-0.5">
@@ -836,7 +845,7 @@ export default function AgentPanel({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5">
                 <CheckCircle className="h-3.5 w-3.5 text-green-400" />
-                <span className="text-xs font-semibold text-green-400">Hoàn thành</span>
+                <span className="text-xs font-semibold text-green-400">{t('agent.done')}</span>
               </div>
               <CopyButton text={summary} />
             </div>
@@ -848,7 +857,7 @@ export default function AgentPanel({
         {agentStatus === 'cancelled' && (
           <div className="rounded-lg border border-yellow-800/50 bg-yellow-950/30 p-3 flex items-center gap-2">
             <Square className="h-3.5 w-3.5 text-yellow-400" />
-            <span className="text-xs text-yellow-400">Đã hủy bởi người dùng.</span>
+            <span className="text-xs text-yellow-400">{t('agent.cancelled')}</span>
           </div>
         )}
 
@@ -857,7 +866,7 @@ export default function AgentPanel({
           <div className="rounded-lg border border-red-800/50 bg-red-950/30 p-3 space-y-1">
             <div className="flex items-center gap-1.5">
               <AlertCircle className="h-3.5 w-3.5 text-red-400" />
-              <span className="text-xs font-semibold text-red-400">Lỗi</span>
+              <span className="text-xs font-semibold text-red-400">{t('agent.error')}</span>
             </div>
             {errorMsg && <p className="text-xs text-slate-400">{errorMsg}</p>}
           </div>
@@ -867,14 +876,14 @@ export default function AgentPanel({
       {/* Input area */}
       <div className="border-t border-slate-800 p-3 space-y-2">
         {!projectId && (
-          <p className="text-center text-xs text-slate-600">Mở project để dùng agent.</p>
+          <p className="text-center text-xs text-slate-600">{t('agent.no_project')}</p>
         )}
         {agentStatus === 'idle' && projectId && (
-          <PresetList onSelect={(t) => setTask(t)} chapterTitle={chapterTitle} />
+          <PresetList onSelect={(t) => setTask(t)} presets={getPresets()} />
         )}
         <textarea
           className="h-20 w-full resize-none rounded-md border border-slate-800 bg-slate-900 p-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-700 focus:outline-none disabled:opacity-50"
-          placeholder="Mô tả nhiệm vụ… (Ctrl+Enter)"
+          placeholder={t('agent.task_placeholder')}
           value={task}
           onChange={(e) => setTask(e.target.value)}
           onKeyDown={onKeyDown}
@@ -887,7 +896,7 @@ export default function AgentPanel({
             className="flex w-full items-center justify-center gap-2 rounded-md bg-red-900/80 px-3 py-2 text-sm font-medium text-red-200 hover:bg-red-800"
           >
             <Square className="h-3.5 w-3.5" />
-            Hủy
+            {t('agent.cancel')}
           </button>
         ) : (
           <button
@@ -897,7 +906,7 @@ export default function AgentPanel({
             className="flex w-full items-center justify-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-40"
           >
             <Play className="h-3.5 w-3.5" />
-            Chạy Agent
+            {t('agent.run')}
           </button>
         )}
       </div>

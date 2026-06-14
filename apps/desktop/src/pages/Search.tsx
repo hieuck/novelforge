@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Search as SearchIcon, FileText, Globe, Users, Loader2, Bot, X, Send } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { api, wsUrl } from '../lib/api'
 
 interface SearchResult {
@@ -12,12 +13,13 @@ interface SearchResult {
 }
 
 const KIND_CONFIG = {
-  chapter:   { icon: FileText, label: 'Chapter',   color: 'text-indigo-400',  border: 'border-indigo-900/50  bg-indigo-950/40'  },
-  lore:      { icon: Globe,    label: 'Lore',       color: 'text-emerald-400', border: 'border-emerald-900/50 bg-emerald-950/40' },
-  character: { icon: Users,    label: 'Character',  color: 'text-amber-400',   border: 'border-amber-900/50   bg-amber-950/40'   },
+  chapter:   { icon: FileText,  color: 'text-indigo-400',  border: 'border-indigo-900/50  bg-indigo-950/40'  },
+  lore:      { icon: Globe,     color: 'text-emerald-400', border: 'border-emerald-900/50 bg-emerald-950/40' },
+  character: { icon: Users,     color: 'text-amber-400',   border: 'border-amber-900/50   bg-amber-950/40'   },
 } as const
 
 export default function Search() {
+  const { t } = useTranslation()
   const { projectId } = useParams()
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
@@ -131,8 +133,8 @@ export default function Search() {
 
   return (
     <div className="mx-auto max-w-3xl p-6">
-      <h1 className="mb-1 text-xl font-bold text-slate-100">Tìm kiếm project</h1>
-      <p className="mb-5 text-sm text-slate-500">Chapters · Lore · Characters — SQLite FTS5</p>
+      <h1 className="mb-1 text-xl font-bold text-slate-100">{t('search.page_title')}</h1>
+      <p className="mb-5 text-sm text-slate-500">{t('search.subtitle')}</p>
 
       <form onSubmit={onSubmit} className="mb-6 flex gap-2">
         <div className="relative flex-1">
@@ -141,7 +143,7 @@ export default function Search() {
             ref={inputRef}
             autoFocus
             className="w-full rounded-lg border border-slate-800 bg-slate-900 py-2.5 pl-9 pr-4 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-700 focus:outline-none"
-            placeholder='Tìm kiếm... vd: "Aria", "rồng lửa", "Eldoria"'
+            placeholder={t('search.placeholder')}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
@@ -152,13 +154,13 @@ export default function Search() {
           className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-40"
         >
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <SearchIcon className="h-4 w-4" />}
-          Tìm
+          {t('search.button')}
         </button>
       </form>
 
       {!projectId && (
         <div className="rounded-lg border border-amber-900 bg-amber-950/50 p-3 text-sm text-amber-300">
-          Hãy chọn project từ sidebar trước khi tìm kiếm.
+          {t('search.no_project')}
         </div>
       )}
 
@@ -168,10 +170,10 @@ export default function Search() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Bot className="h-4 w-4 text-indigo-400" />
-              <span className="text-sm font-medium text-indigo-300">Hỏi AI về project</span>
+              <span className="text-sm font-medium text-indigo-300">{t('search.ask_ai')}</span>
               {results.length > 0 && (
                 <span className="text-[10px] text-indigo-600">
-                  (dựa trên {results.length} kết quả tìm kiếm)
+                  {t('search.context_count', { count: results.length })}
                 </span>
               )}
             </div>
@@ -188,7 +190,7 @@ export default function Search() {
           <div className="flex gap-2">
             <input
               className="flex-1 rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-700 focus:outline-none"
-              placeholder="VD: Nhân vật nào liên quan đến rồng? Tóm tắt chương 3 là gì?"
+              placeholder={t('search.ai_placeholder')}
               value={aiQuestion}
               onChange={(e) => setAiQuestion(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); askAi() } }}
@@ -230,25 +232,25 @@ export default function Search() {
           className="flex items-center gap-2 text-sm text-slate-600 hover:text-indigo-400 transition-colors"
         >
           <Bot className="h-4 w-4" />
-          Hỏi AI về project…
+          {t('search.ask_button')}
         </button>
       )}
 
       {loading && (
         <div className="flex items-center gap-2 text-sm text-slate-500">
-          <Loader2 className="h-4 w-4 animate-spin" /> Đang tìm kiếm...
+          <Loader2 className="h-4 w-4 animate-spin" /> {t('search.loading')}
         </div>
       )}
 
       {!loading && searched && results.length === 0 && (
         <div className="rounded-lg border border-slate-800 p-8 text-center text-sm text-slate-500">
-          Không tìm thấy kết quả cho "{query}"
+          {t('search.no_results', { query })}
         </div>
       )}
 
       {!loading && results.length > 0 && (
         <div className="space-y-6">
-          <div className="text-xs text-slate-600">{results.length} kết quả</div>
+          <div className="text-xs text-slate-600">{t('search.results_count', { count: results.length })}</div>
           {(['chapter', 'lore', 'character'] as const).map((kind) => {
             const items = grouped[kind]
             if (!items?.length) return null
@@ -259,7 +261,7 @@ export default function Search() {
                 <div className="mb-2 flex items-center gap-2">
                   <Icon className={`h-4 w-4 ${cfg.color}`} />
                   <span className={`text-xs font-semibold uppercase tracking-wider ${cfg.color}`}>
-                    {cfg.label} ({items.length})
+                    {t('search.kind_' + kind)} ({items.length})
                   </span>
                 </div>
                 <div className="space-y-1.5">

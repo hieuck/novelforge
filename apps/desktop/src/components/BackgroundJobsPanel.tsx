@@ -7,11 +7,13 @@
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   Play, Square, Trash2, Loader2, CheckCircle, AlertCircle,
   Clock, Sparkles, ChevronDown, ChevronUp, RefreshCw,
 } from 'lucide-react'
 import { api, wsUrl } from '../lib/api'
+import i18n from '../i18n'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -34,19 +36,19 @@ interface AgentJob {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const STATUS_CONFIG = {
-  queued:    { color: 'text-slate-400',  bg: 'bg-slate-900',      icon: <Clock className="h-3.5 w-3.5" />,      label: 'Xếp hàng' },
-  running:   { color: 'text-yellow-400', bg: 'bg-yellow-950/30',  icon: <Loader2 className="h-3.5 w-3.5 animate-spin" />, label: 'Đang chạy' },
-  done:      { color: 'text-green-400',  bg: 'bg-green-950/30',   icon: <CheckCircle className="h-3.5 w-3.5" />, label: 'Xong' },
-  failed:    { color: 'text-red-400',    bg: 'bg-red-950/30',     icon: <AlertCircle className="h-3.5 w-3.5" />, label: 'Lỗi' },
-  cancelled: { color: 'text-slate-500',  bg: 'bg-slate-900',      icon: <Square className="h-3.5 w-3.5" />,      label: 'Đã hủy' },
+  queued:    { color: 'text-slate-400',  bg: 'bg-slate-900',      icon: <Clock className="h-3.5 w-3.5" /> },
+  running:   { color: 'text-yellow-400', bg: 'bg-yellow-950/30',  icon: <Loader2 className="h-3.5 w-3.5 animate-spin" /> },
+  done:      { color: 'text-green-400',  bg: 'bg-green-950/30',   icon: <CheckCircle className="h-3.5 w-3.5" /> },
+  failed:    { color: 'text-red-400',    bg: 'bg-red-950/30',     icon: <AlertCircle className="h-3.5 w-3.5" /> },
+  cancelled: { color: 'text-slate-500',  bg: 'bg-slate-900',      icon: <Square className="h-3.5 w-3.5" /> },
 } as const
 
 function timeAgo(iso: string | null): string {
   if (!iso) return ''
   const diff = Date.now() - new Date(iso).getTime()
-  if (diff < 60_000) return 'vừa xong'
-  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}p trước`
-  return `${Math.floor(diff / 3_600_000)}h trước`
+  if (diff < 60_000) return i18n.t('jobs.just_now')
+  if (diff < 3_600_000) return i18n.t('jobs.min_ago', { count: Math.floor(diff / 60_000) })
+  return i18n.t('jobs.hour_ago', { count: Math.floor(diff / 3_600_000) })
 }
 
 // ── Job card ──────────────────────────────────────────────────────────────────
@@ -62,9 +64,10 @@ function JobCard({
   onStream: (id: string) => void
   streaming: string | null
 }) {
+  const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
   const cfg = STATUS_CONFIG[job.status]
-  const task = job.params?.task ?? '(no task)'
+  const task = job.params?.task ?? t('jobs.no_task')
   const logs = job.result?.logs ?? []
   const summary = job.result?.output?.summary
   const isActive = job.status === 'queued' || job.status === 'running'
@@ -77,7 +80,7 @@ function JobCard({
         <div className="flex items-center gap-2 min-w-0">
           <span className={cfg.color}>{cfg.icon}</span>
           <span className={`text-[10px] font-semibold uppercase tracking-wide ${cfg.color}`}>
-            {cfg.label}
+            {t(`jobs.${job.status}`)}
           </span>
           {job.created_at && (
             <span className="text-[10px] text-slate-600">{timeAgo(job.created_at)}</span>
@@ -88,7 +91,7 @@ function JobCard({
             <button
               type="button"
               onClick={() => onStream(job.id)}
-              title={isStreaming ? 'Đang xem logs' : 'Xem logs live'}
+              title={isStreaming ? t('jobs.viewing_logs') : t('jobs.view_logs')}
               className={`rounded p-1 text-[10px] transition-colors ${
                 isStreaming ? 'text-indigo-400' : 'text-slate-600 hover:text-slate-400'
               }`}
@@ -100,7 +103,7 @@ function JobCard({
             <button
               type="button"
               onClick={() => onCancel(job.id)}
-              title="Hủy"
+              title={t('jobs.cancel_tooltip')}
               className="rounded p-1 text-slate-600 hover:text-red-400"
             >
               <Square className="h-3 w-3" />
@@ -131,7 +134,7 @@ function JobCard({
             className="flex items-center gap-1 text-[10px] text-slate-600 hover:text-slate-400"
           >
             {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-            {logs.length} log entries
+            {t('jobs.log_entries', { count: logs.length })}
           </button>
           {expanded && (
             <div className="mt-1.5 max-h-32 overflow-y-auto rounded border border-slate-800 bg-slate-950 p-2 space-y-0.5">
@@ -153,6 +156,7 @@ interface BackgroundJobsPanelProps {
 }
 
 export default function BackgroundJobsPanel({ projectId: propId }: BackgroundJobsPanelProps) {
+  const { t } = useTranslation()
   const params = useParams()
   const projectId = propId ?? params.projectId ?? null
 
@@ -268,10 +272,10 @@ export default function BackgroundJobsPanel({ projectId: propId }: BackgroundJob
       <header className="flex items-center justify-between border-b border-slate-800 px-3 py-2">
         <div className="flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-indigo-400" />
-          <span className="text-sm font-semibold text-slate-200">Agent Jobs</span>
+          <span className="text-sm font-semibold text-slate-200">{t('jobs.panel_title')}</span>
           {activeCount > 0 && (
             <span className="rounded-full bg-yellow-900/60 px-1.5 py-0.5 text-[10px] text-yellow-300">
-              {activeCount} chạy
+              {t('jobs.active_count', { count: activeCount })}
             </span>
           )}
         </div>
@@ -279,7 +283,7 @@ export default function BackgroundJobsPanel({ projectId: propId }: BackgroundJob
           type="button"
           onClick={loadJobs}
           disabled={loadingJobs}
-          title="Làm mới"
+          title={t('jobs.refresh_tooltip')}
           className="rounded p-1 text-slate-500 hover:bg-slate-800 hover:text-slate-300 disabled:opacity-40"
         >
           <RefreshCw className={`h-3.5 w-3.5 ${loadingJobs ? 'animate-spin' : ''}`} />
@@ -289,12 +293,12 @@ export default function BackgroundJobsPanel({ projectId: propId }: BackgroundJob
       {/* Job list */}
       <div className="flex-1 space-y-2 overflow-y-auto p-3">
         {!projectId && (
-          <p className="text-center text-xs text-slate-600">Mở project để dùng agent jobs.</p>
+          <p className="text-center text-xs text-slate-600">{t('jobs.no_project')}</p>
         )}
 
         {jobs.length === 0 && projectId && !loadingJobs && (
           <div className="mt-4 text-center text-xs text-slate-600">
-            Chưa có job nào. Submit task để agent chạy nền.
+            {t('jobs.empty')}
           </div>
         )}
 
@@ -312,19 +316,19 @@ export default function BackgroundJobsPanel({ projectId: propId }: BackgroundJob
       {/* Submit form */}
       <div className="border-t border-slate-800 p-3 space-y-2">
         <div className="flex items-center justify-between">
-          <span className="text-[10px] text-slate-600">Task mới (chạy nền)</span>
+          <span className="text-[10px] text-slate-600">{t('jobs.submit_title')}</span>
           <select
             value={language}
             onChange={(e) => setLanguage(e.target.value as 'vi' | 'en')}
             className="rounded border border-slate-800 bg-slate-900 px-1.5 py-0.5 text-[10px] text-slate-400 focus:outline-none"
           >
-            <option value="vi">VI</option>
-            <option value="en">EN</option>
+            <option value="vi">{t('jobs.lang_vi')}</option>
+            <option value="en">{t('jobs.lang_en')}</option>
           </select>
         </div>
         <textarea
           className="h-20 w-full resize-none rounded-md border border-slate-800 bg-slate-900 p-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-700 focus:outline-none disabled:opacity-50"
-          placeholder="Mô tả task… Agent sẽ tự chạy nền (Ctrl+Enter)"
+          placeholder={t('jobs.task_placeholder')}
           value={task}
           onChange={(e) => setTask(e.target.value)}
           onKeyDown={onKeyDown}
@@ -337,7 +341,7 @@ export default function BackgroundJobsPanel({ projectId: propId }: BackgroundJob
           className="flex w-full items-center justify-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-40"
         >
           {submitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Play className="h-3.5 w-3.5" />}
-          {submitting ? 'Đang gửi…' : 'Submit Job'}
+          {submitting ? t('jobs.submitting') : t('jobs.submit')}
         </button>
       </div>
     </div>

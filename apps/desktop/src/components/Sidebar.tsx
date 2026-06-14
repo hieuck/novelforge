@@ -1,11 +1,13 @@
 ﻿import { useEffect, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { BookOpen, Settings, LayoutDashboard, Users, Globe, Clock, FileText, Download, Search, SlidersHorizontal, Sparkles } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useProjectStore } from '../stores/projectStore'
 import { useConnectionStore } from '../stores/connectionStore'
 import { api } from '../lib/api'
 
 export default function Sidebar() {
+  const { t } = useTranslation()
   const { projects, fetchProjects } = useProjectStore()
   const { connected, check } = useConnectionStore()
   const location = useLocation()
@@ -49,44 +51,44 @@ export default function Sidebar() {
       <header className="border-b border-slate-800 px-4 py-3">
         <div className="flex items-center gap-2">
           <BookOpen className="h-4 w-4 text-indigo-400" />
-          <span className="text-sm font-bold text-slate-100">NovelForge</span>
+          <span className="text-sm font-bold text-slate-100">{t('app.name')}</span>
         </div>
-        <div className="mt-0.5 text-[11px] text-slate-500">Offline writing studio</div>
+        <div className="mt-0.5 text-[11px] text-slate-500">{t('app.tagline')}</div>
       </header>
 
       <nav className="flex-1 overflow-y-auto px-2 py-3 space-y-0.5">
         <NavLink to="/" end className={navCls}>
           <LayoutDashboard className="h-4 w-4" />
-          Dashboard
+          {t('nav.dashboard')}
         </NavLink>
 
         {projectId && (
           <>
-            <div className="mt-3 px-3 pb-1 text-[10px] uppercase tracking-wider text-slate-600">Project</div>
+            <div className="mt-3 px-3 pb-1 text-[10px] uppercase tracking-wider text-slate-600">{t('nav.project')}</div>
             <NavLink to={`/projects/${projectId}`} end className={navCls}>
-              <SlidersHorizontal className="h-4 w-4" />Project Info
+              <SlidersHorizontal className="h-4 w-4" />{t('nav.project_info')}
             </NavLink>
             <NavLink to={`/projects/${projectId}/chapters`} className={navCls}>
-              <FileText className="h-4 w-4" />Chapters
+              <FileText className="h-4 w-4" />{t('nav.chapters')}
             </NavLink>
             <NavLink to={`/projects/${projectId}/characters`} className={navCls}>
-              <Users className="h-4 w-4" />Characters
+              <Users className="h-4 w-4" />{t('nav.characters')}
             </NavLink>
             <NavLink to={`/projects/${projectId}/lore`} className={navCls}>
-              <Globe className="h-4 w-4" />Lore
+              <Globe className="h-4 w-4" />{t('nav.lore')}
             </NavLink>
             <NavLink to={`/projects/${projectId}/timeline`} className={navCls}>
-              <Clock className="h-4 w-4" />Timeline
+              <Clock className="h-4 w-4" />{t('nav.timeline')}
             </NavLink>
             <NavLink to={`/projects/${projectId}/export`} className={navCls}>
-              <Download className="h-4 w-4" />Export
+              <Download className="h-4 w-4" />{t('nav.export')}
             </NavLink>
             <NavLink to={`/projects/${projectId}/search`} className={navCls}>
-              <Search className="h-4 w-4" />Search
+              <Search className="h-4 w-4" />{t('nav.search')}
             </NavLink>
             <NavLink to={`/projects/${projectId}/agent-jobs`} className={navCls}>
               <Sparkles className="h-4 w-4" />
-              <span>Agent Jobs</span>
+              <span>{t('nav.agent_jobs')}</span>
               {activeJobs > 0 && (
                 <span className="ml-auto rounded-full bg-yellow-900/60 px-1.5 py-0.5 text-[10px] text-yellow-300">
                   {activeJobs}
@@ -98,7 +100,7 @@ export default function Sidebar() {
 
         {projects.length > 0 && (
           <>
-            <div className="mt-3 px-3 pb-1 text-[10px] uppercase tracking-wider text-slate-600">Projects</div>
+            <div className="mt-3 px-3 pb-1 text-[10px] uppercase tracking-wider text-slate-600">{t('nav.projects')}</div>
             {projects.map((p) => (
               <NavLink key={p.id} to={`/projects/${p.id}/chapters`}
                 className={({ isActive }) =>
@@ -116,11 +118,11 @@ export default function Sidebar() {
 
       <footer className="border-t border-slate-800 px-2 py-2 space-y-1">
         <NavLink to="/settings" className={navCls}>
-          <Settings className="h-4 w-4" />Settings
+          <Settings className="h-4 w-4" />{t('nav.settings')}
         </NavLink>
         <div className="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-500">
           <span className={`inline-block h-2 w-2 rounded-full ${connected ? 'bg-green-500' : 'bg-red-500'}`} />
-          AI Engine
+          {t('nav.ai_engine')}
         </div>
       </footer>
     </aside>
