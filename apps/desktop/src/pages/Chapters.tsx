@@ -33,7 +33,7 @@ export default function Chapters() {
   const [status, setStatus] = useState<string>('draft')
   const [saved, setSaved] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [showAi, setShowAi] = useState(false)
+  const [showAi, setShowAi] = useState(true)
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const mountedRef = useRef(true)
