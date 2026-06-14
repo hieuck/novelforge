@@ -310,7 +310,7 @@ function PresetList({ onSelect, presets }: { onSelect: (task: string) => void; p
         {open ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
       </button>
       {open && (
-        <div className="mt-1 space-y-1">
+        <div className="mt-1 space-y-1 max-h-60 overflow-y-auto">
           {presets.map((p) => (
             <button
               key={p.label}

@@ -31,6 +31,7 @@ export interface Character {
   project_id: string
   name: string
   alias?: string | null
+  gender?: string | null
   role?: string | null
   age?: string | null
   personality?: string | null
@@ -84,3 +85,4 @@ export interface AppInfo {
   repo: string
   error?: string
 }
+

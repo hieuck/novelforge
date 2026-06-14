@@ -119,7 +119,7 @@ def _create_char(pid: str, p: dict) -> dict:
     try:
         c = Character(
             id=str(uuid.uuid4()), project_id=pid,
-            name=p.get("name", "?"), role=p.get("role"),
+            name=p.get("name", "?"), gender=p.get("gender"), role=p.get("role"),
             age=str(p["age"]) if p.get("age") else None,
             personality=p.get("personality"), appearance=p.get("appearance"),
             goals=p.get("goals"), secrets=p.get("secrets"),

@@ -39,7 +39,7 @@ def test_list_models_returns_details(client):
         first = data["models"][0]
         assert first["name"] == "deepseek-r1:8b"
         assert first["size"] == 25_000_000_000
-        assert first["parameter_size"] == "4B"
+        assert first["parameter_size"] == "8.2B"
         assert first["quantization"] == "Q4_K_M"
 
 

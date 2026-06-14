@@ -14,6 +14,7 @@ class CharacterIn(BaseModel):
     project_id: str | None = None
     name: str
     alias: str | None = None
+    gender: str | None = None
     role: str | None = None
     age: str | None = None
     personality: str | None = None
@@ -29,6 +30,7 @@ class CharacterIn(BaseModel):
 class CharacterUpdate(BaseModel):
     name: str | None = None
     alias: str | None = None
+    gender: str | None = None
     role: str | None = None
     age: str | None = None
     personality: str | None = None
@@ -47,6 +49,7 @@ def to_dict(c: Character):
         "project_id": c.project_id,
         "name": c.name,
         "alias": c.alias,
+        "gender": c.gender,
         "role": c.role,
         "age": c.age,
         "personality": c.personality,

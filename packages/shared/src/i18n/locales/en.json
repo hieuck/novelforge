@@ -4,7 +4,6 @@
   "app.tagline_long": "Offline-first AI writing studio",
   "app.repo": "https://github.com/hieuck/novelforge",
   "app.engine_not_reachable": "Engine not reachable",
-
   "nav.dashboard": "Dashboard",
   "nav.project": "Project",
   "nav.project_info": "Project Info",
@@ -18,7 +17,6 @@
   "nav.projects": "Projects",
   "nav.settings": "Settings",
   "nav.ai_engine": "AI Engine",
-
   "dashboard.title": "NovelForge",
   "dashboard.create_project": "New Project",
   "dashboard.project_name_prompt": "Enter project name:",
@@ -27,7 +25,6 @@
   "dashboard.projects_count": "Projects ({{count}})",
   "dashboard.updated_at": "Updated {{date}}",
   "dashboard.empty_state": "No projects yet. Create your first project to start writing.",
-
   "chapters.new_title": "Chapter {{n}}",
   "chapters.delete_confirm": "Delete this chapter?",
   "chapters.sidebar_title": "Chapters",
@@ -44,7 +41,6 @@
   "chapters.create_first": "Create first chapter",
   "chapters.untitled": "Untitled",
   "chapters.delete_tooltip": "Delete chapter",
-
   "editor.chapters": "Chapters",
   "editor.untitled": "Untitled",
   "editor.title_placeholder": "Chapter title",
@@ -55,7 +51,6 @@
   "editor.start_writing": "Start writing...",
   "editor.word_count": "{{count}} words",
   "editor.saved_manually": "Saved manually",
-
   "page_editor.loading": "Loading...",
   "page_editor.editing": "Editing: {{title}}",
   "page_editor.no_project": "Select a project to start editing.",
@@ -66,7 +61,6 @@
   "page_editor.save_error": "Error saving chapter: {{error}}",
   "page_editor.save": "Save",
   "page_editor.start_placeholder": "Start writing here...",
-
   "agent.panel_title": "AI Agent",
   "agent.lang_vi": "VI",
   "agent.lang_en": "EN",
@@ -100,7 +94,6 @@
   "agent.history_rerun_tooltip": "Re-run this task",
   "agent.history_rerun": "↺ Re-run",
   "agent.history_steps": "{{count}} steps",
-
   "agent.preset_3chars": "3 characters",
   "agent.preset_3chars_desc": "Create 3 characters for a fantasy story: hero, villain, and mentor. Each needs unique personality, goals, and secrets.",
   "agent.preset_opening": "Opening chapter",
@@ -121,7 +114,6 @@
   "agent.preset_continuity_desc": "Read chapter \"{{title}}\", characters, lore, and timeline. Find contradictions in characters, events, and world. Fix the chapter if needed.",
   "agent.preset_expand": "Expand scene",
   "agent.preset_expand_desc": "Read chapter \"{{title}}\", pick a promising scene and expand it with sensory detail, emotion, and dialogue.",
-
   "agent.field_name": "Name:",
   "agent.field_role": "Role:",
   "agent.field_type": "Type:",
@@ -140,11 +132,9 @@
   "agent.field_chapters_label": "Chapters:",
   "agent.field_updated_mark": "✓ Updated",
   "agent.field_saved_mark": "✓ Saved",
-
   "error_boundary.title": "Something went wrong",
   "error_boundary.unknown": "Unknown error",
   "error_boundary.retry": "Try again",
-
   "ai.label_you": "You",
   "ai.label_assistant": "AI Assistant",
   "ai.label_agent": "AI Agent",
@@ -175,7 +165,6 @@
   "ai.no_response": "[no response]",
   "ai.connection_error": "Could not connect to AI",
   "ai.error_prefix": "Error: {{msg}}",
-
   "characters.page_title": "Character Bible",
   "characters.ai_tooltip": "AI Agent",
   "characters.agent_toggle": "Agent",
@@ -199,7 +188,6 @@
   "characters.label_first_appearance": "Appearance",
   "characters.empty_state": "No characters yet.",
   "characters.delete_confirm": "Delete this character?",
-
   "lore.page_title": "Worldbuilding / Lore",
   "lore.ai_tooltip": "AI Agent",
   "lore.agent_toggle": "Agent",
@@ -215,7 +203,6 @@
   "lore.cancel_edit": "Cancel",
   "lore.empty_state": "No lore entries yet.",
   "lore.delete_confirm": "Delete this lore item?",
-
   "timeline.page_title": "Timeline",
   "timeline.ai_tooltip": "AI Agent",
   "timeline.agent_toggle": "Agent",
@@ -231,7 +218,6 @@
   "timeline.cancel_edit": "Cancel",
   "timeline.empty_state": "No events yet.",
   "timeline.delete_confirm": "Delete this event?",
-
   "search.page_title": "Project Search",
   "search.subtitle": "Chapters · Lore · Characters — SQLite FTS5",
   "search.placeholder": "Search... e.g. \"Aria\", \"dragon\", \"Eldoria\"",
@@ -247,7 +233,6 @@
   "search.kind_chapter": "Chapter",
   "search.kind_lore": "Lore",
   "search.kind_character": "Character",
-
   "export.page_title": "Export / Import",
   "export.subtitle": "Export your story or import from Markdown / TXT",
   "export.section_export": "Export",
@@ -269,7 +254,6 @@
   "export.format_html_desc": "Readable web page with serif styling",
   "export.format_zip": "Project ZIP",
   "export.format_zip_desc": "Full backup: story + characters + lore",
-
   "settings.title": "Settings",
   "settings.subtitle": "Configure AI provider, view app info, manage data",
   "settings.tab_ai": "AI Provider",
@@ -322,7 +306,6 @@
   "settings.danger_confirm_placeholder": "DELETE ALL",
   "settings.deleting": "Deleting…",
   "settings.delete_button": "Delete all data",
-
   "project.loading": "Loading...",
   "project.saving": "Saving...",
   "project.saved": "Saved",
@@ -354,7 +337,6 @@
   "project.notes_label": "Author notes",
   "project.notes_hint": "(not sent to AI)",
   "project.notes_placeholder": "Personal notes, rough ideas, TODO...",
-
   "jobs.queued": "Queued",
   "jobs.running": "Running",
   "jobs.done": "Done",
@@ -379,7 +361,6 @@
   "jobs.task_placeholder": "Describe the task… Agent runs in background (Ctrl+Enter)",
   "jobs.submitting": "Submitting…",
   "jobs.submit": "Submit Job",
-
   "ai_actions.group_write": "Write",
   "ai_actions.group_analyze": "Analyze",
   "ai_actions.group_create": "Create",
@@ -406,5 +387,6 @@
   "ai_actions.create_premise": "Create Premise",
   "ai_actions.create_outline": "Create Outline",
   "ai_actions.translate_vi_en": "Translate VI → EN",
-  "ai_actions.translate_en_vi": "Translate EN → VI"
+  "ai_actions.translate_en_vi": "Translate EN → VI",
+  "characters.field_gender": "Gender"
 }

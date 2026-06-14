@@ -33,6 +33,7 @@ class Character(Base):
     project_id = Column(String, nullable=True, index=True)
     name = Column(String, nullable=False)
     alias = Column(String, nullable=True)
+    gender = Column(String, nullable=True)
     role = Column(String, nullable=True)
     age = Column(String, nullable=True)
     personality = Column(Text, nullable=True)

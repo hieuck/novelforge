@@ -4,7 +4,6 @@
   "app.tagline_long": "Offline-first AI writing studio",
   "app.repo": "https://github.com/hieuck/novelforge",
   "app.engine_not_reachable": "Engine not reachable",
-
   "nav.dashboard": "Dashboard",
   "nav.project": "Project",
   "nav.project_info": "Project Info",
@@ -18,7 +17,6 @@
   "nav.projects": "Projects",
   "nav.settings": "Settings",
   "nav.ai_engine": "AI Engine",
-
   "dashboard.title": "NovelForge",
   "dashboard.create_project": "Tạo project mới",
   "dashboard.project_name_prompt": "Nhập tên project:",
@@ -27,7 +25,6 @@
   "dashboard.projects_count": "Projects ({{count}})",
   "dashboard.updated_at": "Cập nhật {{date}}",
   "dashboard.empty_state": "Chưa có project nào. Tạo project đầu tiên để bắt đầu viết.",
-
   "chapters.new_title": "Chương {{n}}",
   "chapters.delete_confirm": "Xóa chương này?",
   "chapters.sidebar_title": "Chapters",
@@ -44,7 +41,6 @@
   "chapters.create_first": "Tạo chương đầu tiên",
   "chapters.untitled": "Untitled",
   "chapters.delete_tooltip": "Xóa chương",
-
   "editor.chapters": "Chương",
   "editor.untitled": "Chưa có tiêu đề",
   "editor.title_placeholder": "Tiêu đề chương",
@@ -55,7 +51,6 @@
   "editor.start_writing": "Bắt đầu viết...",
   "editor.word_count": "{{count}} từ",
   "editor.saved_manually": "Đã lưu thủ công",
-
   "page_editor.loading": "Đang tải...",
   "page_editor.editing": "Đang soạn: {{title}}",
   "page_editor.no_project": "Chọn một dự án để bắt đầu soạn.",
@@ -66,7 +61,6 @@
   "page_editor.save_error": "Lỗi lưu chương: {{error}}",
   "page_editor.save": "Lưu",
   "page_editor.start_placeholder": "Bắt đầu viết ở đây...",
-
   "agent.panel_title": "AI Agent",
   "agent.lang_vi": "VI",
   "agent.lang_en": "EN",
@@ -100,7 +94,6 @@
   "agent.history_rerun_tooltip": "Chạy lại task này",
   "agent.history_rerun": "↺ Chạy lại",
   "agent.history_steps": "{{count}} bước",
-
   "agent.preset_3chars": "3 nhân vật",
   "agent.preset_3chars_desc": "Tạo 3 nhân vật cho truyện fantasy: anh hùng, phản diện, và người thầy. Mỗi nhân vật cần tính cách, mục tiêu và bí mật riêng.",
   "agent.preset_opening": "Chương mở đầu",
@@ -121,7 +114,6 @@
   "agent.preset_continuity_desc": "Đọc chương \"{{title}}\", characters, lore và timeline. Phát hiện mọi mâu thuẫn về nhân vật, sự kiện, thế giới. Sửa chương nếu cần.",
   "agent.preset_expand": "Mở rộng cảnh",
   "agent.preset_expand_desc": "Đọc chương \"{{title}}\", chọn một cảnh có tiềm năng và mở rộng với chi tiết giác quan, cảm xúc, hội thoại.",
-
   "agent.field_name": "Name:",
   "agent.field_role": "Role:",
   "agent.field_type": "Type:",
@@ -140,11 +132,9 @@
   "agent.field_chapters_label": "Chapters:",
   "agent.field_updated_mark": "✓ Updated",
   "agent.field_saved_mark": "✓ Saved",
-
   "error_boundary.title": "Đã xảy ra lỗi",
   "error_boundary.unknown": "Unknown error",
   "error_boundary.retry": "Thử lại",
-
   "ai.label_you": "Bạn",
   "ai.label_assistant": "AI Assistant",
   "ai.label_agent": "AI Agent",
@@ -175,7 +165,6 @@
   "ai.no_response": "[no response]",
   "ai.connection_error": "Không kết nối được AI",
   "ai.error_prefix": "Lỗi: {{msg}}",
-
   "characters.page_title": "Character Bible",
   "characters.ai_tooltip": "AI Agent",
   "characters.agent_toggle": "Agent",
@@ -199,7 +188,6 @@
   "characters.label_first_appearance": "Xuất hiện",
   "characters.empty_state": "Chưa có nhân vật nào.",
   "characters.delete_confirm": "Xóa nhân vật này?",
-
   "lore.page_title": "Worldbuilding / Lore",
   "lore.ai_tooltip": "AI Agent",
   "lore.agent_toggle": "Agent",
@@ -215,7 +203,6 @@
   "lore.cancel_edit": "Hủy",
   "lore.empty_state": "Chưa có lore nào.",
   "lore.delete_confirm": "Xóa lore item này?",
-
   "timeline.page_title": "Timeline",
   "timeline.ai_tooltip": "AI Agent",
   "timeline.agent_toggle": "Agent",
@@ -231,7 +218,6 @@
   "timeline.cancel_edit": "Hủy",
   "timeline.empty_state": "Chưa có sự kiện nào.",
   "timeline.delete_confirm": "Xóa sự kiện này?",
-
   "search.page_title": "Tìm kiếm project",
   "search.subtitle": "Chapters · Lore · Characters — SQLite FTS5",
   "search.placeholder": "Tìm kiếm... vd: \"Aria\", \"rồng lửa\", \"Eldoria\"",
@@ -247,7 +233,6 @@
   "search.kind_chapter": "Chapter",
   "search.kind_lore": "Lore",
   "search.kind_character": "Character",
-
   "export.page_title": "Export / Import",
   "export.subtitle": "Xuất truyện ra file hoặc import từ Markdown / TXT",
   "export.section_export": "Xuất truyện",
@@ -269,7 +254,6 @@
   "export.format_html_desc": "Web page đọc được, có style serif",
   "export.format_zip": "Project ZIP",
   "export.format_zip_desc": "Backup đầy đủ: story + characters + lore",
-
   "settings.title": "Settings",
   "settings.subtitle": "Configure AI provider, view app info, manage data",
   "settings.tab_ai": "AI Provider",
@@ -322,7 +306,6 @@
   "settings.danger_confirm_placeholder": "DELETE ALL",
   "settings.deleting": "Deleting…",
   "settings.delete_button": "Delete all data",
-
   "project.loading": "Đang tải...",
   "project.saving": "Đang lưu...",
   "project.saved": "Đã lưu",
@@ -354,7 +337,6 @@
   "project.notes_label": "Ghi chú tác giả",
   "project.notes_hint": "(không gửi cho AI)",
   "project.notes_placeholder": "Ghi chú cá nhân, ý tưởng chưa hoàn thiện, TODO...",
-
   "jobs.queued": "Xếp hàng",
   "jobs.running": "Đang chạy",
   "jobs.done": "Xong",
@@ -379,7 +361,6 @@
   "jobs.task_placeholder": "Mô tả task… Agent sẽ tự chạy nền (Ctrl+Enter)",
   "jobs.submitting": "Đang gửi…",
   "jobs.submit": "Submit Job",
-
   "ai_actions.group_write": "Viết",
   "ai_actions.group_analyze": "Phân tích",
   "ai_actions.group_create": "Tạo mới",
@@ -406,5 +387,6 @@
   "ai_actions.create_premise": "Tạo premise",
   "ai_actions.create_outline": "Tạo dàn ý",
   "ai_actions.translate_vi_en": "Dịch VI → EN",
-  "ai_actions.translate_en_vi": "Dịch EN → VI"
+  "ai_actions.translate_en_vi": "Dịch EN → VI",
+  "characters.field_gender": "Giới tính"
 }

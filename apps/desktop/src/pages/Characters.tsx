@@ -7,7 +7,7 @@ import type { Character } from '../types'
 import AgentPanel from '../components/AgentPanel'
 
 const EMPTY: Omit<Character, 'id' | 'project_id' | 'created_at' | 'updated_at'> = {
-  name: '', alias: '', role: '', age: '', personality: '', appearance: '',
+  name: '', alias: '', gender: '', role: '', age: '', personality: '', appearance: '',
   goals: '', secrets: '', first_appearance: '', notes: '',
 }
 
@@ -106,13 +106,13 @@ export default function Characters() {
               </button>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              {(['name', 'alias', 'role', 'age', 'first_appearance'] as const).map((f) => (
+              {(['name', 'gender', 'alias', 'role', 'age', 'first_appearance'] as const).map((f) => (
                 <input
                   key={f}
                   className="rounded-md border border-slate-800 bg-slate-800 px-3 py-1.5 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-600 focus:outline-none"
-                  placeholder={f === 'name' ? t('characters.field_name') : f === 'alias' ? t('characters.field_alias') : f === 'role' ? t('characters.field_role') : f === 'age' ? t('characters.field_age') : t('characters.field_first_appearance')}
+                  placeholder={f === 'name' ? t('characters.field_name') : f === 'gender' ? t('characters.field_gender') : f === 'alias' ? t('characters.field_alias') : f === 'role' ? t('characters.field_role') : f === 'age' ? t('characters.field_age') : t('characters.field_first_appearance')}
                   required={f === 'name'}
-                  value={form[f]}
+                  value={form[f] ?? ''}
                   onChange={(e) => setForm({ ...form, [f]: e.target.value })}
                 />
               ))}
