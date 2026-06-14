@@ -1,6 +1,8 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import Sidebar from './components/Sidebar'
 import { ErrorBoundary } from './components/ErrorBoundary'
+import AgentPanel from './components/AgentPanel'
 import Dashboard from './pages/Dashboard'
 import Chapters from './pages/Chapters'
 import Characters from './pages/Characters'
@@ -12,6 +14,7 @@ import Search from './pages/Search'
 import ProjectPage from './pages/Project'
 import BackgroundJobsPanel from './components/BackgroundJobsPanel'
 import ToastContainer from './components/Toast'
+import { useAgentSessionStore } from './stores/agentSessionStore'
 
 export default function App() {
   return (
@@ -34,7 +37,58 @@ export default function App() {
         </Routes>
       </main>
       <ToastContainer />
+      <GlobalAgentFloating />
     </div>
+  )
+}
+
+function GlobalAgentFloating() {
+  const loc = useLocation()
+  const pidMatch = loc.pathname.match(/^\/projects\/([^/]+)/)
+  const urlProjectId = pidMatch?.[1] ?? null
+  const { session, start, setPanelOpen } = useAgentSessionStore()
+
+  useEffect(() => {
+    if (urlProjectId && !session.projectId) {
+      start(urlProjectId)
+    }
+  }, [urlProjectId])
+
+  if (!urlProjectId && !session.projectId) return null
+
+  const activePid = urlProjectId || session.projectId
+  if (!activePid) return null
+
+  return (
+    <>
+      {/* Floating toggle button */}
+      <button
+        onClick={() => setPanelOpen(!session.panelOpen)}
+        className={`fixed right-0 top-1/2 z-30 -translate-y-1/2 rounded-l-lg border border-r-0 border-slate-700 p-2 text-xs transition-colors ${
+          session.panelOpen
+            ? 'bg-indigo-900/70 text-indigo-300 border-indigo-700'
+            : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+        }`}
+        title="AI Agent"
+      >
+        🤖
+        {session.status !== 'idle' && (
+          <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+        )}
+      </button>
+
+      {/* Panel overlay */}
+      {session.panelOpen && (
+        <div className="fixed right-0 top-0 z-20 h-full border-l border-slate-800 bg-slate-950 shadow-2xl">
+          <AgentPanel
+            projectId={activePid}
+            chapterId={null}
+            chapterTitle={null}
+            onInsertText={() => {}}
+          />
+        </div>
+      )}
+    </>
   )
 }
 

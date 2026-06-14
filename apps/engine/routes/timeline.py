@@ -1,3 +1,5 @@
+import json
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -31,6 +33,28 @@ class TimelineUpdate(BaseModel):
     metadata: dict | None = None
 
 
+def _deserialize(value: str | None) -> any:
+    if value is None:
+        return None
+    if isinstance(value, str):
+        try:
+            return json.loads(value)
+        except (json.JSONDecodeError, ValueError):
+            return value
+    return value
+
+
+def _serialize_timeline(p: dict) -> dict:
+    d = dict(p)
+    for field in ("involved_characters", "related_chapters"):
+        if isinstance(d.get(field), list):
+            d[field] = json.dumps(d[field], ensure_ascii=False)
+    if isinstance(d.get("metadata"), dict):
+        d["meta_data"] = json.dumps(d["metadata"], ensure_ascii=False)
+        d.pop("metadata", None)
+    return d
+
+
 def to_dict(row: TimelineItem):
     return {
         "id": row.id,
@@ -39,9 +63,9 @@ def to_dict(row: TimelineItem):
         "event_date": row.event_date,
         "relative_order": row.relative_order,
         "description": row.description,
-        "involved_characters": row.involved_characters,
-        "related_chapters": row.related_chapters,
-        "metadata": row.meta_data,
+        "involved_characters": _deserialize(row.involved_characters),
+        "related_chapters": _deserialize(row.related_chapters),
+        "metadata": _deserialize(row.meta_data),
         "created_at": row.created_at.isoformat()+'Z' if row.created_at else None,
         "updated_at": row.updated_at.isoformat()+'Z' if row.updated_at else None,
     }
@@ -61,7 +85,7 @@ def list_timeline(project_id: str):
 def create_timeline(payload: TimelineIn):
     db: Session = SessionLocal()
     try:
-        row = TimelineItem(id=str(uuid.uuid4()), **payload.model_dump())
+        row = TimelineItem(id=str(uuid.uuid4()), **_serialize_timeline(payload.model_dump()))
         db.add(row)
         db.commit()
         db.refresh(row)
@@ -89,9 +113,12 @@ def update_timeline(event_id: str, payload: TimelineUpdate):
         row = db.query(TimelineItem).filter(TimelineItem.id == event_id).first()
         if not row:
             raise HTTPException(status_code=404, detail="Not found")
-        data = payload.model_dump(exclude_unset=True)
+        data = _serialize_timeline(payload.model_dump(exclude_unset=True))
         for k, v in data.items():
-            setattr(row, k, v)
+            if k == "meta_data":
+                row.meta_data = v
+            else:
+                setattr(row, k, v)
         row.updated_at = datetime.now(timezone.utc)
         db.add(row)
         db.commit()
