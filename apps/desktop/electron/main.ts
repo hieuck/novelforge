@@ -8,10 +8,14 @@ declare function require(name: string): any
 
 const isDev = !app.isPackaged
 const ENGINE_PORT = 9000
+const MAX_ENGINE_RESTARTS = 5
+const ENGINE_RESTART_DELAY = 3000
 
 let mainWindow: BrowserWindow | null = null
 let engineProcess: child_process.ChildProcess | null = null
 let splashWindow: BrowserWindow | null = null
+let engineRestartCount = 0
+let isQuitting = false
 
 function loadCJS(name: string): any {
   return require(path.join(__dirname, '../electron', `${name}.cjs`))
@@ -52,10 +56,22 @@ function startEngine(): void {
   })
   engineProcess.stdout?.on('data', (d: Buffer) => process.stdout.write(`[engine] ${d}`))
   engineProcess.stderr?.on('data', (d: Buffer) => process.stderr.write(`[engine] ${d}`))
-  engineProcess.on('exit', (code) => console.log(`[main] Engine exited: ${code}`))
+  engineProcess.on('exit', (code) => {
+    console.log(`[main] Engine exited: ${code}`)
+    engineProcess = null
+    if (isQuitting) return
+    if (engineRestartCount >= MAX_ENGINE_RESTARTS) {
+      console.error('[main] Max engine restarts reached, giving up')
+      return
+    }
+    engineRestartCount++
+    console.log(`[main] Restarting engine in ${ENGINE_RESTART_DELAY}ms (attempt ${engineRestartCount}/${MAX_ENGINE_RESTARTS})`)
+    setTimeout(() => startEngine(), ENGINE_RESTART_DELAY)
+  })
 }
 
 function stopEngine(): void {
+  isQuitting = true
   if (engineProcess && !engineProcess.killed) {
     engineProcess.kill()
     engineProcess = null
@@ -245,6 +261,7 @@ app.whenReady().then(async () => {
     startEngine()
     try {
       await waitForEngine(ENGINE_PORT, 60000)
+      engineRestartCount = 0
       console.log('[main] Engine ready on port', ENGINE_PORT)
     } catch (err) {
       splashWindow?.close(); splashWindow = null
