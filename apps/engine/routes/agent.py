@@ -708,6 +708,8 @@ async def agent_ws(ws: WebSocket) -> None:
             params = step.get("params", {})
             desc = step.get("description", tool)
 
+            tool_label = tool.replace("_", " ").title()
+            await send({"type": "status", "message": f"Đang thực hiện: {desc}..."})
             await send({
                 "type": "step_start",
                 "step": step["step"],

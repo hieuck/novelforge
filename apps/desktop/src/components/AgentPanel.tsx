@@ -527,6 +527,7 @@ export default function AgentPanel({
   const [toolOutputs, setToolOutputs] = useState<ToolOutput[]>([])
   const [streamText, setStreamText] = useState('')
   const [summary, setSummary] = useState('')
+  const [statusMsg, setStatusMsg] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [pendingQuestion, setPendingQuestion] = useState<string | null>(null)
 
@@ -557,6 +558,7 @@ export default function AgentPanel({
     setStreamText('')
     streamBuf.current = ''
     setSummary('')
+    setStatusMsg('')
     setErrorMsg('')
     setPendingQuestion(null)
   }, [])
@@ -601,6 +603,7 @@ export default function AgentPanel({
         const type = msg.type as string
 
         if (type === 'status') {
+          setStatusMsg((msg.message as string) ?? '')
           setAgentStatus((prev) => prev === 'asking' ? 'asking' : 'planning')
         } else if (type === 'plan') {
           setPlan((msg.steps as PlanStep[]) ?? [])
@@ -752,11 +755,11 @@ export default function AgentPanel({
           </div>
         )}
 
-        {/* Planning spinner */}
-        {agentStatus === 'planning' && (
+        {/* Planning / status message */}
+        {(agentStatus === 'planning' || (agentStatus === 'running' && statusMsg)) && (
           <div className="flex items-center gap-2 text-slate-400 text-xs">
             <Loader2 className="h-4 w-4 animate-spin text-indigo-400" />
-            <span>{t('agent.planning')}</span>
+            <span>{statusMsg || t('agent.planning')}</span>
           </div>
         )}
 
