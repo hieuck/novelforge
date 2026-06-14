@@ -1,8 +1,10 @@
-import { app, BrowserWindow, shell } from 'electron'
+import { app, BrowserWindow, shell, ipcMain } from 'electron'
 import * as path from 'path'
 import * as child_process from 'child_process'
 import * as fs from 'fs'
 import * as http from 'http'
+
+declare function require(name: string): any
 
 const isDev = !app.isPackaged
 const ENGINE_PORT = 9000
@@ -11,31 +13,37 @@ let mainWindow: BrowserWindow | null = null
 let engineProcess: child_process.ChildProcess | null = null
 let splashWindow: BrowserWindow | null = null
 
-// ── Engine spawn ──────────────────────────────────────────────────────────────
+function loadCJS(name: string): any {
+  return require(path.join(__dirname, '../electron', `${name}.cjs`))
+}
 
-function findEngine(): { cmd: string; args: string[]; cwd: string } {
+function resolveEngine(): { cmd: string; args: string[]; cwd: string } | null {
   if (isDev) {
     const venvPy = process.platform === 'win32'
       ? path.join(__dirname, '../../engine/.venv/Scripts/python.exe')
       : path.join(__dirname, '../../engine/.venv/bin/python3')
     return { cmd: venvPy, args: ['run.py'], cwd: path.join(__dirname, '../../engine') }
   }
-  // Production: PyInstaller-built exe in extraResources
-  const exeName = process.platform === 'win32' ? 'engine.exe' : 'engine'
-  const engineExe = path.join(process.resourcesPath, 'engine', exeName)
-  if (fs.existsSync(engineExe)) {
-    return { cmd: engineExe, args: [], cwd: path.join(process.resourcesPath, 'engine') }
+
+  const probes = loadCJS('backend-probes')
+  const backend = probes.resolveBackend()
+  if (backend.kind === 'bootstrap-needed') {
+    return null
   }
-  // Fallback: system Python
-  return {
-    cmd: process.platform === 'win32' ? 'python' : 'python3',
-    args: ['run.py'],
-    cwd: path.join(process.resourcesPath, 'engine'),
-  }
+
+  const pythonExe = process.platform === 'win32'
+    ? path.join(backend.venv, 'Scripts', 'python.exe')
+    : path.join(backend.venv, 'bin', 'python3')
+  return { cmd: pythonExe, args: ['run.py'], cwd: backend.engineDir }
 }
 
 function startEngine(): void {
-  const { cmd, args, cwd } = findEngine()
+  const resolved = resolveEngine()
+  if (!resolved) {
+    console.error('[main] No engine found — bootstrap needed')
+    return
+  }
+  const { cmd, args, cwd } = resolved
   if (!fs.existsSync(cwd)) { console.error('[main] Engine dir missing:', cwd); return }
   engineProcess = child_process.spawn(cmd, args, {
     cwd,
@@ -54,9 +62,54 @@ function stopEngine(): void {
   }
 }
 
-// ── Health check ──────────────────────────────────────────────────────────────
+async function runBootstrap(): Promise<boolean> {
+  const bootstrap = loadCJS('bootstrap-runner')
+  return new Promise((resolve) => {
+    bootstrap.runBootstrap((event: any) => {
+      console.log(`[bootstrap] ${event.type}:`, event.data)
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('novelforge:bootstrap:status', event)
+      }
+      if (event.type === 'complete') resolve(true)
+      if (event.type === 'error') resolve(false)
+    })
+  })
+}
 
-function waitForEngine(port: number, maxMs = 30000): Promise<void> {
+function createBootstrapSplash(): void {
+  splashWindow = new BrowserWindow({
+    width: 480, height: 320,
+    frame: false, resizable: false, center: true,
+    backgroundColor: '#020817',
+    webPreferences: { nodeIntegration: true, contextIsolation: false },
+  })
+  splashWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(`
+    <!DOCTYPE html>
+    <html><head><meta charset="utf-8"><style>
+      body{margin:0;background:#020817;color:#e2e8f0;font-family:system-ui,sans-serif;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      height:100vh;gap:12px;padding:40px;}
+      h1{font-size:24px;font-weight:700;margin:0;color:#f1f5f9;}
+      #status{font-size:13px;color:#94a3b8;text-align:center;}
+      #progress{width:100%;max-width:360px;height:4px;background:#1e293b;border-radius:2px;overflow:hidden;}
+      #bar{height:100%;width:10%;background:#6366f1;transition:width .3s;}
+    </style></head><body>
+    <h1>⚡ NovelForge</h1>
+    <p id="status">Setting up your workspace...</p>
+    <div id="progress"><div id="bar"></div></div>
+    <script>
+      const { ipcRenderer } = require('electron');
+      ipcRenderer.on('novelforge:bootstrap:status', (_, ev) => {
+        if (ev.type === 'stage') document.getElementById('status').textContent = ev.data.message;
+        if (ev.type === 'error') document.getElementById('status').textContent = 'Error: ' + ev.data.message;
+        if (ev.type === 'complete') document.getElementById('status').textContent = 'Starting...';
+      });
+    </script>
+    </body></html>
+  `)}`)
+}
+
+function waitForEngine(port: number, maxMs = 60000): Promise<void> {
   return new Promise((resolve, reject) => {
     const start = Date.now()
     const poll = () => {
@@ -75,7 +128,23 @@ function waitForEngine(port: number, maxMs = 30000): Promise<void> {
   })
 }
 
-// ── Splash ────────────────────────────────────────────────────────────────────
+function registerIpcHandlers(): void {
+  ipcMain.handle('novelforge:updates:check', async () => {
+    const updater = loadCJS('updater')
+    return updater.checkUpdates()
+  })
+
+  ipcMain.handle('novelforge:updates:apply', async (_event, branch?: string) => {
+    const updater = loadCJS('updater')
+    updater.applyUpdates(branch)
+    app.quit()
+  })
+
+  ipcMain.handle('novelforge:updates:stamp', async () => {
+    const updater = loadCJS('updater')
+    return updater.readDesktopStamp()
+  })
+}
 
 function createSplash(): void {
   splashWindow = new BrowserWindow({
@@ -102,8 +171,6 @@ function createSplash(): void {
   splashWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`)
 }
 
-// ── Main window ───────────────────────────────────────────────────────────────
-
 function createMainWindow(): void {
   mainWindow = new BrowserWindow({
     width: 1440, height: 900,
@@ -127,10 +194,8 @@ function createMainWindow(): void {
   }
 
   mainWindow.once('ready-to-show', () => {
-    splashWindow?.close()
-    splashWindow = null
-    mainWindow?.show()
-    mainWindow?.focus()
+    splashWindow?.close(); splashWindow = null
+    mainWindow?.show(); mainWindow?.focus()
   })
 
   mainWindow.on('closed', () => { mainWindow = null })
@@ -140,20 +205,32 @@ function createMainWindow(): void {
   })
 }
 
-// ── Lifecycle ─────────────────────────────────────────────────────────────────
-
 app.whenReady().then(async () => {
+  registerIpcHandlers()
+
   if (!isDev) {
+    const probes = loadCJS('backend-probes')
+    const backend = probes.resolveBackend()
+
+    if (backend.kind === 'bootstrap-needed') {
+      createBootstrapSplash()
+      const success = await runBootstrap()
+      if (!success) {
+        console.error('[main] Bootstrap failed')
+        return
+      }
+    }
+
     createSplash()
     startEngine()
     try {
-      await waitForEngine(ENGINE_PORT, 30000)
+      await waitForEngine(ENGINE_PORT, 60000)
       console.log('[main] Engine ready on port', ENGINE_PORT)
     } catch (err) {
       console.error('[main] Engine failed to start:', err)
-      // Proceed anyway — renderer will show API errors
     }
   }
+
   createMainWindow()
 })
 
