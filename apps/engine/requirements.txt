@@ -1,4 +1,4 @@
-fastapi[standard]>=0.115.0
+fastapi[standard]>=0.136.3
 uvicorn[standard]>=0.30.0
 sqlalchemy>=2.0.36
 aiofiles>=24.1.0
