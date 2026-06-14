@@ -20,6 +20,7 @@ coverage
 .nyc_output
 .vite
 *.local
+*.tsbuildinfo
 logs
 *.log
 .DS_Store

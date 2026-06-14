@@ -42,7 +42,7 @@ def run_git(args: list[str]) -> tuple[int, str, str]:
 @router.get("/update/check", response_model=UpdateCheckResponse)
 async def check_update() -> UpdateCheckResponse:
     remote = os.environ.get("NOVELFORGE_REMOTE", "https://github.com/hieuck/novelforge.git")
-    branch = os.environ.get("NOVELFORGE_BRANCH", "master")
+    branch = os.environ.get("NOVELFORGE_BRANCH", "main")
 
     code, out, err = run_git(["fetch", "--quiet", remote, branch])
     if code != 0:
@@ -73,7 +73,7 @@ async def check_update() -> UpdateCheckResponse:
 
 @router.post("/update/apply", response_model=UpdateApplyResponse)
 async def apply_update() -> UpdateApplyResponse:
-    branch = os.environ.get("NOVELFORGE_BRANCH", "master")
+    branch = os.environ.get("NOVELFORGE_BRANCH", "main")
     remote = os.environ.get("NOVELFORGE_REMOTE", "https://github.com/hieuck/novelforge.git")
 
     code, out, err = run_git(["status", "--porcelain"])
