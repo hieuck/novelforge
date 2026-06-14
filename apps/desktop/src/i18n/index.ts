@@ -1,19 +1,14 @@
-import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
-import vi from './locales/vi.json'
-import en from './locales/en.json'
+import { i18n, getSavedLanguage, setLanguage as sharedSetLanguage } from '@novelforge/shared'
 
-i18n.use(initReactI18next).init({
-  resources: { vi: { translation: vi }, en: { translation: en } },
-  lng: localStorage.getItem('novelforge:lang') || 'vi',
-  fallbackLng: 'vi',
-  interpolation: { escapeValue: false },
-  returnObjects: true,
-})
+i18n.use(initReactI18next).init()
+
+if (typeof localStorage !== 'undefined') {
+  i18n.changeLanguage(getSavedLanguage())
+}
 
 export function setLanguage(lang: string) {
-  localStorage.setItem('novelforge:lang', lang)
-  i18n.changeLanguage(lang)
+  sharedSetLanguage(lang)
 }
 
 export default i18n
