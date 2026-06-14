@@ -131,7 +131,12 @@ async def list_models(
                 resp = await client.get(f"{_base}/api/tags", timeout=timeout)
                 resp.raise_for_status()
                 data = resp.json()
-                models = [m["name"] for m in (data.get("models") or []) if m.get("name")]
+                models = [{
+                    "name": m["name"],
+                    "size": m.get("size", 0),
+                    "parameter_size": m.get("details", {}).get("parameter_size", ""),
+                    "quantization": m.get("details", {}).get("quantization_level", ""),
+                } for m in (data.get("models") or []) if m.get("name")]
             else:
                 resp = await client.get(
                     f"{_base}/models",

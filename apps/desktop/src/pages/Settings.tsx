@@ -4,6 +4,7 @@ import i18n, { setLanguage } from '../i18n'
 import { CheckCircle, XCircle, Loader2, RefreshCw, ChevronDown, Info, Trash2, AlertTriangle } from 'lucide-react'
 import { useSettingsStore } from '../stores/settingsStore'
 import { api } from '../lib/api'
+import OllamaManager from '../components/OllamaManager'
 import type { AISettings } from '../types'
 
 const PROVIDERS = [
@@ -27,8 +28,6 @@ export default function Settings() {
   const [models, setModels]   = useState<string[]>([])
   const [loadingModels, setLoadingModels] = useState(false)
   const [showModelDrop, setShowModelDrop] = useState(false)
-  const [pullName, setPullName] = useState('')
-  const [pulling, setPulling] = useState(false)
   const dropRef = useRef<HTMLDivElement>(null)
   const [about, setAbout]       = useState<AboutInfo|null>(null)
   const [checkingUpdate, setCheckingUpdate] = useState(false)
@@ -47,7 +46,7 @@ export default function Settings() {
       api.get<AboutInfo>('/settings/about').then(setAbout).catch(() =>
         setAbout({app:'NovelForge',version:'?',python:'?',description:'',repo:'',error:'Failed to load'}))
   }, [tab])
-  useEffect(() => { if (tab === 'ai' && !models.length && !loadingModels) handleLoadModels() }, [tab])
+
 
   const setField = (k:keyof AISettings, v:string|number) => setForm(f => ({...f,[k]:v}))
   const onProviderChange = (provider:string) => {
@@ -72,31 +71,12 @@ export default function Settings() {
     try {
       const p = new URLSearchParams({provider:form.provider,base_url:form.base_url})
       if (form.api_key) p.set('api_key', form.api_key)
-      const data = await api.get<{models:string[];error?:string}>('/settings/models?'+p.toString())
+      const data = await api.get<{models:{name:string}[];error?:string}>('/settings/models?'+p.toString())
       if (data.error) { setStatus({type:'error',msg:t('settings.models_error',{error:data.error})}); setModels([]) }
       else if (!data.models.length) { setStatus({type:'error',msg:t('settings.models_empty')}); setModels([]) }
-      else { setModels(data.models); setShowModelDrop(true) }
+      else { setModels(data.models.map((m:any)=>typeof m==='string'?m:m.name)); setShowModelDrop(true) }
     } catch (e:unknown) { setStatus({type:'error',msg:t('settings.data_error',{msg:e instanceof Error?e.message:'unknown'})}); setModels([]) }
     setLoadingModels(false)
-  }
-  const handlePullModel = async () => {
-    if (!pullName.trim()) return
-    setPulling(true); setStatus(null)
-    try {
-      const r = await api.post<{success:boolean;message?:string;error?:string}>('/settings/models/pull', {name:pullName.trim()})
-      if (r.success) { setStatus({type:'success',msg:r.message??'OK'}); setPullName(''); handleLoadModels() }
-      else { setStatus({type:'error',msg:r.error??'Failed'}) }
-    } catch (e:unknown) { setStatus({type:'error',msg:e instanceof Error?e.message:'Failed'}) }
-    setPulling(false)
-  }
-  const handleDeleteModel = async (model:string) => {
-    if (!confirm(`Xóa model "${model}"?`)) return
-    try {
-      const res = await fetch(`/api/settings/models/${encodeURIComponent(model)}`, { method: 'DELETE' })
-      const data = await res.json()
-      if (data.success) { setStatus({type:'success',msg:data.message??'Deleted'}); handleLoadModels() }
-      else { setStatus({type:'error',msg:data.error??'Failed'}) }
-    } catch (e:unknown) { setStatus({type:'error',msg:e instanceof Error?e.message:'Failed'}) }
   }
   const handleCheckUpdate = useCallback(async () => {
     setCheckingUpdate(true); setUpdateMsg(null)
@@ -184,26 +164,17 @@ export default function Settings() {
               {showModelDrop&&models.length>0&&(
                 <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-52 overflow-y-auto rounded-md border border-slate-700 bg-slate-800 shadow-xl">
                   {models.map(m=>(
-                    <div key={m} className="group flex items-center">
-                      <button type="button" onClick={()=>{setField('model',m);setShowModelDrop(false)}}
-                        className={`flex-1 px-3 py-2 text-left text-sm hover:bg-slate-700 transition-colors ${form.model===m?'bg-slate-700 text-indigo-300 font-medium':'text-slate-200'}`}>{m}</button>
-                      <button type="button" onClick={()=>handleDeleteModel(m)}
-                        className="hidden group-hover:block px-2 py-2 text-xs text-red-400 hover:text-red-300">✕</button>
-                    </div>
+                    <button key={m} type="button" onClick={()=>{setField('model',m);setShowModelDrop(false)}}
+                      className={`w-full px-3 py-2 text-left text-sm hover:bg-slate-700 transition-colors ${form.model===m?'bg-slate-700 text-indigo-300 font-medium':'text-slate-200'}`}>{m}</button>
                   ))}
                 </div>
               )}
             </div>
             <p className="mt-1.5 text-xs text-slate-600">{t('settings.model_helper')}</p>
-            {/* Pull model */}
-            <div className="flex gap-2 items-center pt-1">
-              <input className={inp+' flex-1'} placeholder="Pull model (vd: llama3.2:1b)" value={pullName} onChange={e=>setPullName(e.target.value)}
-                onKeyDown={e=>e.key==='Enter'&&handlePullModel()}/>
-              <button type="button" onClick={handlePullModel} disabled={pulling||!pullName.trim()}
-                className="flex items-center gap-1.5 rounded-md border border-slate-700 px-3 py-2 text-sm text-slate-300 hover:border-slate-500 hover:text-white disabled:opacity-40">
-                {pulling?<Loader2 className="h-4 w-4 animate-spin"/>:<span>Pull</span>}
-              </button>
-            </div>
+          </div>
+          {/* Ollama Model Manager */}
+          <div className="rounded-lg border border-slate-800 bg-slate-900 p-4">
+            <OllamaManager />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div><label className={lbl}>{t('settings.temperature')}</label>
