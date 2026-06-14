@@ -37,6 +37,16 @@ export const api = {
   delete:     (path: string)               => req<void>(path, { method: 'DELETE' }),
 }
 
+export async function safeReq<T>(label: string, fn: () => Promise<T>): Promise<T | null> {
+  try {
+    return await fn()
+  } catch (e: any) {
+    const { useNotificationStore } = await import('../stores/notificationStore')
+    useNotificationStore.getState().add('error', `${label}: ${e.message}`)
+    return null
+  }
+}
+
 export function wsUrl(path: string): string {
   const port = window.__NOVELFORGE__?.enginePort ?? 9000
   const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:'

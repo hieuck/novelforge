@@ -11,6 +11,7 @@ import Export from './pages/Export'
 import Search from './pages/Search'
 import ProjectPage from './pages/Project'
 import BackgroundJobsPanel from './components/BackgroundJobsPanel'
+import ToastContainer from './components/Toast'
 
 export default function App() {
   return (
@@ -32,6 +33,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
+      <ToastContainer />
     </div>
   )
 }
