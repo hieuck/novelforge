@@ -3,10 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   Plus, Trash2, CheckCircle, Save, Loader2,
-  FileText, Bot,
+  FileText,
 } from 'lucide-react'
 import { useChapterStore } from '../stores/chapterStore'
-import AgentPanel from '../components/AgentPanel'
+
 import type { Chapter } from '../types'
 
 const STATUS_OPTIONS = ['draft', 'revised', 'final'] as const
@@ -33,7 +33,6 @@ export default function Chapters() {
   const [status, setStatus] = useState<string>('draft')
   const [saved, setSaved] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [showAi, setShowAi] = useState(true)
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const mountedRef = useRef(true)
@@ -208,18 +207,7 @@ export default function Chapters() {
               <span>{saving ? t('chapters.saving') : saved ? t('chapters.saved') : t('chapters.unsaved')}</span>
             </div>
 
-            {/* AI toggle */}
-            <button
-              onClick={() => setShowAi((v) => !v)}
-              title={t('chapters.ai_panel_tooltip')}
-              className={`rounded p-1.5 transition-colors ${
-                showAi
-                  ? 'bg-indigo-900/50 text-indigo-300'
-                  : 'text-slate-500 hover:bg-slate-800 hover:text-slate-300'
-              }`}
-            >
-              <Bot className="h-4 w-4" />
-            </button>
+
           </div>
 
           {/* Writing area */}
@@ -251,17 +239,7 @@ export default function Chapters() {
         </div>
       )}
 
-      {/* ── AI Agent panel ── */}
-      <div className={`border-l border-slate-800 h-full overflow-hidden transition-all duration-300 ${showAi ? 'w-80 opacity-100' : 'w-0 opacity-0'}`}>
-        <div className="w-80 h-full">
-          <AgentPanel
-            projectId={projectId}
-            chapterId={chapterId}
-            chapterTitle={activeChapter?.title ?? null}
-            onInsertText={onInsertText}
-          />
-        </div>
-      </div>
+      {/* AI Agent panel is now in App.tsx (right panel) */}
     </div>
   )
 }
