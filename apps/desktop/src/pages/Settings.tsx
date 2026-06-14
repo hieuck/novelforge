@@ -1,5 +1,6 @@
 ﻿import { useEffect, useRef, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
+import i18n, { setLanguage } from '../i18n'
 import { CheckCircle, XCircle, Loader2, RefreshCw, ChevronDown, Info, Trash2, AlertTriangle } from 'lucide-react'
 import { useSettingsStore } from '../stores/settingsStore'
 import { api } from '../lib/api'
@@ -204,6 +205,17 @@ export default function Settings() {
               <div className="border-t border-slate-800 pt-3">
                 <div className="text-xs text-slate-500 mb-2">{t('settings.about_tech_stack')}</div>
                 <div className="flex flex-wrap gap-2">{TECH_STACK.map(t=><span key={t} className="rounded-full border border-slate-700 px-2.5 py-0.5 text-xs text-slate-400">{t}</span>)}</div>
+              </div>
+              <div className="border-t border-slate-800 pt-3 flex items-center gap-3">
+                <span className="text-xs text-slate-500">Language / Ngôn ngữ</span>
+                <select
+                  className="rounded border border-slate-700 bg-slate-800 px-2 py-1 text-xs text-slate-200 focus:outline-none"
+                  value={i18n.language}
+                  onChange={(e) => setLanguage(e.target.value)}
+                >
+                  <option value="vi">Tiếng Việt</option>
+                  <option value="en">English</option>
+                </select>
               </div>
               <div className="rounded-md border border-yellow-900/60 bg-yellow-950/30 px-3 py-2 text-xs text-yellow-500">
                 {t('settings.about_security_warning')}
