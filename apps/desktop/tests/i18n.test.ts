@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import vi from '../src/i18n/locales/vi.json'
-import en from '../src/i18n/locales/en.json'
+import { vi, en } from '@novelforge/shared'
 
 type TranslationSet = Record<string, string | Record<string, string>>
 
