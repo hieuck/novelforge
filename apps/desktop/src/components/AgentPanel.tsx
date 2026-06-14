@@ -37,7 +37,12 @@ function getPresets(chapterTitle?: string | null) {
     { label: 'Timeline sự kiện', task: 'Đọc các chương hiện có và tạo 3-5 timeline events quan trọng theo thứ tự thời gian.' },
     { label: 'Kiểm tra nhất quán', task: 'Kiểm tra toàn bộ project để tìm mâu thuẫn về nhân vật, timeline và cốt truyện. Liệt kê mọi vấn đề tìm thấy.' },
     ...(chapterTitle
-      ? [{ label: 'Cải thiện chương này', task: `Đọc chương "${chapterTitle}", viết lại để tăng chất lượng văn phong, nhịp độ và cảm xúc. Lưu lại chương sau khi hoàn thành.` }]
+      ? [
+          { label: 'Cải thiện chương này', task: `Đọc chương "${chapterTitle}", phân tích điểm yếu, viết lại để tăng chất lượng văn phong, nhịp độ và cảm xúc. Lưu lại chương sau khi hoàn thành.` },
+          { label: 'Viết tiếp chương', task: `Đọc chương "${chapterTitle}" hiện tại, đọc characters và lore để nắm bối cảnh, rồi viết tiếp nội dung mới mạch lạc.` },
+          { label: 'Kiểm tra continuity', task: `Đọc chương "${chapterTitle}", characters, lore và timeline. Phát hiện mọi mâu thuẫn về nhân vật, sự kiện, thế giới. Sửa chương nếu cần.` },
+          { label: 'Mở rộng cảnh', task: `Đọc chương "${chapterTitle}", chọn một cảnh có tiềm năng và mở rộng với chi tiết giác quan, cảm xúc, hội thoại.` },
+        ]
       : []),
   ]
 }

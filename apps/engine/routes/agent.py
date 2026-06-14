@@ -29,6 +29,7 @@ Return ONLY a valid JSON array. Each element: {"step":N,"tool":"name","descripti
 Available tools:
   analyze_consistency {query?, kind?(chapter|character|lore|all)}
   search_content      {query, kind?(chapter|character|lore|all)}
+  edit_chapter_section {chapter_id, old_text_excerpt, new_text, description}
   create_character    {name, role, age, personality, goals, secrets, appearance}
   update_character    {character_id, name?, role?, personality?, goals?, secrets?, appearance?, notes?}
   create_lore         {name, lore_type(location|magic|organization|technology|term), description, tags:[]}
@@ -178,6 +179,38 @@ def _update_chapter(pid: str, p: dict) -> dict:
         db.refresh(c)
         index_chapter(c.id, pid, c.title or "", c.content or "")
         return {"id": c.id, "title": c.title, "word_count": c.word_count, "updated": True}
+    finally:
+        db.close()
+
+
+def _edit_chapter_section(pid: str, p: dict) -> dict:
+    """Replace old_text_excerpt with new_text within a chapter."""
+    chapter_id = p.get("chapter_id", "")
+    if not chapter_id:
+        return {"error": "chapter_id required"}
+    old_excerpt = p.get("old_text_excerpt", "")
+    new_text = p.get("new_text", "")
+    if not old_excerpt or not new_text:
+        return {"error": "old_text_excerpt and new_text required"}
+    from services.search import index_chapter
+    db = SessionLocal()
+    try:
+        c = db.query(Chapter).filter(
+            Chapter.id == chapter_id, Chapter.project_id == pid
+        ).first()
+        if not c:
+            return {"error": f"Chapter {chapter_id} not found"}
+        content = c.content or ""
+        idx = content.find(old_excerpt)
+        if idx == -1:
+            return {"error": "old_text_excerpt not found in chapter"}
+        c.content = content[:idx] + new_text + content[idx + len(old_excerpt):]
+        c.word_count = len(c.content.split())
+        c.updated_at = datetime.now(timezone.utc)
+        db.commit()
+        db.refresh(c)
+        index_chapter(c.id, pid, c.title or "", c.content or "")
+        return {"id": c.id, "title": c.title, "word_count": c.word_count, "updated": True, "section_length": len(new_text)}
     finally:
         db.close()
 
@@ -546,6 +579,8 @@ def _tool_result_summary(tool: str, result: dict) -> str:
         return f"[create_lore] Created '{result.get('name')}' ({result.get('lore_type')}) id={result.get('id')}"
     if tool == "create_chapter":
         return f"[create_chapter] Created '{result.get('title')}' id={result.get('id')} words={result.get('word_count')}"
+    if tool == "edit_chapter_section":
+        return f"[edit_chapter_section] Replaced section in '{result.get('title')}' id={result.get('id')} (section_length={result.get('section_length', 0)})"
     if tool == "update_chapter":
         return f"[update_chapter] Updated '{result.get('title')}' id={result.get('id')} words={result.get('word_count')}"
     if tool == "update_summary":
@@ -850,6 +885,9 @@ async def agent_ws(ws: WebSocket) -> None:
                         params = {**params, "content": g.strip()}
                     result = _create_chapter(pid, params)
 
+                elif tool == "edit_chapter_section" and pid:
+                    result = _edit_chapter_section(pid, params)
+
                 elif tool == "update_chapter" and pid:
                     # Try to get existing content from memory first
                     chapter_id = params.get("chapter_id", "")
@@ -949,6 +987,8 @@ async def agent_ws(ws: WebSocket) -> None:
                         elif tool == "create_chapter" and pid and params.get("content"):
                             # Only retry if content was already generated — avoids empty chapter
                             result = _create_chapter(pid, params)
+                        elif tool == "edit_chapter_section" and pid and params.get("new_text"):
+                            result = _edit_chapter_section(pid, params)
                         elif tool == "update_chapter" and pid and params.get("content"):
                             # Only retry if content was already generated
                             result = _update_chapter(pid, params)

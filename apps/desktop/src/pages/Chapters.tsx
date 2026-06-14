@@ -5,7 +5,7 @@ import {
   FileText, Bot,
 } from 'lucide-react'
 import { useChapterStore } from '../stores/chapterStore'
-import AiPanel from '../components/AiPanel'
+import AgentPanel from '../components/AgentPanel'
 import type { Chapter } from '../types'
 
 const STATUS_OPTIONS = ['draft', 'revised', 'final'] as const
@@ -249,12 +249,13 @@ export default function Chapters() {
         </div>
       )}
 
-      {/* ── AI panel ── */}
+      {/* ── AI Agent panel ── */}
       {showAi && (
         <div className="border-l border-slate-800">
-          <AiPanel
+          <AgentPanel
             projectId={projectId}
             chapterId={chapterId}
+            chapterTitle={activeChapter?.title ?? null}
             onInsertText={onInsertText}
           />
         </div>
