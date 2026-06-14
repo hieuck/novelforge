@@ -150,18 +150,23 @@ async def list_models(
                     for m in (data.get("data") or [])
                     if m.get("id") or m.get("name")
                 ]
-        return {"models": sorted(models)}
+        return {"models": sorted(models, key=lambda m: m["name"] if isinstance(m, dict) else m)}
     except HTTPError as exc:
         return {"models": [], "error": str(exc)}
     except Exception as exc:
         return {"models": [], "error": str(exc)}
 
 
+class PullModelIn(BaseModel):
+    name: str = ""
+
+
 @router.post("/settings/models/pull")
-async def pull_model(name: str = "") -> dict:
+async def pull_model(payload: PullModelIn) -> dict:
     """Pull an Ollama model by name."""
     import subprocess
-    if not name.strip():
+    name = payload.name.strip()
+    if not name:
         raise HTTPException(status_code=400, detail="Model name required")
     try:
         result = subprocess.run(
