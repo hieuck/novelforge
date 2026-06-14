@@ -68,6 +68,48 @@ Each element: {"step":N,"tool":"name","description":"...","params":{}}
 Same tools available as before. Use the actual IDs and content from the read data.
 If nothing more is needed, return []."""
 
+THINK_SYSTEM = """You are an expert novel-writing agent. Before each action, reason step by step.
+Given the original task, context, and what you've done so far, decide the BEST next action.
+
+Return a JSON object with:
+{
+  "reasoning": "Your step-by-step reasoning about what to do next and why",
+  "tool": "tool_name",
+  "params": {...},
+  "description": "Short description of this step for the user"
+}
+
+Available tools:
+- read_chapter: Read a specific chapter's content. params: {"chapter_id":"..."|"chapter_title":"..."}
+- read_characters: Read all characters. params: {}
+- read_lore: Read all lore. params: {}
+- read_timeline: Read timeline. params: {}
+- read_project_summary: Read project summary. params: {}
+- create_character: Create a new character. params: {"name":"...","role":"...","personality":"...","goals":"...","secrets":"..."}
+- update_character: Update an existing character. params: {"character_id":"...","name":"...","personality":"..."}
+- create_lore: Create lore item. params: {"lore_type":"location|organization|rule|magic|technology|term","name":"...","description":"..."}
+- update_lore: Update lore. params: {"lore_id":"...","name":"...","description":"..."}
+- create_chapter: Create a new chapter. params: {"title":"...","content":"..."}
+- update_chapter: Update chapter. params: {"chapter_id":"...","title":"...","content":"..."}
+- create_timeline_event: Create timeline event. params: {"title":"...","description":"..."}
+- generate_text: Write or generate text content. params: {"prompt":"what to write","context":"additional context"}
+- search_content: Search project content. params: {"query":"search term"}
+- analyze_consistency: Check for plot holes. params: {}
+
+Write directly — do NOT delegate. Choose the single most impactful next action."""
+
+REFLECT_SYSTEM = """You are a quality inspector for novel writing. Evaluate the result just produced.
+
+Return a JSON object:
+{
+  "quality": "good|needs_improvement|poor",
+  "issues": ["list of specific issues found"],
+  "suggestions": ["how to improve"],
+  "retry_needed": true/false
+}
+
+Be critical. If the result is vague, too short, or doesn't match the task requirements, mark it as needs_improvement."""
+
 
 # ── Tool implementations ──────────────────────────────────────────────────────
 
@@ -470,6 +512,18 @@ def _read_project_summary(pid: str) -> dict:
 
 # ── Plan / adapt parsers ──────────────────────────────────────────────────────
 
+def _parse_json(raw: str) -> dict | None:
+    """Parse a JSON object from LLM output."""
+    cleaned = re.sub(r"```[a-z]*\n?", "", raw).strip()
+    m = re.search(r"\{.*\}", cleaned, re.DOTALL)
+    if m:
+        cleaned = m.group(0)
+    try:
+        return json.loads(cleaned)
+    except Exception:
+        return None
+
+
 def _parse_plan(raw: str) -> list[dict]:
     """Parse a JSON plan from LLM output, returning a list of step dicts."""
     cleaned = re.sub(r"```[a-z]*\n?", "", raw).strip()
@@ -694,7 +748,7 @@ async def agent_ws(ws: WebSocket) -> None:
         memory: list[str] = []
         completed: list[dict] = []
 
-        # ── Step execution loop ────────────────────────────────────────────
+        # ── Step execution loop (ReAct: Think → Act → Observe → Reflect) ────
         step_index = 0
         while step_index < len(steps):
             step = steps[step_index]
@@ -708,8 +762,32 @@ async def agent_ws(ws: WebSocket) -> None:
             params = step.get("params", {})
             desc = step.get("description", tool)
 
-            tool_label = tool.replace("_", " ").title()
-            await send({"type": "status", "message": f"Đang thực hiện: {desc}..."})
+            # ── THINK: Reason about this step before executing ──────────────
+            think_msgs: list[dict] = [
+                {"role": "system", "content": THINK_SYSTEM},
+                {"role": "user", "content": (
+                    f"Original task: {task}\n\n"
+                    f"Project context: {ctx_summary[:500]}\n\n"
+                    f"Completed steps:\n" + ("\n".join(memory[-5:]) or "None yet") +
+                    f"\n\nCurrent step to execute: {tool} — {desc}\n"
+                    f"Params: {json.dumps(params, ensure_ascii=False)[:300]}\n\n"
+                    "Explain your reasoning for this step and confirm/adjust the parameters."
+                )},
+            ]
+            try:
+                think_raw = await client.chat_messages(think_msgs)
+                think_data = _parse_json(think_raw)
+                if isinstance(think_data, dict) and think_data.get("reasoning"):
+                    await send({"type": "status", "message": f"🧠 {think_data['reasoning'][:200]}"})
+                    if think_data.get("params"):
+                        params = {**params, **think_data["params"]}
+                    if think_data.get("tool") and think_data["tool"] != tool:
+                        tool = think_data["tool"]
+                        desc = think_data.get("description", tool)
+            except Exception:
+                pass  # If thinking fails, continue with original plan
+
+            await send({"type": "status", "message": f"⚡ {desc}..."})
             await send({
                 "type": "step_start",
                 "step": step["step"],
@@ -718,6 +796,7 @@ async def agent_ws(ws: WebSocket) -> None:
                 "description": desc,
             })
 
+            # ── Execute step ──────────────────────────────────────────────────
             result: dict = {}
             is_read_tool = tool.startswith("read_")
 
@@ -1005,6 +1084,24 @@ async def agent_ws(ws: WebSocket) -> None:
                     except Exception as retry_e:
                         logger.warning("Retry failed for %s step %d: %s", tool, step["step"], retry_e)
                         result = {"error": str(retry_e)}
+
+            # ── REFLECT: Evaluate quality after write/create tools ─────────
+            if not is_read_tool and tool not in ("ask_user",) and "error" not in result:
+                try:
+                    reflect_msgs: list[dict] = [
+                        {"role": "system", "content": REFLECT_SYSTEM},
+                        {"role": "user", "content": (
+                            f"Task: {desc}\n\nResult:\n{json.dumps(result, ensure_ascii=False)[:1000]}\n\n"
+                            "Evaluate this result. Is it good enough?"
+                        )},
+                    ]
+                    reflect_raw = await client.chat_messages(reflect_msgs)
+                    reflect_data = _parse_json(reflect_raw)
+                    if isinstance(reflect_data, dict) and reflect_data.get("quality") in ("needs_improvement", "poor"):
+                        issues = "\n".join(reflect_data.get("suggestions", ["Improve quality"]))
+                        await send({"type": "status", "message": f"🔍 Nhận xét: {issues[:200]}"})
+                except Exception:
+                    pass
 
             # ── Update memory with this step's result ──────────────────────
             memory.append(_tool_result_summary(tool, result))
