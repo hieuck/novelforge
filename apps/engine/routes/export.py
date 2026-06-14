@@ -3,7 +3,7 @@ from __future__ import annotations
 import io
 import json
 import zipfile
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import Response
@@ -139,7 +139,7 @@ def _build_zip(db: Session, project: Project, chapters: list[Chapter]) -> bytes:
             "language": project.language,
             "summary": project.summary,
             "style_guide": project.style_guide,
-            "exported_at": datetime.utcnow().isoformat(),
+            "exported_at": datetime.now(timezone.utc).isoformat(),
         }
         zf.writestr("project.json", json.dumps(meta, ensure_ascii=False, indent=2))
 
@@ -208,3 +208,6 @@ async def export_project(payload: ProjectExportIn) -> Response:
         media_type=_MIME[fmt],
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
+
+
+

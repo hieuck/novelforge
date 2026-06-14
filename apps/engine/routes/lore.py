@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from db.session import SessionLocal
 from models.extra import Lore
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 router = APIRouter()
@@ -92,7 +92,7 @@ def update_lore(lore_id: str, payload: LoreUpdate):
         data = payload.model_dump(exclude_unset=True)
         for k, v in data.items():
             setattr(row, k, v)
-        row.updated_at = datetime.utcnow()
+        row.updated_at = datetime.now(timezone.utc)
         db.add(row)
         db.commit()
         db.refresh(row)
@@ -117,3 +117,6 @@ def delete_lore(lore_id: str):
             pass
     finally:
         db.close()
+
+
+

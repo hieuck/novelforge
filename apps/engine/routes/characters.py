@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from db.session import SessionLocal
 from models.extra import Character
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 router = APIRouter()
@@ -107,7 +107,7 @@ def update_character(character_id: str, payload: CharacterUpdate):
         data = payload.model_dump(exclude_unset=True)
         for k, v in data.items():
             setattr(c, k, v)
-        c.updated_at = datetime.utcnow()
+        c.updated_at = datetime.now(timezone.utc)
         db.add(c)
         db.commit()
         db.refresh(c)
@@ -132,3 +132,6 @@ def delete_character(character_id: str):
             pass
     finally:
         db.close()
+
+
+

@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from db.session import SessionLocal
 from models.chapter import Chapter
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 router = APIRouter()
@@ -107,7 +107,7 @@ def update_chapter(chapter_id: str, payload: ChapterUpdate):
             setattr(c, k, v)
         if "content" in data:
             c.word_count = count_words(data.get("content") or "")
-        c.updated_at = datetime.utcnow()
+        c.updated_at = datetime.now(timezone.utc)
         db.add(c)
         db.commit()
         db.refresh(c)
@@ -133,3 +133,6 @@ def delete_chapter(chapter_id: str):
             pass
     finally:
         db.close()
+
+
+

@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from db.session import SessionLocal
 from models.extra import TimelineItem
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 router = APIRouter()
@@ -92,7 +92,7 @@ def update_timeline(event_id: str, payload: TimelineUpdate):
         data = payload.model_dump(exclude_unset=True)
         for k, v in data.items():
             setattr(row, k, v)
-        row.updated_at = datetime.utcnow()
+        row.updated_at = datetime.now(timezone.utc)
         db.add(row)
         db.commit()
         db.refresh(row)
@@ -112,3 +112,6 @@ def delete_timeline(event_id: str):
         db.commit()
     finally:
         db.close()
+
+
+

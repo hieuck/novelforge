@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from db.session import SessionLocal
 from models.project import Project
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 router = APIRouter()
@@ -87,7 +87,7 @@ def update_project(project_id: str, payload: ProjectUpdate):
         data = payload.model_dump(exclude_unset=True)
         for k, v in data.items():
             setattr(p, k, v)
-        p.updated_at = datetime.utcnow()
+        p.updated_at = datetime.now(timezone.utc)
         db.add(p)
         db.commit()
         db.refresh(p)
@@ -147,3 +147,6 @@ def delete_project(project_id: str):
                 pass
     finally:
         db.close()
+
+
+
