@@ -2,10 +2,12 @@
 import { NavLink, useLocation } from 'react-router-dom'
 import { BookOpen, Settings, LayoutDashboard, Users, Globe, Clock, FileText, Download, Search, SlidersHorizontal, Sparkles } from 'lucide-react'
 import { useProjectStore } from '../stores/projectStore'
+import { useConnectionStore } from '../stores/connectionStore'
 import { api } from '../lib/api'
 
 export default function Sidebar() {
   const { projects, fetchProjects } = useProjectStore()
+  const { connected, check } = useConnectionStore()
   const location = useLocation()
   // With HashRouter, location.pathname gives us the path after #
   const projectId = location.pathname.match(/^\/projects\/([^/]+)/)?.[1] ?? null
@@ -29,6 +31,13 @@ export default function Sidebar() {
     const t = setInterval(check, 5000)
     return () => { cancelled = true; clearInterval(t) }
   }, [projectId])
+
+  // Poll engine health every 15s
+  useEffect(() => {
+    check()
+    const t = setInterval(check, 15000)
+    return () => clearInterval(t)
+  }, [check])
 
   const navCls = ({ isActive }: { isActive: boolean }) =>
     `flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
@@ -105,10 +114,14 @@ export default function Sidebar() {
         )}
       </nav>
 
-      <footer className="border-t border-slate-800 px-2 py-2">
+      <footer className="border-t border-slate-800 px-2 py-2 space-y-1">
         <NavLink to="/settings" className={navCls}>
           <Settings className="h-4 w-4" />Settings
         </NavLink>
+        <div className="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-500">
+          <span className={`inline-block h-2 w-2 rounded-full ${connected ? 'bg-green-500' : 'bg-red-500'}`} />
+          AI Engine
+        </div>
       </footer>
     </aside>
   )
