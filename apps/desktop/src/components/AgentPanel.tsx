@@ -497,21 +497,34 @@ export default function AgentPanel({
   const chapterId = propChapterId ?? null
 
   function getPresets() {
+    const chapterPresets = chapterTitle
+      ? [
+          { label: t('agent.preset_improve'), task: t('agent.preset_improve_desc', { title: chapterTitle }) },
+          { label: t('agent.preset_continue'), task: t('agent.preset_continue_desc', { title: chapterTitle }) },
+          { label: t('agent.preset_continuity'), task: t('agent.preset_continuity_desc', { title: chapterTitle }) },
+          { label: t('agent.preset_expand'), task: t('agent.preset_expand_desc', { title: chapterTitle }) },
+        ]
+      : []
     return [
+      { label: '📝 ' + t('ai_actions.continue'), task: 'Viết tiếp nội dung đang dang dở. Duy trì phong cách và mạch truyện hiện tại.' },
+      { label: '✍️ ' + t('ai_actions.rewrite'), task: 'Viết lại đoạn văn bản đã chọn, cải thiện chất lượng và giữ nguyên ý chính.' },
+      { label: '📖 Viết chương mới', task: t('agent.preset_opening_desc') },
+      { label: '🧑 Tạo nhân vật', task: 'Tạo 1 nhân vật mới với tính cách, ngoại hình, mục tiêu và bí mật chi tiết.' },
       { label: t('agent.preset_3chars'), task: t('agent.preset_3chars_desc') },
-      { label: t('agent.preset_opening'), task: t('agent.preset_opening_desc') },
+      { label: '🌍 ' + t('ai_actions.create_lore'), task: 'Tạo 1 lore item: địa điểm, tổ chức, phép thuật hoặc thuật ngữ.' },
       { label: t('agent.preset_lore'), task: t('agent.preset_lore_desc') },
-      { label: t('agent.preset_summary'), task: t('agent.preset_summary_desc') },
-      { label: t('agent.preset_timeline'), task: t('agent.preset_timeline_desc') },
-      { label: t('agent.preset_consistency'), task: t('agent.preset_consistency_desc') },
-      ...(chapterTitle
-        ? [
-            { label: t('agent.preset_improve'), task: t('agent.preset_improve_desc', { title: chapterTitle }) },
-            { label: t('agent.preset_continue'), task: t('agent.preset_continue_desc', { title: chapterTitle }) },
-            { label: t('agent.preset_continuity'), task: t('agent.preset_continuity_desc', { title: chapterTitle }) },
-            { label: t('agent.preset_expand'), task: t('agent.preset_expand_desc', { title: chapterTitle }) },
-          ]
-        : []),
+      { label: '📅 ' + t('agent.preset_timeline'), task: t('agent.preset_timeline_desc') },
+      { label: '📋 ' + t('ai_actions.summarize_chapter'), task: 'Đọc chương hiện tại và viết tóm tắt ngắn gọn, đầy đủ ý chính.' },
+      { label: '📄 ' + t('ai_actions.summarize_project'), task: t('agent.preset_summary_desc') },
+      { label: '🔍 ' + t('ai_actions.check_consistency'), task: t('agent.preset_consistency_desc') },
+      { label: '🕳️ ' + t('ai_actions.find_plot_holes'), task: 'Đọc toàn bộ chapters, characters, lore và timeline. Tìm lỗi logic, mâu thuẫn cốt truyện. Liệt kê chi tiết từng vấn đề.' },
+      { label: '🎬 ' + t('ai_actions.suggest_next_scene'), task: 'Đọc chapters hiện có và đề xuất 3 hướng phát triển cốt truyện khả thi cho cảnh tiếp theo.' },
+      { label: '🎭 ' + t('ai_actions.improve_dialogue'), task: 'Cải thiện hội thoại trong chapter: làm cho lời thoại tự nhiên hơn, thể hiện rõ tính cách nhân vật.' },
+      { label: '🎨 ' + t('ai_actions.cinematic'), task: 'Viết lại chapter theo phong cách điện ảnh: giàu hình ảnh, cảm xúc, nhịp điệu.' },
+      { label: '📐 ' + t('ai_actions.create_outline'), task: 'Tạo dàn ý chi tiết cho project: mở đầu, phát triển, cao trào, kết thúc.' },
+      { label: '🔄 Dịch VI→EN', task: 'Dịch chapter hiện tại từ tiếng Việt sang tiếng Anh, giữ nguyên văn phong và cảm xúc.' },
+      { label: '🔄 Dịch EN→VI', task: 'Dịch chapter hiện tại từ tiếng Anh sang tiếng Việt, giữ nguyên văn phong và cảm xúc.' },
+      ...chapterPresets,
     ]
   }
 
