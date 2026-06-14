@@ -1,17 +1,15 @@
 ﻿import { useEffect, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
-import { BookOpen, Settings, LayoutDashboard, Users, Globe, Clock, FileText, Download, Search, SlidersHorizontal, Sparkles, Bot } from 'lucide-react'
+import { BookOpen, Settings, LayoutDashboard, Users, Globe, Clock, FileText, Download, Search, SlidersHorizontal, Sparkles } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useProjectStore } from '../stores/projectStore'
 import { useConnectionStore } from '../stores/connectionStore'
-import { useAgentSessionStore } from '../stores/agentSessionStore'
 import { api } from '../lib/api'
 
 export default function Sidebar() {
   const { t } = useTranslation()
   const { projects, fetchProjects } = useProjectStore()
   const { connected, check } = useConnectionStore()
-  const session = useAgentSessionStore((s) => s.session)
   const location = useLocation()
   // With HashRouter, location.pathname gives us the path after #
   const projectId = location.pathname.match(/^\/projects\/([^/]+)/)?.[1] ?? null
@@ -118,23 +116,11 @@ export default function Sidebar() {
         )}
       </nav>
 
-      <footer className="border-t border-slate-800 px-2 py-2 space-y-1">
+      <footer className="border-t border-slate-800 px-2 py-2">
         <NavLink to="/settings" className={navCls}>
           <Settings className="h-4 w-4" />{t('nav.settings')}
         </NavLink>
-        <button
-          onClick={() => useAgentSessionStore.getState().setPanelOpen(!useAgentSessionStore.getState().session.panelOpen)}
-          className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
-            session.panelOpen ? 'bg-indigo-900/50 text-indigo-300' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
-          }`}
-        >
-          <Bot className="h-4 w-4" />
-          <span>AI Agent</span>
-          {session.status !== 'idle' && (
-            <span className={`ml-auto h-2 w-2 rounded-full ${session.status === 'running' || session.status === 'planning' ? 'bg-green-500 animate-pulse' : 'bg-slate-500'}`} />
-          )}
-        </button>
-        <div className="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-500">
+        <div className="mt-1 flex items-center gap-2 px-3 py-1.5 text-xs text-slate-500">
           <span className={`inline-block h-2 w-2 rounded-full ${connected ? 'bg-green-500' : 'bg-red-500'}`} />
           {t('nav.ai_engine')}
         </div>
