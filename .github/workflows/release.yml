@@ -20,7 +20,7 @@ jobs:
         working-directory: apps/desktop
       - run: npx electron-builder
         working-directory: apps/desktop
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           files: apps/desktop/release/NovelForge Setup *.exe
           generate_release_notes: true
