@@ -29,3 +29,7 @@ Thumbs.db
 apps/engine/dist/
 apps/engine/build_pyinstaller/
 apps/desktop/release/
+
+# Coverage artifacts
+.coverage
+*.py,cover
