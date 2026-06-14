@@ -203,10 +203,12 @@ async def export_project(payload: ProjectExportIn) -> Response:
         db.close()
 
     filename = f"{safe_title}.{fmt}"
+    import urllib.parse
+    encoded = urllib.parse.quote(filename, safe='')
     return Response(
         content=content_bytes,
         media_type=_MIME[fmt],
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{encoded}"},
     )
 
 
