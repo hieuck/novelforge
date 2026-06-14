@@ -14,7 +14,7 @@ const defaults: AISettings = {
   provider: 'ollama',
   base_url: 'http://localhost:11434',
   api_key: '',
-  model: 'deepseek-r1:8b',
+  model: 'gemma3:4b',
   temperature: 0.7,
   max_tokens: 2048,
 }

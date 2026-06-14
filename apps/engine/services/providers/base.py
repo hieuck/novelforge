@@ -9,7 +9,7 @@ class ProviderSettings:
     provider: str = "ollama"
     base_url: str = "http://localhost:11434"
     api_key: Optional[str] = None
-    model: str = "deepseek-r1:8b"
+    model: str = "gemma3:4b"
     temperature: float = 0.7
     max_tokens: int = 2048
 
