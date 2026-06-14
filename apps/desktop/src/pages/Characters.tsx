@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router-dom'
-import { Plus, X, ChevronDown, ChevronUp, Trash2, Edit2, Check, Bot } from 'lucide-react'
+import { Plus, X, ChevronDown, ChevronUp, Trash2, Edit2, Check } from 'lucide-react'
 import { api } from '../lib/api'
 import type { Character } from '../types'
-import AgentPanel from '../components/AgentPanel'
 
 const EMPTY: Omit<Character, 'id' | 'project_id' | 'created_at' | 'updated_at'> = {
   name: '', alias: '', gender: '', role: '', age: '', personality: '', appearance: '',
@@ -74,18 +73,7 @@ export default function Characters() {
         <div className="flex items-center justify-between border-b border-slate-800 px-6 py-3">
         <h1 className="text-lg font-semibold text-slate-100">{t('characters.page_title')}</h1>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowAgent((v) => !v)}
-            title={t('characters.ai_tooltip')}
-            className={`flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm transition-colors ${
-              showAgent
-                ? 'border-indigo-700 bg-indigo-900/40 text-indigo-300'
-                : 'border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200'
-            }`}
-          >
-            <Bot className="h-3.5 w-3.5" />
-            {t('characters.agent_toggle')}
-          </button>
+
           <button
             onClick={() => setShowForm((v) => !v)}
             className="flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-1.5 text-sm text-white hover:bg-indigo-700"
@@ -210,13 +198,6 @@ export default function Characters() {
         )}
       </div>
       </div>{/* end main content */}
-
-      {/* Agent panel */}
-      {showAgent && (
-        <div className="border-l border-slate-800">
-          <AgentPanel projectId={projectId} />
-        </div>
-      )}
     </div>
   )
 }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router-dom'
-import { Plus, Trash2, X, Edit2, Check, Bot } from 'lucide-react'
+import { Plus, Trash2, X, Edit2, Check } from 'lucide-react'
 import { api } from '../lib/api'
 import type { TimelineEvent } from '../types'
 import AgentPanel from '../components/AgentPanel'
@@ -60,18 +60,7 @@ export default function Timeline() {
       <div className="flex items-center justify-between border-b border-slate-800 px-6 py-3">
         <h1 className="text-lg font-semibold text-slate-100">{t('timeline.page_title')}</h1>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowAgent((v) => !v)}
-            title={t('timeline.ai_tooltip')}
-            className={`flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm transition-colors ${
-              showAgent
-                ? 'border-indigo-700 bg-indigo-900/40 text-indigo-300'
-                : 'border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200'
-            }`}
-          >
-            <Bot className="h-3.5 w-3.5" />
-            {t('timeline.agent_toggle')}
-          </button>
+
           <button
             onClick={() => setShowForm((v) => !v)}
             className="flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-1.5 text-sm text-white hover:bg-indigo-700"
