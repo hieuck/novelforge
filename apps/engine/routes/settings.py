@@ -152,6 +152,48 @@ async def list_models(
         return {"models": [], "error": str(exc)}
 
 
+@router.post("/settings/models/pull")
+async def pull_model(name: str = "") -> dict:
+    """Pull an Ollama model by name."""
+    import subprocess
+    if not name.strip():
+        raise HTTPException(status_code=400, detail="Model name required")
+    try:
+        result = subprocess.run(
+            ["ollama", "pull", name.strip()],
+            capture_output=True, text=True, timeout=300,
+        )
+        if result.returncode != 0:
+            return {"success": False, "error": result.stderr.strip() or result.stdout.strip()}
+        return {"success": True, "message": f"Pulled {name.strip()}"}
+    except subprocess.TimeoutExpired:
+        return {"success": False, "error": "Pull timed out (5 min)"}
+    except FileNotFoundError:
+        return {"success": False, "error": "ollama command not found in PATH"}
+    except Exception as exc:
+        return {"success": False, "error": str(exc)}
+
+
+@router.delete("/settings/models/{name}")
+async def delete_model(name: str) -> dict:
+    """Delete an Ollama model by name."""
+    import subprocess
+    if not name.strip():
+        raise HTTPException(status_code=400, detail="Model name required")
+    try:
+        result = subprocess.run(
+            ["ollama", "rm", name.strip()],
+            capture_output=True, text=True, timeout=30,
+        )
+        if result.returncode != 0:
+            return {"success": False, "error": result.stderr.strip() or result.stdout.strip()}
+        return {"success": True, "message": f"Deleted {name.strip()}"}
+    except FileNotFoundError:
+        return {"success": False, "error": "ollama command not found in PATH"}
+    except Exception as exc:
+        return {"success": False, "error": str(exc)}
+
+
 @router.get("/settings/about")
 async def about() -> dict:
     """App metadata for the About tab."""
