@@ -101,7 +101,7 @@ export default function Sidebar() {
         {projects.length > 0 && (
           <>
             <div className="mt-3 px-3 pb-1 text-[10px] uppercase tracking-wider text-slate-600">{t('nav.projects')}</div>
-            {projects.map((p) => (
+            {projects.slice(0, 10).map((p) => (
               <NavLink key={p.id} to={`/projects/${p.id}/chapters`}
                 className={({ isActive }) =>
                   `block rounded-md px-3 py-2 text-sm transition-colors ${

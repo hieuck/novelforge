@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Start both FastAPI engine and Vite frontend concurrently for development."""
+import os
 import pathlib
 import signal
 import subprocess
 import sys
+import time
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 ENGINE_DIR = ROOT / "apps" / "engine"
@@ -37,8 +39,23 @@ def cleanup(*_: object) -> None:
     sys.exit(0)
 
 
+def kill_port(port: int) -> None:
+    if sys.platform == "win32":
+        subprocess.run(
+            f'for /f "tokens=5" %a in (\'netstat -aon ^| findstr :{port}\') do taskkill /f /pid %a 2>nul',
+            shell=True, capture_output=True,
+        )
+    else:
+        subprocess.run(["fuser", "-k", f"{port}/tcp"], capture_output=True)
+
+
 signal.signal(signal.SIGINT, cleanup)
 signal.signal(signal.SIGTERM, cleanup)
+
+# Free up ports before starting
+kill_port(9000)
+kill_port(5173)
+time.sleep(1)
 
 python = find_python()
 npm = find_npm()
