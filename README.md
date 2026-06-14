@@ -1,34 +1,77 @@
 # NovelForge
 
-Cong cu viet truyen offline-first voi AI - Scrivener + Obsidian + AI writing studio.
+Offline-first AI writing studio — một trình soạn thảo tiểu thuyết với AI Agent hỗ trợ.
 
-## Tinh nang
-- Project management: metadata, chapters, style guide
-- Editor: autosave, word count, chapter status (draft/revised/final)
-- AI Writing Agent: 19 actions
-- Character Bible + Worldbuilding/Lore + Timeline
-- Full-text search (FTS5), Job system (WebSocket)
-- Export: MD, TXT, HTML, ZIP | Import: .md, .txt
+## Kiến trúc
 
-## Yeu cau
-- Node.js >= 18, Python >= 3.11
-- Ollama hoac OpenAI/OpenRouter API key
+```
+novelforge/
+├── apps/
+│   ├── desktop/    # Electron + React + Vite (giao diện người dùng)
+│   └── engine/     # Python FastAPI (API backend + AI Agent)
+└── packages/
+    └── shared/     # @novelforge/shared (i18n config, types, locales chung)
+```
 
-## Cai dat
+## Tính năng
+
+- **Project management**: metadata, chapters, style guide, nhân vật, lore, timeline
+- **Editor**: autosave (1.5s), word count, chapter status (draft/revised/final), Ctrl+S
+- **AI Writing Agent**: 18 tools, plan→execute→adapt loop, preset tasks
+- **Character Bible + Worldbuilding/Lore + Timeline**
+- **Full-text search** (SQLite FTS5), **Background job system**
+- **Export**: MD, TXT, HTML, ZIP | **Import**: .md, .txt
+- **i18n**: Tiếng Việt / English (chuyển đổi trong Settings → About)
+- **Engine crash recovery**: tự động restart (tối đa 5 lần)
+- **Cross-platform**: Windows (NSIS), macOS (DMG), Linux (AppImage)
+
+## Yêu cầu
+
+- Node.js >= 20, Python >= 3.11
+- Ollama (mặc định) hoặc OpenAI/OpenRouter API key (cấu hình trong Settings)
+
+## Cài đặt & Chạy dev
+
 ```bash
-git clone <repo-url> && cd novelforge
+# Clone && cài dependencies
+git clone https://github.com/hieuck/novelforge && cd novelforge
+npm install                          # root workspace
+
+# Backend (Python)
 cd apps/engine && python -m venv .venv
-.venv\Scripts\pip install -r requirements.txt
-cd ../.. && cd apps/desktop && npm install && cd ../..
-```bash
+.venv\Scripts\pip install -r requirements.txt && cd ../..
 
-## Chay dev
-```bash
-# Cach 1: 1 lenh
+# Frontend (có sẵn từ workspace ở trên)
+
+# Chạy dev (1 lệnh)
 python scripts/dev.py
 
-# Cach 2: 2 terminal
-# Terminal 1:
+# Hoặc 2 terminal riêng:
+# Terminal 1: cd apps/engine && .venv\Scripts\uvicorn app:app --reload --port 9000
+# Terminal 2: cd apps/desktop && npm run dev
+```
+
+## Build desktop installer
+
+```bash
+cd apps/desktop
+npm run electron:build    # tạo NSIS installer trong release/
+```
+
+## Testing
+
+```bash
+# Frontend unit tests
+cd apps/desktop && npx vitest run     # 44 tests
+
+# Backend integration tests
+cd apps/engine && pytest -v            # 10 tests
+
+# E2E API tests (cần engine đang chạy)
+cd apps/desktop && npx vitest run tests_e2e/
+```
+
+CI tự động chạy trên GitHub Actions cho mọi push vào `main`.# Terminal 1:
 cd apps/engine && .venv\Scripts\python -m uvicorn app:app --host 127.0.0.1 --port 9000 --reload
 # Terminal 2:
 cd apps/desktop && npm run dev
