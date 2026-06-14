@@ -17,7 +17,7 @@ test.describe('Full stack E2E', () => {
     await page.waitForTimeout(2000)
 
     // Should be on chapters page
-    await expect(page).toHaveURL(/\/projects\//)
+    await expect(page).toHaveURL(/#\/projects\//)
   })
 
   test('verify project via API', async ({ request }) => {
@@ -38,8 +38,9 @@ test.describe('Full stack E2E', () => {
   })
 
   test('settings page renders', async ({ page }) => {
-    await page.goto('/settings')
-    await expect(page.getByText('AI Provider')).toBeVisible()
-    await expect(page.getByText('About')).toBeVisible()
+    await page.goto('/#/settings')
+    await page.waitForTimeout(1000)
+    await expect(page.getByRole('button', { name: 'AI Provider' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'About' })).toBeVisible()
   })
 })

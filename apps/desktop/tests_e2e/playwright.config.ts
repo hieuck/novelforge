@@ -20,6 +20,7 @@ const isWin = process.platform === 'win32'
 
 export default defineConfig({
   testDir: '.',
+  testIgnore: ['api.test.ts'],
   timeout: 30000,
   retries: 1,
   use: {
