@@ -33,3 +33,19 @@ def test_db_session():
         assert r == 1
     finally:
         db.close()
+
+
+def test_get_db():
+    """get_db generator yields a working session."""
+    from db.session import get_db
+    gen = get_db()
+    db = next(gen)
+    try:
+        from sqlalchemy import text
+        r = db.execute(text("SELECT 1")).scalar()
+        assert r == 1
+    finally:
+        try:
+            next(gen)  # close session
+        except StopIteration:
+            pass

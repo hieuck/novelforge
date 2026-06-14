@@ -79,6 +79,79 @@ def test_agent_plan_execute_flow(client):
             assert "step_start" in types, f"Expected step_start in {types}"
 
 
+def test_agent_create_character_tool(client):
+    """Agent can create a character via tool."""
+    pid = _create_project(client)
+
+    mock_llm = MockLLMClient(responses=[
+        json.dumps([{
+            "step": 1, "tool": "create_character",
+            "description": "Create a hero character",
+            "params": {"name": "Test Hero", "role": "protagonist"}
+        }]),
+        json.dumps({"reasoning": "Need to create a character", "tool": "create_character", "description": "Create", "params": {"name": "Test Hero", "role": "protagonist"}}),
+    ])
+
+    with patch("routes.agent.build_client", return_value=mock_llm):
+        with client.websocket_connect(f"/api/ws/agent") as ws:
+            ws.send_json({"project_id": pid, "task": "Create a hero", "language": "vi"})
+            msgs = _recv_until(ws, {"done", "error"}, max_msgs=15)
+            types = [m["type"] for m in msgs]
+            assert "step_done" in types, f"Expected step_done in {types}"
+
+
+def test_agent_read_and_adapt(client):
+    """Agent reads data then adapts plan."""
+    pid = _create_project(client)
+    client.post("/api/chapters/", json={
+        "project_id": pid, "title": "Ch1", "content": "Story begins."
+    })
+
+    mock_llm = MockLLMClient(responses=[
+        json.dumps([{"step": 1, "tool": "read_chapter", "description": "Read chapter 1", "params": {"chapter_title": "Ch1"}}]),
+        json.dumps({"reasoning": "Read chapter", "tool": "read_chapter", "description": "Read", "params": {"chapter_title": "Ch1"}}),
+        json.dumps([]),  # adapt: no more steps needed
+    ])
+
+    with patch("routes.agent.build_client", return_value=mock_llm):
+        with client.websocket_connect(f"/api/ws/agent") as ws:
+            ws.send_json({"project_id": pid, "task": "Read chapter", "language": "vi"})
+            msgs = _recv_until(ws, {"done", "error"}, max_msgs=15)
+            types = [m["type"] for m in msgs]
+            assert "step_done" in types
+            assert "done" in types
+
+
+def test_agent_create_lore_tool(client):
+    """Agent can create lore via tool."""
+    pid = _create_project(client)
+    mock_llm = MockLLMClient(responses=[
+        json.dumps([{"step": 1, "tool": "create_lore", "description": "Create lore", "params": {"name": "Magic Sword", "lore_type": "item"}}]),
+        json.dumps({"reasoning": "Create lore", "tool": "create_lore", "description": "Create", "params": {"name": "Magic Sword", "lore_type": "item"}}),
+    ])
+    with patch("routes.agent.build_client", return_value=mock_llm):
+        with client.websocket_connect(f"/api/ws/agent") as ws:
+            ws.send_json({"project_id": pid, "task": "Create a magic sword lore", "language": "vi"})
+            msgs = _recv_until(ws, {"done", "error"}, max_msgs=15)
+            types = [m["type"] for m in msgs]
+            assert "step_done" in types
+
+
+def test_agent_create_timeline_tool(client):
+    """Agent can create timeline events via tool."""
+    pid = _create_project(client)
+    mock_llm = MockLLMClient(responses=[
+        json.dumps([{"step": 1, "tool": "create_timeline_event", "description": "Add timeline event", "params": {"title": "Epic Battle"}}]),
+        json.dumps({"reasoning": "Create event", "tool": "create_timeline_event", "description": "Add", "params": {"title": "Epic Battle"}}),
+    ])
+    with patch("routes.agent.build_client", return_value=mock_llm):
+        with client.websocket_connect(f"/api/ws/agent") as ws:
+            ws.send_json({"project_id": pid, "task": "Add timeline event", "language": "vi"})
+            msgs = _recv_until(ws, {"done", "error"}, max_msgs=15)
+            types = [m["type"] for m in msgs]
+            assert "step_done" in types
+
+
 def test_agent_generate_text(client):
     """Test agent handles generate_text tool."""
     pid = _create_project(client)

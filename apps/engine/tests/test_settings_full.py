@@ -44,3 +44,16 @@ def test_settings_about(client):
     assert data["app"] == "NovelForge"
     assert "version" in data
     assert "python" in data
+
+
+def test_settings_list_models(client):
+    """List models endpoint returns a response."""
+    # This endpoint tries to contact the AI provider, so it may error
+    r = client.get("/api/settings/models?provider=ollama&base_url=http://localhost:11434")
+    assert r.status_code == 200
+
+
+def test_settings_delete_all_data(client):
+    """Delete all data endpoint returns success."""
+    r = client.delete("/api/settings/data/all")
+    assert r.status_code in (200, 204)
