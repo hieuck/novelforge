@@ -1,0 +1,1 @@
+Sinh hồ sơ nhân vật chi tiết: tên, tuổi, ngoại hình, tính cách, mục tiêu, nỗi sợ, bí mật, tiểu sử, động lực, giọng nói. Nhân vật phải có chiều sâu và phức tạp.

@@ -1,6 +1,6 @@
 param(
     [string]$AgentRoot,
-    [string]$VenueRoot,
+    [string]$VenvRoot,
     [string]$Branch = "main",
     [string]$DesktopStampPath,
     [string]$LogFile
@@ -9,7 +9,7 @@ param(
 $ErrorActionPreference = "Stop"
 $LogPath = if ($LogFile) { $LogFile } else { Join-Path $env:LOCALAPPDATA "novelforge\logs\update.log" }
 
-function Write-Log { param([string]$Msg) $Msg | Out-File -FilePath $LogPath -Append }
+function Write-Log { param([string]$Msg) $Msg | Out-File -FilePath $LogPath -Append -Encoding utf8 }
 
 function Compute-ContentHash {
     param([string]$Dir)
@@ -60,23 +60,37 @@ if ($elapsed -ge $timeout) {
 Set-Location $AgentRoot
 Write-Log "Fetching origin $Branch..."
 & "git" fetch origin $Branch 2>&1 | ForEach-Object { Write-Log $_ }
+if ($LASTEXITCODE -ne 0) {
+    Write-Log "git fetch failed (exit $LASTEXITCODE)"
+    exit 1
+}
 $hasDirty = & "git" status --porcelain
 if ($hasDirty) {
     Write-Log "Stashing dirty changes..."
     & "git" stash push --include-untracked -m "auto-stash before update" 2>&1 | ForEach-Object { Write-Log $_ }
+    if ($LASTEXITCODE -ne 0) {
+        Write-Log "git stash failed (exit $LASTEXITCODE)"
+        exit 1
+    }
 }
+$prevHead = & "git" "rev-parse" "HEAD"
 Write-Log "Pulling $Branch..."
 & "git" pull --ff-only origin $Branch 2>&1 | ForEach-Object { Write-Log $_ }
 if ($LASTEXITCODE -ne 0) {
     Write-Log "ff-only failed, resetting hard..."
     & "git" reset --hard origin/$Branch 2>&1 | ForEach-Object { Write-Log $_ }
+    if ($LASTEXITCODE -ne 0) {
+        Write-Log "git reset --hard failed (exit $LASTEXITCODE)"
+        exit 1
+    }
 }
 
 # Step 3: Syntax guard
 $enginePy = Join-Path $AgentRoot "apps\engine"
 $failed = $false
 Get-ChildItem -Path $enginePy -Filter "*.py" -Recurse | ForEach-Object {
-    $result = & "python" "-c" "import ast; ast.parse(open('$($_.FullName)').read())" 2>&1
+    $escaped = $_.FullName -replace "'", "''"
+    $result = & "python" "-c" "import ast, sys; ast.parse(open(sys.argv[1]).read())" $_.FullName 2>&1
     if ($LASTEXITCODE -ne 0) {
         Write-Log "SYNTAX ERROR in $($_.Name): rolling back"
         $failed = $true
@@ -84,16 +98,16 @@ Get-ChildItem -Path $enginePy -Filter "*.py" -Recurse | ForEach-Object {
 }
 if ($failed) {
     Write-Log "Rolling back to previous commit..."
-    & "git" reset --hard "HEAD@{1}" 2>&1 | ForEach-Object { Write-Log $_ }
+    & "git" reset --hard $prevHead 2>&1 | ForEach-Object { Write-Log $_ }
     exit 1
 }
 
 # Step 4: Reinstall Python deps
 Write-Log "Reinstalling Python deps..."
-$venvPython = Join-Path $VenueRoot "Scripts\python.exe"
+$venvPython = Join-Path $VenvRoot "Scripts\python.exe"
 if (-not (Test-Path $venvPython)) {
     Write-Log "Creating venv..."
-    & "uv" venv $VenueRoot 2>&1 | ForEach-Object { Write-Log $_ }
+    & "uv" venv $VenvRoot 2>&1 | ForEach-Object { Write-Log $_ }
 }
 $reqFile = Join-Path $AgentRoot "apps\engine\requirements.txt"
 & "uv" "pip" "--python" $venvPython "install" "-r" $reqFile 2>&1 | ForEach-Object { Write-Log $_ }
@@ -114,6 +128,10 @@ if ($needRebuild) {
     Write-Log "Rebuilding desktop..."
     Set-Location $desktopSrc
     & "npm" "run" "pack" 2>&1 | ForEach-Object { Write-Log $_ }
+    if ($LASTEXITCODE -ne 0) {
+        Write-Log "npm run pack failed (exit $LASTEXITCODE)"
+        exit 1
+    }
     # Write new stamp
     $hash = Compute-ContentHash $desktopSrc
     $newStamp = @{ contentHash = $hash; builtAt = (Get-Date -Format o) } | ConvertTo-Json

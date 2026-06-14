@@ -1,0 +1,1 @@
+Kiểm tra lỗi nhất quán trong cốt truyện: thông tin nhân vật, dòng thời gian, sự kiện, bối cảnh. Liệt kê từng vấn đề với vị trí cụ thể và đề xuất sửa.
