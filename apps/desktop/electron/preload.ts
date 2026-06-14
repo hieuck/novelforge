@@ -1,4 +1,4 @@
-import { contextBridge } from 'electron'
+import { contextBridge, ipcRenderer } from 'electron'
 
 // Read the engine port injected via additionalArguments by the main process.
 // Falls back to 9000 (the dev/default port).
@@ -11,4 +11,9 @@ const enginePort = (() => {
 // contextBridge ensures the value is trusted (set only by main process, not web content)
 contextBridge.exposeInMainWorld('__NOVELFORGE__', {
   enginePort,
+  updates: {
+    check: () => ipcRenderer.invoke('novelforge:updates:check'),
+    apply: (branch?: string) => ipcRenderer.invoke('novelforge:updates:apply', branch),
+    getStamp: () => ipcRenderer.invoke('novelforge:updates:stamp'),
+  },
 })
