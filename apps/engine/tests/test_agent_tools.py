@@ -159,3 +159,42 @@ class TestRouteAndAgentConsistency:
             assert len(items) == 2
         finally:
             db.close()
+
+
+class TestAgentUpdateTools:
+    """Agent's update tools (update_character, update_lore, update_chapter)."""
+
+    def test_update_character(self, client):
+        from routes.agent import _create_char, _update_character
+        pid = _create_project(client)
+        created = _create_char(pid, {"name": "Old Name", "role": "hero"})
+        cid = created["id"]
+        result = _update_character(pid, {"character_id": cid, "name": "New Name"})
+        assert result.get("updated"), f"Update failed: {result}"
+        assert result["name"] == "New Name"
+
+    def test_update_lore(self, client):
+        from routes.agent import _create_lore, _update_lore
+        pid = _create_project(client)
+        created = _create_lore(pid, {"name": "Old Lore", "lore_type": "item", "tags": ["old"]})
+        lid = created["id"]
+        result = _update_lore(pid, {"lore_id": lid, "name": "Updated Lore", "tags": ["new"]})
+        assert result.get("updated"), f"Update failed: {result}"
+
+    def test_update_lore_list_tags(self, client):
+        """Verify _update_lore handles list tags."""
+        from routes.agent import _create_lore, _update_lore
+        pid = _create_project(client)
+        created = _create_lore(pid, {"name": "Tag Test", "lore_type": "item"})
+        lid = created["id"]
+        result = _update_lore(pid, {"lore_id": lid, "tags": ["tag1", "tag2"]})
+        assert result.get("updated"), f"Update failed: {result}"
+
+    def test_update_chapter(self, client):
+        from routes.agent import _create_chapter, _update_chapter
+        pid = _create_project(client)
+        created = _create_chapter(pid, {"title": "Ch1", "content": "Old text"})
+        cid = created["id"]
+        result = _update_chapter(pid, {"chapter_id": cid, "content": "New text here"})
+        assert result.get("updated"), f"Update failed: {result}"
+        assert result["word_count"] > 0
