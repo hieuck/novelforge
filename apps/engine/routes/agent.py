@@ -393,6 +393,12 @@ def _read_timeline(pid: str) -> dict:
 
 def _create_timeline_event(pid: str, p: dict) -> dict:
     db = SessionLocal()
+    involved = p.get("involved_characters", [])
+    if isinstance(involved, list):
+        involved = json.dumps(involved, ensure_ascii=False)
+    rel_chapters = p.get("related_chapters")
+    if isinstance(rel_chapters, list):
+        rel_chapters = json.dumps(rel_chapters, ensure_ascii=False)
     try:
         item = TimelineItem(
             id=str(uuid.uuid4()), project_id=pid,
@@ -400,7 +406,8 @@ def _create_timeline_event(pid: str, p: dict) -> dict:
             event_date=p.get("event_date"),
             relative_order=p.get("relative_order"),
             description=p.get("description"),
-            involved_characters=p.get("involved_characters", []),
+            involved_characters=involved,
+            related_chapters=rel_chapters,
         )
         db.add(item)
         db.commit()
