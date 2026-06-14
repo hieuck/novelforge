@@ -125,7 +125,7 @@ export default function Settings() {
   )
 
   return (
-    <div className="mx-auto max-w-2xl p-6">
+    <div className="mx-auto max-w-2xl h-full overflow-y-auto p-6">
       <h1 className="mb-0.5 text-xl font-bold text-slate-100">{t('settings.title')}</h1>
       <p className="mb-5 text-sm text-slate-500">{t('settings.subtitle')}</p>
       <div className="flex border-b border-slate-800 mb-6">
