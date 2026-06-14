@@ -162,11 +162,14 @@ def _update_character(pid: str, p: dict) -> dict:
 def _create_lore(pid: str, p: dict) -> dict:
     from services.search import index_lore
     db = SessionLocal()
+    tags_val = p.get("tags", [])
+    if isinstance(tags_val, list):
+        tags_val = json.dumps(tags_val, ensure_ascii=False)
     try:
         lore_obj = Lore(
             id=str(uuid.uuid4()), project_id=pid,
             name=p.get("name", "?"), lore_type=p.get("lore_type", "term"),
-            description=p.get("description"), tags=p.get("tags", []),
+            description=p.get("description"), tags=tags_val,
         )
         db.add(lore_obj)
         db.commit()
@@ -350,7 +353,8 @@ def _update_lore(pid: str, p: dict) -> dict:
         if "description" in p:
             item.description = p["description"]
         if "tags" in p:
-            item.tags = p["tags"]
+            tv = p["tags"]
+            item.tags = json.dumps(tv, ensure_ascii=False) if isinstance(tv, list) else tv
         item.updated_at = datetime.now(timezone.utc)
         db.commit()
         db.refresh(item)
