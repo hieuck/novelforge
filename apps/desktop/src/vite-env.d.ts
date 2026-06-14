@@ -1,0 +1,9 @@
+/// <reference types="vite/client" />
+
+declare module '*.css' {}
+declare module '*.svg' {}
+declare module '*.png' {}
+declare module '*.json' {
+  const value: any
+  export default value
+}
