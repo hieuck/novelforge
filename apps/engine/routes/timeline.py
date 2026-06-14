@@ -57,7 +57,7 @@ def list_timeline(project_id: str):
         db.close()
 
 
-@router.post("/", status_code=201)
+@router.post("/timeline/", status_code=201)
 def create_timeline(payload: TimelineIn):
     db: Session = SessionLocal()
     try:
@@ -70,7 +70,7 @@ def create_timeline(payload: TimelineIn):
         db.close()
 
 
-@router.get("/{event_id}")
+@router.get("/timeline/{event_id}")
 def get_timeline(event_id: str):
     db: Session = SessionLocal()
     try:
@@ -82,7 +82,7 @@ def get_timeline(event_id: str):
         db.close()
 
 
-@router.patch("/{event_id}")
+@router.patch("/timeline/{event_id}")
 def update_timeline(event_id: str, payload: TimelineUpdate):
     db: Session = SessionLocal()
     try:
@@ -101,7 +101,7 @@ def update_timeline(event_id: str, payload: TimelineUpdate):
         db.close()
 
 
-@router.delete("/{event_id}", status_code=204)
+@router.delete("/timeline/{event_id}", status_code=204)
 def delete_timeline(event_id: str):
     db: Session = SessionLocal()
     try:

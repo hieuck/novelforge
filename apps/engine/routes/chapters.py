@@ -66,7 +66,7 @@ def list_chapters(project_id: str):
         db.close()
 
 
-@router.post("/", status_code=201)
+@router.post("/chapters/", status_code=201)
 def create_chapter(payload: ChapterIn):
     db: Session = SessionLocal()
     try:
@@ -83,7 +83,7 @@ def create_chapter(payload: ChapterIn):
         db.close()
 
 
-@router.get("/{chapter_id}")
+@router.get("/chapters/{chapter_id}")
 def get_chapter(chapter_id: str):
     db: Session = SessionLocal()
     try:
@@ -95,7 +95,7 @@ def get_chapter(chapter_id: str):
         db.close()
 
 
-@router.patch("/{chapter_id}")
+@router.patch("/chapters/{chapter_id}")
 def update_chapter(chapter_id: str, payload: ChapterUpdate):
     db: Session = SessionLocal()
     try:
@@ -116,7 +116,7 @@ def update_chapter(chapter_id: str, payload: ChapterUpdate):
         db.close()
 
 
-@router.delete("/{chapter_id}", status_code=204)
+@router.delete("/chapters/{chapter_id}", status_code=204)
 def delete_chapter(chapter_id: str):
     db: Session = SessionLocal()
     try:

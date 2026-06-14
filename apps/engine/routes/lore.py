@@ -57,7 +57,7 @@ def list_lore(project_id: str):
         db.close()
 
 
-@router.post("/", status_code=201)
+@router.post("/lore/", status_code=201)
 def create_lore(payload: LoreIn):
     db: Session = SessionLocal()
     try:
@@ -70,7 +70,7 @@ def create_lore(payload: LoreIn):
         db.close()
 
 
-@router.get("/{lore_id}")
+@router.get("/lore/{lore_id}")
 def get_lore(lore_id: str):
     db: Session = SessionLocal()
     try:
@@ -82,7 +82,7 @@ def get_lore(lore_id: str):
         db.close()
 
 
-@router.patch("/{lore_id}")
+@router.patch("/lore/{lore_id}")
 def update_lore(lore_id: str, payload: LoreUpdate):
     db: Session = SessionLocal()
     try:
@@ -101,7 +101,7 @@ def update_lore(lore_id: str, payload: LoreUpdate):
         db.close()
 
 
-@router.delete("/{lore_id}", status_code=204)
+@router.delete("/lore/{lore_id}", status_code=204)
 def delete_lore(lore_id: str):
     db: Session = SessionLocal()
     try:

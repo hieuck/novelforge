@@ -32,7 +32,7 @@ describe('API Integration Tests', () => {
   })
 
   it('creates a project', async () => {
-    const data = await apiPost('/', { title: 'E2E Test Project', genre: 'Fantasy' })
+    const data = await apiPost('/projects/', { title: 'E2E Test Project', genre: 'Fantasy' })
     expect(data.title).toBe('E2E Test Project')
     expect(data.genre).toBe('Fantasy')
     expect(data.id).toBeTruthy()
@@ -40,18 +40,18 @@ describe('API Integration Tests', () => {
   })
 
   it('lists projects', async () => {
-    const data = await apiGet('/')
+    const data = await apiGet('/projects/')
     expect(Array.isArray(data)).toBe(true)
     expect(data.length).toBeGreaterThanOrEqual(1)
   })
 
   it('creates a chapter', async () => {
-    const data = await apiPost('/', { project_id: projectId, title: 'Chapter 1', content: 'Once upon a time...' })
+    const data = await apiPost('/chapters/', { project_id: projectId, title: 'Chapter 1', content: 'Once upon a time...' })
     expect(data.title).toBe('Chapter 1')
     expect(data.project_id).toBe(projectId)
   })
 
   it('deletes a project', async () => {
-    await apiDelete(`/${projectId}`)
+    await apiDelete(`/projects/${projectId}`)
   })
 })

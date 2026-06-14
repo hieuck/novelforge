@@ -42,7 +42,7 @@ def to_dict(p: Project):
     }
 
 
-@router.get("/")
+@router.get("/projects/")
 def list_projects():
     db: Session = SessionLocal()
     try:
@@ -52,7 +52,7 @@ def list_projects():
         db.close()
 
 
-@router.post("/", status_code=201)
+@router.post("/projects/", status_code=201)
 def create_project(payload: ProjectIn):
     db: Session = SessionLocal()
     try:
@@ -65,7 +65,7 @@ def create_project(payload: ProjectIn):
         db.close()
 
 
-@router.get("/{project_id}")
+@router.get("/projects/{project_id}")
 def get_project(project_id: str):
     db: Session = SessionLocal()
     try:
@@ -77,7 +77,7 @@ def get_project(project_id: str):
         db.close()
 
 
-@router.patch("/{project_id}")
+@router.patch("/projects/{project_id}")
 def update_project(project_id: str, payload: ProjectUpdate):
     db: Session = SessionLocal()
     try:
@@ -96,7 +96,7 @@ def update_project(project_id: str, payload: ProjectUpdate):
         db.close()
 
 
-@router.delete("/{project_id}", status_code=204)
+@router.delete("/projects/{project_id}", status_code=204)
 def delete_project(project_id: str):
     from models.chapter import Chapter
     from models.extra import Character, Lore, TimelineItem, Job

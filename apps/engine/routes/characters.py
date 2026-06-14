@@ -72,7 +72,7 @@ def list_characters(project_id: str):
         db.close()
 
 
-@router.post("/", status_code=201)
+@router.post("/characters/", status_code=201)
 def create_character(payload: CharacterIn):
     db: Session = SessionLocal()
     try:
@@ -85,7 +85,7 @@ def create_character(payload: CharacterIn):
         db.close()
 
 
-@router.get("/{character_id}")
+@router.get("/characters/{character_id}")
 def get_character(character_id: str):
     db: Session = SessionLocal()
     try:
@@ -97,7 +97,7 @@ def get_character(character_id: str):
         db.close()
 
 
-@router.patch("/{character_id}")
+@router.patch("/characters/{character_id}")
 def update_character(character_id: str, payload: CharacterUpdate):
     db: Session = SessionLocal()
     try:
@@ -116,7 +116,7 @@ def update_character(character_id: str, payload: CharacterUpdate):
         db.close()
 
 
-@router.delete("/{character_id}", status_code=204)
+@router.delete("/characters/{character_id}", status_code=204)
 def delete_character(character_id: str):
     db: Session = SessionLocal()
     try:
