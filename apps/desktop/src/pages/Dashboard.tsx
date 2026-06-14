@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Loader2, RefreshCw, BookOpen, Plus } from 'lucide-react'
+import { Loader2, RefreshCw, BookOpen, Plus, Trash2 } from 'lucide-react'
 import { api } from '../lib/api'
 import { useProjectStore } from '../stores/projectStore'
 
@@ -116,19 +116,32 @@ export default function Dashboard() {
           {t('dashboard.projects_count', { count: projects.length })}
         </h2>
         {projects.map((p) => (
-          <button
-            key={p.id}
-            onClick={() => navigate(`/projects/${p.id}/chapters`)}
-            className="block w-full rounded-lg border border-slate-800 bg-slate-900/60 p-4 text-left transition-colors hover:border-slate-700 hover:bg-slate-900"
-          >
-            <div className="font-medium text-slate-100">{p.title}</div>
-            <div className="mt-0.5 flex items-center gap-3 text-xs text-slate-500">
-              {p.genre && <span>{p.genre}</span>}
-              {p.updated_at && (
-                <span>{t('dashboard.updated_at', { date: new Date(p.updated_at).toLocaleString() })}</span>
-              )}
-            </div>
-          </button>
+          <div key={p.id} className="group relative">
+            <button
+              onClick={() => navigate(`/projects/${p.id}/chapters`)}
+              className="block w-full rounded-lg border border-slate-800 bg-slate-900/60 p-4 pr-10 text-left transition-colors hover:border-slate-700 hover:bg-slate-900"
+            >
+              <div className="font-medium text-slate-100">{p.title}</div>
+              <div className="mt-0.5 flex items-center gap-3 text-xs text-slate-500">
+                {p.genre && <span>{p.genre}</span>}
+                {p.updated_at && (
+                  <span>{t('dashboard.updated_at', { date: new Date(p.updated_at).toLocaleString() })}</span>
+                )}
+              </div>
+            </button>
+            <button
+              onClick={async (e) => {
+                e.stopPropagation()
+                if (!confirm('Xóa truyện này?')) return
+                await useProjectStore.getState().deleteProject(p.id)
+                useProjectStore.getState().fetchProjects()
+              }}
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1.5 text-slate-600 opacity-0 transition-opacity hover:text-red-400 group-hover:opacity-100"
+              title="Xóa truyện"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
         ))}
         {!projects.length && (
           <div className="rounded-lg border border-dashed border-slate-800 p-8 text-center text-sm text-slate-600">
