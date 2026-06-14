@@ -26,3 +26,4 @@ Thumbs.db
 /.kiro
 apps/engine/dist/
 apps/engine/build_pyinstaller/
+apps/desktop/release/

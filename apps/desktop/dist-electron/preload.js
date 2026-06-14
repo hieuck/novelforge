@@ -11,4 +11,9 @@ const enginePort = (() => {
 // contextBridge ensures the value is trusted (set only by main process, not web content)
 electron_1.contextBridge.exposeInMainWorld('__NOVELFORGE__', {
     enginePort,
+    updates: {
+        check: () => electron_1.ipcRenderer.invoke('novelforge:updates:check'),
+        apply: (branch) => electron_1.ipcRenderer.invoke('novelforge:updates:apply', branch),
+        getStamp: () => electron_1.ipcRenderer.invoke('novelforge:updates:stamp'),
+    },
 });

@@ -33,29 +33,33 @@ const ENGINE_PORT = 9000;
 let mainWindow = null;
 let engineProcess = null;
 let splashWindow = null;
-// ── Engine spawn ──────────────────────────────────────────────────────────────
-function findEngine() {
+function loadCJS(name) {
+    return require(path.join(__dirname, '../electron', `${name}.cjs`));
+}
+function resolveEngine() {
     if (isDev) {
         const venvPy = process.platform === 'win32'
             ? path.join(__dirname, '../../engine/.venv/Scripts/python.exe')
             : path.join(__dirname, '../../engine/.venv/bin/python3');
         return { cmd: venvPy, args: ['run.py'], cwd: path.join(__dirname, '../../engine') };
     }
-    // Production: PyInstaller-built exe in extraResources
-    const exeName = process.platform === 'win32' ? 'engine.exe' : 'engine';
-    const engineExe = path.join(process.resourcesPath, 'engine', exeName);
-    if (fs.existsSync(engineExe)) {
-        return { cmd: engineExe, args: [], cwd: path.join(process.resourcesPath, 'engine') };
+    const probes = loadCJS('backend-probes');
+    const backend = probes.resolveBackend();
+    if (backend.kind === 'bootstrap-needed') {
+        return null;
     }
-    // Fallback: system Python
-    return {
-        cmd: process.platform === 'win32' ? 'python' : 'python3',
-        args: ['run.py'],
-        cwd: path.join(process.resourcesPath, 'engine'),
-    };
+    const pythonExe = process.platform === 'win32'
+        ? path.join(backend.venv, 'Scripts', 'python.exe')
+        : path.join(backend.venv, 'bin', 'python3');
+    return { cmd: pythonExe, args: ['run.py'], cwd: backend.engineDir };
 }
 function startEngine() {
-    const { cmd, args, cwd } = findEngine();
+    const resolved = resolveEngine();
+    if (!resolved) {
+        console.error('[main] No engine found — bootstrap needed');
+        return;
+    }
+    const { cmd, args, cwd } = resolved;
     if (!fs.existsSync(cwd)) {
         console.error('[main] Engine dir missing:', cwd);
         return;
@@ -75,8 +79,54 @@ function stopEngine() {
         engineProcess = null;
     }
 }
-// ── Health check ──────────────────────────────────────────────────────────────
-function waitForEngine(port, maxMs = 30000) {
+async function runBootstrap() {
+    const bootstrap = loadCJS('bootstrap-runner');
+    return new Promise((resolve) => {
+        bootstrap.runBootstrap((event) => {
+            console.log(`[bootstrap] ${event.type}:`, event.data);
+            if (mainWindow && !mainWindow.isDestroyed()) {
+                mainWindow.webContents.send('novelforge:bootstrap:status', event);
+            }
+            if (event.type === 'complete')
+                resolve(true);
+            if (event.type === 'error')
+                resolve(false);
+        });
+    });
+}
+function createBootstrapSplash() {
+    splashWindow = new electron_1.BrowserWindow({
+        width: 480, height: 320,
+        frame: false, resizable: false, center: true,
+        backgroundColor: '#020817',
+        webPreferences: { nodeIntegration: true, contextIsolation: false },
+    });
+    splashWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(`
+    <!DOCTYPE html>
+    <html><head><meta charset="utf-8"><style>
+      body{margin:0;background:#020817;color:#e2e8f0;font-family:system-ui,sans-serif;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      height:100vh;gap:12px;padding:40px;}
+      h1{font-size:24px;font-weight:700;margin:0;color:#f1f5f9;}
+      #status{font-size:13px;color:#94a3b8;text-align:center;}
+      #progress{width:100%;max-width:360px;height:4px;background:#1e293b;border-radius:2px;overflow:hidden;}
+      #bar{height:100%;width:10%;background:#6366f1;transition:width .3s;}
+    </style></head><body>
+    <h1>⚡ NovelForge</h1>
+    <p id="status">Setting up your workspace...</p>
+    <div id="progress"><div id="bar"></div></div>
+    <script>
+      const { ipcRenderer } = require('electron');
+      ipcRenderer.on('novelforge:bootstrap:status', (_, ev) => {
+        if (ev.type === 'stage') document.getElementById('status').textContent = ev.data.message;
+        if (ev.type === 'error') document.getElementById('status').textContent = 'Error: ' + ev.data.message;
+        if (ev.type === 'complete') document.getElementById('status').textContent = 'Starting...';
+      });
+    </script>
+    </body></html>
+  `)}`);
+}
+function waitForEngine(port, maxMs = 60000) {
     return new Promise((resolve, reject) => {
         const start = Date.now();
         const poll = () => {
@@ -97,7 +147,21 @@ function waitForEngine(port, maxMs = 30000) {
         poll();
     });
 }
-// ── Splash ────────────────────────────────────────────────────────────────────
+function registerIpcHandlers() {
+    electron_1.ipcMain.handle('novelforge:updates:check', async () => {
+        const updater = loadCJS('updater');
+        return updater.checkUpdates();
+    });
+    electron_1.ipcMain.handle('novelforge:updates:apply', async (_event, branch) => {
+        const updater = loadCJS('updater');
+        updater.applyUpdates(branch);
+        electron_1.app.quit();
+    });
+    electron_1.ipcMain.handle('novelforge:updates:stamp', async () => {
+        const updater = loadCJS('updater');
+        return updater.readDesktopStamp();
+    });
+}
 function createSplash() {
     splashWindow = new electron_1.BrowserWindow({
         width: 380, height: 220,
@@ -122,7 +186,6 @@ function createSplash() {
     </body></html>`;
     splashWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
 }
-// ── Main window ───────────────────────────────────────────────────────────────
 function createMainWindow() {
     mainWindow = new electron_1.BrowserWindow({
         width: 1440, height: 900,
@@ -157,18 +220,27 @@ function createMainWindow() {
         return { action: 'deny' };
     });
 }
-// ── Lifecycle ─────────────────────────────────────────────────────────────────
 electron_1.app.whenReady().then(async () => {
+    registerIpcHandlers();
     if (!isDev) {
+        const probes = loadCJS('backend-probes');
+        const backend = probes.resolveBackend();
+        if (backend.kind === 'bootstrap-needed') {
+            createBootstrapSplash();
+            const success = await runBootstrap();
+            if (!success) {
+                console.error('[main] Bootstrap failed');
+                return;
+            }
+        }
         createSplash();
         startEngine();
         try {
-            await waitForEngine(ENGINE_PORT, 30000);
+            await waitForEngine(ENGINE_PORT, 60000);
             console.log('[main] Engine ready on port', ENGINE_PORT);
         }
         catch (err) {
             console.error('[main] Engine failed to start:', err);
-            // Proceed anyway — renderer will show API errors
         }
     }
     createMainWindow();
