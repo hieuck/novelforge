@@ -62,16 +62,16 @@ function stopEngine(): void {
   }
 }
 
-async function runBootstrap(): Promise<boolean> {
+async function runBootstrap(): Promise<{ success: boolean; error?: string }> {
   const bootstrap = loadCJS('bootstrap-runner')
   return new Promise((resolve) => {
     bootstrap.runBootstrap((event: any) => {
       console.log(`[bootstrap] ${event.type}:`, event.data)
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send('novelforge:bootstrap:status', event)
+      if (splashWindow && !splashWindow.isDestroyed()) {
+        splashWindow.webContents.send('novelforge:bootstrap:status', event)
       }
-      if (event.type === 'complete') resolve(true)
-      if (event.type === 'error') resolve(false)
+      if (event.type === 'complete') resolve({ success: true })
+      if (event.type === 'error') resolve({ success: false, error: event.data.message })
     })
   })
 }
@@ -205,6 +205,13 @@ function createMainWindow(): void {
   })
 }
 
+function showErrorDialog(title: string, message: string): void {
+  splashWindow?.close(); splashWindow = null
+  const { dialog } = require('electron') as any
+  dialog.showErrorBox(title, message)
+  app.quit()
+}
+
 app.whenReady().then(async () => {
   registerIpcHandlers()
 
@@ -214,9 +221,11 @@ app.whenReady().then(async () => {
 
     if (backend.kind === 'bootstrap-needed') {
       createBootstrapSplash()
-      const success = await runBootstrap()
-      if (!success) {
-        console.error('[main] Bootstrap failed')
+      const result = await runBootstrap()
+      if (!result.success) {
+        showErrorDialog('NovelForge — Setup Failed',
+          `Could not set up the application on first launch:\n\n${result.error}\n\n` +
+          'Please check your internet connection and make sure Git is installed.')
         return
       }
     }
@@ -227,7 +236,10 @@ app.whenReady().then(async () => {
       await waitForEngine(ENGINE_PORT, 60000)
       console.log('[main] Engine ready on port', ENGINE_PORT)
     } catch (err) {
+      splashWindow?.close(); splashWindow = null
       console.error('[main] Engine failed to start:', err)
+      createMainWindow()
+      return
     }
   }
 
