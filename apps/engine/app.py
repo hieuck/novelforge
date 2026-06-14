@@ -18,6 +18,7 @@ from routes.search import router as search_router
 from routes.agent import router as agent_router
 from routes.update import router as update_router
 
+from _version import VERSION
 from db.base import Base, engine
 from services.search import init_fts
 
@@ -31,7 +32,7 @@ def create_app() -> FastAPI:
 
     application = FastAPI(
         title="NovelForge Engine",
-        version="1.0.0",
+        version=VERSION,
         docs_url="/docs",
         redoc_url="/redoc",
     )

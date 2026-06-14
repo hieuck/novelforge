@@ -160,9 +160,11 @@ async def about() -> dict:
     except Exception:
         fapi_version = "?"
 
+    from _version import VERSION
+
     return {
         "app": "NovelForge",
-        "version": "1.0.0",
+        "version": VERSION,
         "python": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
         "platform": platform.system(),
         "fastapi": fapi_version,
