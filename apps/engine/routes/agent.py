@@ -113,6 +113,13 @@ Be critical. If the result is vague, too short, or doesn't match the task requir
 
 # ── Tool implementations ──────────────────────────────────────────────────────
 
+def _serialize_field(val):
+    """Convert a list to JSON string for Text columns, pass through otherwise."""
+    if isinstance(val, list):
+        return json.dumps(val, ensure_ascii=False)
+    return val
+
+
 def _create_char(pid: str, p: dict) -> dict:
     from services.search import index_character
     db = SessionLocal()
@@ -122,7 +129,8 @@ def _create_char(pid: str, p: dict) -> dict:
             name=p.get("name", "?"), gender=p.get("gender"), role=p.get("role"),
             age=str(p["age"]) if p.get("age") else None,
             personality=p.get("personality"), appearance=p.get("appearance"),
-            goals=p.get("goals"), secrets=p.get("secrets"),
+            goals=_serialize_field(p.get("goals")),
+            secrets=_serialize_field(p.get("secrets")),
         )
         db.add(c)
         db.commit()
@@ -147,7 +155,10 @@ def _update_character(pid: str, p: dict) -> dict:
             return {"error": f"Character {character_id} not found"}
         for field in ("name", "role", "personality", "appearance", "goals", "secrets", "notes"):
             if field in p:
-                setattr(c, field, p[field])
+                val = p[field]
+                if field in ("goals", "secrets") and isinstance(val, list):
+                    val = json.dumps(val, ensure_ascii=False)
+                setattr(c, field, val)
         if "age" in p:
             c.age = str(p["age"])
         c.updated_at = datetime.now(timezone.utc)
