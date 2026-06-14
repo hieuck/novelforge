@@ -24,3 +24,5 @@ logs
 .DS_Store
 Thumbs.db
 /.kiro
+apps/engine/dist/
+apps/engine/build_pyinstaller/
