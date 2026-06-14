@@ -1,0 +1,14 @@
+> from sqlalchemy import Column, String, Text, DateTime, ForeignKey
+> from sqlalchemy.sql import func
+> from db.base import Base
+  
+  
+> class Summary(Base):
+>     __tablename__ = "summaries"
+>     id = Column(String, primary_key=True)
+>     project_id = Column(String, ForeignKey("projects.id"), nullable=False)
+>     kind = Column(String, nullable=False)
+>     subject_id = Column(String, nullable=True)
+>     text = Column(Text, nullable=False)
+>     embedding = Column(Text, nullable=True)
+>     created_at = Column(DateTime(timezone=True), server_default=func.now())

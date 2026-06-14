@@ -41,7 +41,7 @@ def to_dict(row: Lore):
         "tags": row.tags,
         "related_chapters": row.related_chapters,
         "related_characters": row.related_characters,
-        "metadata": row.meta,
+        "metadata": row.meta_data,
         "created_at": row.created_at.isoformat() if row.created_at else None,
         "updated_at": row.updated_at.isoformat() if row.updated_at else None,
     }
@@ -117,6 +117,7 @@ def delete_lore(lore_id: str):
             pass
     finally:
         db.close()
+
 
 
 

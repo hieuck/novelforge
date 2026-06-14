@@ -1,0 +1,213 @@
+> from __future__ import annotations
+  
+> import io
+> import json
+> import zipfile
+> from datetime import datetime, timezone
+  
+> from fastapi import APIRouter, HTTPException
+> from fastapi.responses import Response
+> from pydantic import BaseModel
+> from sqlalchemy.orm import Session
+  
+> from db.session import SessionLocal
+> from models.chapter import Chapter
+> from models.extra import Character, Lore, TimelineItem
+> from models.project import Project
+  
+> router = APIRouter()
+  
+> _MIME: dict[str, str] = {
+>     "md":   "text/markdown",
+>     "txt":  "text/plain",
+>     "html": "text/html",
+>     "zip":  "application/zip",
+> }
+  
+> HTML_TEMPLATE = """<!DOCTYPE html>
+> <html lang="{lang}">
+> <head>
+> <meta charset="UTF-8">
+> <meta name="viewport" content="width=device-width, initial-scale=1.0">
+> <title>{title}</title>
+> <style>
+>   body {{ max-width: 780px; margin: 2rem auto; font-family: Georgia, serif;
+>           line-height: 1.8; color: #222; padding: 0 1rem; }}
+>   h1 {{ font-size: 2rem; margin-bottom: 0.25rem; }}
+>   .meta {{ color: #666; font-size: 0.9rem; margin-bottom: 2rem; }}
+>   h2 {{ font-size: 1.4rem; margin-top: 3rem; border-bottom: 1px solid #ddd; padding-bottom: 0.4rem; }}
+>   p {{ margin: 0.8rem 0; text-indent: 1.5em; }}
+>   p:first-of-type {{ text-indent: 0; }}
+> </style>
+> </head>
+> <body>
+> <h1>{title}</h1>
+> <div class="meta">{genre}{description}</div>
+> {chapters}
+> </body>
+> </html>"""
+  
+  
+> class ProjectExportIn(BaseModel):
+>     project_id: str
+>     fmt: str = "md"
+  
+  
+> def _load_data(db: Session, project_id: str) -> tuple[Project, list[Chapter]]:
+!     project = db.query(Project).filter(Project.id == project_id).first()
+!     if not project:
+!         raise HTTPException(status_code=404, detail="Project not found")
+!     chapters = (
+!         db.query(Chapter)
+!         .filter(Chapter.project_id == project_id)
+!         .order_by(Chapter.scene_order)
+!         .all()
+!     )
+!     return project, chapters
+  
+  
+> def _safe_filename(title: str) -> str:
+!     return "".join(c if c.isalnum() or c in " _-" else "_" for c in title).strip() or "export"
+  
+  
+> def _build_md(project: Project, chapters: list[Chapter]) -> str:
+!     lines: list[str] = [f"# {project.title}"]
+!     if project.description:
+!         lines.append(f"\n{project.description}")
+!     lines.append("")
+!     for ch in chapters:
+!         lines.append(f"\n## {ch.title or 'Untitled'}")
+!         lines.append("")
+!         lines.append(ch.content or "")
+!     return "\n".join(lines)
+  
+  
+> def _build_txt(project: Project, chapters: list[Chapter]) -> str:
+!     lines: list[str] = [project.title.upper(), "=" * len(project.title)]
+!     if project.description:
+!         lines.append(project.description)
+!     lines.append("")
+!     for ch in chapters:
+!         lines.append(f"\n{ch.title or 'Untitled'}")
+!         lines.append("-" * 40)
+!         lines.append(ch.content or "")
+!     return "\n".join(lines)
+  
+  
+> def _build_html(project: Project, chapters: list[Chapter]) -> str:
+!     ch_html_parts: list[str] = []
+!     for ch in chapters:
+!         content = ch.content or ""
+!         paragraphs = "".join(
+!             f"<p>{line}</p>" for line in content.split("\n") if line.strip()
+!         )
+!         ch_html_parts.append(f"<h2>{ch.title or 'Untitled'}</h2>\n{paragraphs}")
+  
+!     genre_str = f"{project.genre} · " if project.genre else ""
+!     desc_str = project.description or ""
+  
+!     return HTML_TEMPLATE.format(
+!         lang=project.language or "vi",
+!         title=project.title,
+!         genre=genre_str,
+!         description=desc_str,
+!         chapters="\n".join(ch_html_parts),
+!     )
+  
+  
+> def _build_zip(db: Session, project: Project, chapters: list[Chapter]) -> bytes:
+!     buf = io.BytesIO()
+!     characters = db.query(Character).filter(Character.project_id == project.id).all()
+!     lore_items = db.query(Lore).filter(Lore.project_id == project.id).all()
+!     timeline = db.query(TimelineItem).filter(TimelineItem.project_id == project.id).all()
+  
+!     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+          # Main story as markdown
+!         zf.writestr("story.md", _build_md(project, chapters))
+  
+          # Individual chapter files
+!         for i, ch in enumerate(chapters, 1):
+!             safe = _safe_filename(ch.title or f"chapter_{i}")
+!             zf.writestr(f"chapters/{i:03d}_{safe}.md", ch.content or "")
+  
+          # Project metadata
+!         meta = {
+!             "id": project.id,
+!             "title": project.title,
+!             "description": project.description,
+!             "genre": project.genre,
+!             "language": project.language,
+!             "summary": project.summary,
+!             "style_guide": project.style_guide,
+!             "exported_at": datetime.now(timezone.utc).isoformat(),
+!         }
+!         zf.writestr("project.json", json.dumps(meta, ensure_ascii=False, indent=2))
+  
+          # Characters
+!         char_data = [
+!             {
+!                 "id": c.id, "name": c.name, "alias": c.alias,
+!                 "role": c.role, "age": c.age, "personality": c.personality,
+!                 "appearance": c.appearance, "goals": c.goals,
+!                 "secrets": c.secrets, "notes": c.notes,
+!             }
+!             for c in characters
+!         ]
+!         zf.writestr("characters.json", json.dumps(char_data, ensure_ascii=False, indent=2))
+  
+          # Lore
+!         lore_data = [
+!             {
+!                 "id": item.id, "name": item.name,
+!                 "lore_type": item.lore_type, "description": item.description,
+!                 "tags": item.tags,
+!             }
+!             for item in lore_items
+!         ]
+!         zf.writestr("lore.json", json.dumps(lore_data, ensure_ascii=False, indent=2))
+  
+          # Timeline
+!         timeline_data = [
+!             {
+!                 "id": ev.id, "title": ev.title,
+!                 "event_date": ev.event_date, "description": ev.description,
+!             }
+!             for ev in timeline
+!         ]
+!         zf.writestr("timeline.json", json.dumps(timeline_data, ensure_ascii=False, indent=2))
+  
+!     buf.seek(0)
+!     return buf.read()
+  
+  
+> @router.post("/export")
+> async def export_project(payload: ProjectExportIn) -> Response:
+!     fmt = payload.fmt.lower()
+!     if fmt not in _MIME:
+!         raise HTTPException(status_code=400, detail=f"Unsupported format: {fmt}")
+  
+!     db = SessionLocal()
+!     try:
+!         project, chapters = _load_data(db, payload.project_id)
+!         safe_title = _safe_filename(project.title)
+  
+!         if fmt == "md":
+!             content_bytes = _build_md(project, chapters).encode("utf-8")
+!         elif fmt == "txt":
+!             content_bytes = _build_txt(project, chapters).encode("utf-8")
+!         elif fmt == "html":
+!             content_bytes = _build_html(project, chapters).encode("utf-8")
+!         else:  # zip
+!             content_bytes = _build_zip(db, project, chapters)
+!     finally:
+!         db.close()
+  
+!     filename = f"{safe_title}.{fmt}"
+!     return Response(
+!         content=content_bytes,
+!         media_type=_MIME[fmt],
+!         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+!     )
+  
+  
+  

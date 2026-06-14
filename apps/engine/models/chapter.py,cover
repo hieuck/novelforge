@@ -1,0 +1,22 @@
+> from sqlalchemy import Column, String, Text, DateTime, ForeignKey, Integer, Float
+> from sqlalchemy.orm import relationship
+> from sqlalchemy.sql import func
+> from db.base import Base
+  
+  
+> class Chapter(Base):
+>     __tablename__ = "chapters"
+  
+>     id = Column(String, primary_key=True)
+>     project_id = Column(String, ForeignKey("projects.id"), nullable=False)
+>     title = Column(String, nullable=False)
+>     content = Column(Text, nullable=False)
+>     status = Column(String, nullable=False, default="draft")
+>     word_count = Column(Integer, nullable=False, default=0)
+>     scene_order = Column(Integer, nullable=False, default=0)
+>     summary = Column(Text, nullable=True)
+>     notes = Column(Text, nullable=True)
+>     created_at = Column(DateTime(timezone=True), server_default=func.now())
+>     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+  
+      # relationships populates later when needed.
