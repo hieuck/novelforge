@@ -6,11 +6,12 @@ import { api } from '../lib/api'
 
 export default function Sidebar() {
   const { projects, fetchProjects } = useProjectStore()
-  const { hash } = useLocation()
-  const projectId = hash.match(/#\/projects\/([^/]+)/)?.[1]
+  const location = useLocation()
+  // With HashRouter, location.pathname gives us the path after #
+  const projectId = location.pathname.match(/^\/projects\/([^/]+)/)?.[1] ?? null
   const [activeJobs, setActiveJobs] = useState(0)
 
-  useEffect(() => { fetchProjects() }, [])
+  useEffect(() => { fetchProjects() }, [fetchProjects])
 
   // Poll active job count for the current project
   useEffect(() => {

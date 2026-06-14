@@ -1,3 +1,3 @@
-from fastapi import APIRouter
-
-router = APIRouter()
+# Routes package – routers are imported directly from their submodules,
+# primarily by apps.engine.app.create_app(). Intentionally no side-effect
+# imports here to keep startup and circular-import risk low.

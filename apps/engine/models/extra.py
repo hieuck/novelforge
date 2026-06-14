@@ -1,10 +1,21 @@
-from sqlalchemy import Column, String, Text, DateTime, Boolean, Integer, Float, func, JSON
+from sqlalchemy import Column, String, Text, DateTime, Boolean, Integer, Float, func
+
 from db.base import Base
 
 
 class Settings(Base):
     __tablename__ = "settings"
-    id = Column(String, primary_key=True)
+    id = Column(String, primary_key=True, default="app-settings")
+    project_id = Column(String, nullable=True)
+    key = Column(String, nullable=False)
+    value = Column(Text, nullable=False)
+    is_secret = Column(Boolean, nullable=False, default=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class AppSettings(Base):
+    __tablename__ = "app_settings"
+    id = Column(String, primary_key=True, default="app-settings")
     active = Column(Boolean, nullable=False, default=True, index=True)
     provider = Column(String, nullable=False, default="ollama")
     base_url = Column(String, nullable=False, default="http://localhost:11434")
@@ -28,7 +39,7 @@ class Character(Base):
     appearance = Column(Text, nullable=True)
     goals = Column(Text, nullable=True)
     secrets = Column(Text, nullable=True)
-    relationships = Column(JSON, nullable=True)
+    relationships = Column(Text, nullable=True)
     first_appearance = Column(String, nullable=True)
     notes = Column(Text, nullable=True)
     summary = Column(Text, nullable=True)
@@ -43,10 +54,10 @@ class Lore(Base):
     lore_type = Column(String, nullable=False)
     name = Column(String, nullable=False)
     description = Column(Text, nullable=True)
-    tags = Column(JSON, nullable=True)
-    related_chapters = Column(JSON, nullable=True)
-    related_characters = Column(JSON, nullable=True)
-    metadata = Column(JSON, nullable=True)
+    tags = Column(Text, nullable=True)
+    related_chapters = Column(Text, nullable=True)
+    related_characters = Column(Text, nullable=True)
+    meta_data = Column("metadata", Text, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
 
@@ -58,10 +69,10 @@ class TimelineItem(Base):
     title = Column(String, nullable=False)
     event_date = Column(String, nullable=True)
     relative_order = Column(String, nullable=True)
-    involved_characters = Column(JSON, nullable=True)
-    related_chapters = Column(JSON, nullable=True)
+    involved_characters = Column(Text, nullable=True)
+    related_chapters = Column(Text, nullable=True)
     description = Column(Text, nullable=True)
-    metadata = Column(JSON, nullable=True)
+    meta_data = Column("metadata", Text, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
 
@@ -72,7 +83,7 @@ class Job(Base):
     project_id = Column(String, nullable=False, index=True)
     kind = Column(String, nullable=False)
     status = Column(String, nullable=False, default="queued")
-    params = Column(JSON, nullable=True)
+    params = Column(Text, nullable=True)
     result = Column(Text, nullable=True)
     error = Column(Text, nullable=True)
     created_at = Column(DateTime, server_default=func.now())

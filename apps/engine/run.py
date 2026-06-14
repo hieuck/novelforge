@@ -1,12 +1,14 @@
 import os
 import sys
-import uvicorn
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, BASE_DIR)
+from typing import Optional
 
-HOST = os.environ.get("NOVELFORGE_HOST", "127.0.0.1")
-PORT = int(os.environ.get("NOVELFORGE_PORT", "9000"))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-if __name__ == "__main__":
-    uvicorn.run("app:app", host=HOST, port=PORT, log_level="info")
+try:
+    from app import create_app
+except Exception as exc:  # pragma: no cover - used as bootstrap guard only
+    raise ImportError("novelforge engine bootstrap failed: %s" % exc)
+
+app = create_app()
+application = app

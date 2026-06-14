@@ -13,7 +13,7 @@ class Chapter(Base):
     content = Column(Text, nullable=False)
     status = Column(String, nullable=False, default="draft")
     word_count = Column(Integer, nullable=False, default=0)
-    order = Column(Integer, nullable=False, default=0)
+    scene_order = Column(Integer, nullable=False, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 

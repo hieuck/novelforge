@@ -11,11 +11,11 @@
     "dev:engine": "python scripts/dev.py",
     "dev:desktop": "python scripts/dev.py",
     "install:engine": "cd apps/engine && python -m venv .venv && ./.venv/Scripts/pip install -r requirements.txt",
-    "build": "npm run build -w apps/desktop && cd apps/engine && python -m uvicorn server:app --host 127.0.0.1 --port 9000",
+    "build": "npm run build -w apps/desktop",
     "setup": "npm install && npm run setup -w apps/engine && npm run setup -w apps/desktop",
     "start": "npm run dev",
     "win": "scripts\\win-dev.bat",
-    "test": "pytest",
+    "test": "pytest -q",
     "update": "cmd /c scripts\\update.bat"
   },
   "devDependencies": {
