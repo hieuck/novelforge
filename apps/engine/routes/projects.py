@@ -52,7 +52,7 @@ def list_projects():
         db.close()
 
 
-@router.post("/")
+@router.post("/", status_code=201)
 def create_project(payload: ProjectIn):
     db: Session = SessionLocal()
     try:
@@ -92,5 +92,57 @@ def update_project(project_id: str, payload: ProjectUpdate):
         db.commit()
         db.refresh(p)
         return to_dict(p)
+    finally:
+        db.close()
+
+
+@router.delete("/{project_id}", status_code=204)
+def delete_project(project_id: str):
+    from models.extra import Character, Lore, TimelineItem, Job
+    from models.summary import Summary
+    from services.search import remove_chapter, remove_character, remove_lore
+
+    db: Session = SessionLocal()
+    try:
+        p = db.query(Project).filter(Project.id == project_id).first()
+        if not p:
+            raise HTTPException(status_code=404, detail="Not found")
+
+        # Cascade delete all related data
+        chapters = db.query(Chapter).filter(Chapter.project_id == project_id).all()
+        chapter_ids = [c.id for c in chapters]
+
+        db.query(Summary).filter(Summary.project_id == project_id).delete()
+        db.query(Job).filter(Job.project_id == project_id).delete()
+        db.query(TimelineItem).filter(TimelineItem.project_id == project_id).delete()
+
+        lore_items = db.query(Lore).filter(Lore.project_id == project_id).all()
+        lore_ids = [item.id for item in lore_items]
+        db.query(Lore).filter(Lore.project_id == project_id).delete()
+
+        characters = db.query(Character).filter(Character.project_id == project_id).all()
+        char_ids = [c.id for c in characters]
+        db.query(Character).filter(Character.project_id == project_id).delete()
+
+        db.query(Chapter).filter(Chapter.project_id == project_id).delete()
+        db.delete(p)
+        db.commit()
+
+        # Clean up FTS index entries
+        for cid in chapter_ids:
+            try:
+                remove_chapter(cid)
+            except Exception:
+                pass
+        for lid in lore_ids:
+            try:
+                remove_lore(lid)
+            except Exception:
+                pass
+        for chid in char_ids:
+            try:
+                remove_character(chid)
+            except Exception:
+                pass
     finally:
         db.close()

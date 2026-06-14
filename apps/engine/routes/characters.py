@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from db.session import SessionLocal
-from models.character import Character
+from models.extra import Character
 import uuid
 from datetime import datetime
 
@@ -72,7 +72,7 @@ def list_characters(project_id: str):
         db.close()
 
 
-@router.post("/")
+@router.post("/", status_code=201)
 def create_character(payload: CharacterIn):
     db: Session = SessionLocal()
     try:
@@ -112,5 +112,23 @@ def update_character(character_id: str, payload: CharacterUpdate):
         db.commit()
         db.refresh(c)
         return to_dict(c)
+    finally:
+        db.close()
+
+
+@router.delete("/{character_id}", status_code=204)
+def delete_character(character_id: str):
+    db: Session = SessionLocal()
+    try:
+        c = db.query(Character).filter(Character.id == character_id).first()
+        if not c:
+            raise HTTPException(status_code=404, detail="Not found")
+        db.delete(c)
+        db.commit()
+        try:
+            from services.search import remove_character
+            remove_character(character_id)
+        except Exception:
+            pass
     finally:
         db.close()

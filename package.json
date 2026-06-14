@@ -11,18 +11,16 @@
     "dev:engine": "python scripts/dev.py",
     "dev:desktop": "python scripts/dev.py",
     "install:engine": "cd apps/engine && python -m venv .venv && ./.venv/Scripts/pip install -r requirements.txt",
-    "build": "npm run build -w apps/desktop && cd apps/engine && python -m uvicorn server:app --host 127.0.0.1 --port 9000",
+    "build": "npm run build -w apps/desktop",
     "setup": "npm install && npm run setup -w apps/engine && npm run setup -w apps/desktop",
     "start": "npm run dev",
     "win": "scripts\\win-dev.bat",
-    "test": "pytest"
+    "test": "pytest -q",
+    "update": "cmd /c scripts\\update.bat"
   },
   "devDependencies": {
-    "@types/better-sqlite3": "^7.6.13",
-    "@types/node": "^25.9.3",
-    "@types/ws": "^8.18.1",
-    "concurrently": "^9.2.1",
-    "pytest": "^8.3.4"
+    "@types/node": "^20.0.0",
+    "concurrently": "^9.2.1"
   },
   "dependencies": {
     "cross-env": "^10.1.0",

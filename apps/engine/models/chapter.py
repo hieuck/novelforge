@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Text, DateTime, ForeignKey
+from sqlalchemy import Column, String, Text, DateTime, ForeignKey, Integer, Float
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from db.base import Base
@@ -12,8 +12,8 @@ class Chapter(Base):
     title = Column(String, nullable=False)
     content = Column(Text, nullable=False)
     status = Column(String, nullable=False, default="draft")
-    word_count = Column(int, nullable=False, default=0)
-    order = Column(int, nullable=False, default=0)
+    word_count = Column(Integer, nullable=False, default=0)
+    scene_order = Column(Integer, nullable=False, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 

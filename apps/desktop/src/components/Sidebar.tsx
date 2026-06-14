@@ -1,48 +1,114 @@
-import { NavLink } from 'react-router-dom'
+﻿import { useEffect, useState } from 'react'
+import { NavLink, useLocation } from 'react-router-dom'
+import { BookOpen, Settings, LayoutDashboard, Users, Globe, Clock, FileText, Download, Search, SlidersHorizontal, Sparkles } from 'lucide-react'
 import { useProjectStore } from '../stores/projectStore'
+import { api } from '../lib/api'
 
 export default function Sidebar() {
   const { projects, fetchProjects } = useProjectStore()
+  const location = useLocation()
+  // With HashRouter, location.pathname gives us the path after #
+  const projectId = location.pathname.match(/^\/projects\/([^/]+)/)?.[1] ?? null
+  const [activeJobs, setActiveJobs] = useState(0)
+
+  useEffect(() => { fetchProjects() }, [fetchProjects])
+
+  // Poll active job count for the current project
+  useEffect(() => {
+    if (!projectId) { setActiveJobs(0); return }
+    let cancelled = false
+    const check = async () => {
+      try {
+        const jobs = await api.get<Array<{ status: string; kind: string }>>(`/projects/${projectId}/jobs?limit=20`)
+        if (!cancelled) {
+          setActiveJobs(jobs.filter((j) => j.kind === 'agent' && (j.status === 'queued' || j.status === 'running')).length)
+        }
+      } catch { /* ignore */ }
+    }
+    check()
+    const t = setInterval(check, 5000)
+    return () => { cancelled = true; clearInterval(t) }
+  }, [projectId])
+
+  const navCls = ({ isActive }: { isActive: boolean }) =>
+    `flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
+      isActive ? 'bg-slate-800 text-slate-100' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
+    }`
 
   return (
-    <aside className="flex h-full w-60 flex-col border-r border-slate-800/70 bg-slate-900/60">
-      <header className="border-b border-slate-800/70 px-4 py-3">
-        <div className="text-sm font-semibold text-slate-100">NovelForge</div>
-        <div className="text-xs text-slate-500">Offline-first writing</div>
+    <aside className="flex h-full w-56 flex-col border-r border-slate-800 bg-slate-950">
+      <header className="border-b border-slate-800 px-4 py-3">
+        <div className="flex items-center gap-2">
+          <BookOpen className="h-4 w-4 text-indigo-400" />
+          <span className="text-sm font-bold text-slate-100">NovelForge</span>
+        </div>
+        <div className="mt-0.5 text-[11px] text-slate-500">Offline writing studio</div>
       </header>
 
-      <nav className="flex-1 space-y-1 overflow-y-auto px-2 py-3 text-sm">
-        <NavLink
-          to="/"
-          end
-          className="block rounded-md px-3 py-2 text-slate-300 hover:bg-slate-800"
-        >
+      <nav className="flex-1 overflow-y-auto px-2 py-3 space-y-0.5">
+        <NavLink to="/" end className={navCls}>
+          <LayoutDashboard className="h-4 w-4" />
           Dashboard
         </NavLink>
 
-        <div className="px-3 pb-1 pt-2 text-[11px] uppercase tracking-wide text-slate-500">
-          Projects
-        </div>
-        {projects.map((p) => (
-          <NavLink
-            key={p.id}
-            to={`/projects/${p.id}/chapters`}
-            className="block rounded-md px-3 py-2 text-slate-300 hover:bg-slate-800"
-          >
-            <div className="truncate">{p.title}</div>
-            {p.updated_at && (
-              <div className="text-[10px] text-slate-500">
-                {new Date(p.updated_at).toLocaleDateString()}
-              </div>
-            )}
-          </NavLink>
-        ))}
+        {projectId && (
+          <>
+            <div className="mt-3 px-3 pb-1 text-[10px] uppercase tracking-wider text-slate-600">Project</div>
+            <NavLink to={`/projects/${projectId}`} end className={navCls}>
+              <SlidersHorizontal className="h-4 w-4" />Project Info
+            </NavLink>
+            <NavLink to={`/projects/${projectId}/chapters`} className={navCls}>
+              <FileText className="h-4 w-4" />Chapters
+            </NavLink>
+            <NavLink to={`/projects/${projectId}/characters`} className={navCls}>
+              <Users className="h-4 w-4" />Characters
+            </NavLink>
+            <NavLink to={`/projects/${projectId}/lore`} className={navCls}>
+              <Globe className="h-4 w-4" />Lore
+            </NavLink>
+            <NavLink to={`/projects/${projectId}/timeline`} className={navCls}>
+              <Clock className="h-4 w-4" />Timeline
+            </NavLink>
+            <NavLink to={`/projects/${projectId}/export`} className={navCls}>
+              <Download className="h-4 w-4" />Export
+            </NavLink>
+            <NavLink to={`/projects/${projectId}/search`} className={navCls}>
+              <Search className="h-4 w-4" />Search
+            </NavLink>
+            <NavLink to={`/projects/${projectId}/agent-jobs`} className={navCls}>
+              <Sparkles className="h-4 w-4" />
+              <span>Agent Jobs</span>
+              {activeJobs > 0 && (
+                <span className="ml-auto rounded-full bg-yellow-900/60 px-1.5 py-0.5 text-[10px] text-yellow-300">
+                  {activeJobs}
+                </span>
+              )}
+            </NavLink>
+          </>
+        )}
+
+        {projects.length > 0 && (
+          <>
+            <div className="mt-3 px-3 pb-1 text-[10px] uppercase tracking-wider text-slate-600">Projects</div>
+            {projects.map((p) => (
+              <NavLink key={p.id} to={`/projects/${p.id}/chapters`}
+                className={({ isActive }) =>
+                  `block rounded-md px-3 py-2 text-sm transition-colors ${
+                    isActive || p.id === projectId ? 'bg-slate-800 text-slate-100' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
+                  }`
+                }>
+                <div className="truncate font-medium">{p.title}</div>
+                {p.genre && <div className="text-[10px] text-slate-500">{p.genre}</div>}
+              </NavLink>
+            ))}
+          </>
+        )}
       </nav>
 
-      <footer className="border-t border-slate-800/70 px-3 py-2 text-[11px] text-slate-500">
-        <button onClick={fetchProjects} className="w-full rounded-md border border-slate-800 py-1">
-          Refresh
-        </button>
+      <footer className="border-t border-slate-800 px-2 py-2">
+        <NavLink to="/settings" className={navCls}>
+          <Settings className="h-4 w-4" />Settings
+        </NavLink>
       </footer>
     </aside>
   )

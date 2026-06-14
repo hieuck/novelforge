@@ -1,74 +1,229 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
+import { Plus, X, ChevronDown, ChevronUp, Trash2, Edit2, Check, Bot } from 'lucide-react'
+import { api } from '../lib/api'
+import type { Character } from '../types'
+import AgentPanel from '../components/AgentPanel'
+
+const EMPTY: Omit<Character, 'id' | 'project_id' | 'created_at' | 'updated_at'> = {
+  name: '', alias: '', role: '', age: '', personality: '', appearance: '',
+  goals: '', secrets: '', first_appearance: '', notes: '',
+}
 
 export default function Characters() {
   const { projectId } = useParams()
-  const [list, setList] = useState<any[]>([])
-  const [form, setForm] = useState({ name: '', role: '', bio: '' })
+  const [list, setList] = useState<Character[]>([])
+  const [form, setForm] = useState({ ...EMPTY })
+  const [showForm, setShowForm] = useState(false)
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [editId, setEditId] = useState<string | null>(null)
+  const [editForm, setEditForm] = useState({ ...EMPTY })
   const [loading, setLoading] = useState(false)
+  const [showAgent, setShowAgent] = useState(false)
 
-  useEffect(() => {
+  const load = async () => {
     if (!projectId) return
     setLoading(true)
-    fetch(`/api/projects/${projectId}/characters`)
-      .then((r) => r.json())
-      .then(setList)
-      .finally(() => setLoading(false))
-  }, [projectId])
+    try {
+      const data = await api.get<Character[]>(`/projects/${projectId}/characters`)
+      setList(data)
+    } finally {
+      setLoading(false)
+    }
+  }
 
-  const submit = async (e: React.FormEvent) => {
+  useEffect(() => { load() }, [projectId])
+
+  const create = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!projectId) return
-    await fetch('/api/characters', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ project_id: projectId, ...form }),
+    if (!form.name.trim() || !projectId) return
+    await api.post('/characters/', { project_id: projectId, ...form })
+    setForm({ ...EMPTY })
+    setShowForm(false)
+    load()
+  }
+
+  const remove = async (id: string) => {
+    if (!confirm('Xóa nhân vật này?')) return
+    await api.delete(`/characters/${id}`)
+    setList((l) => l.filter((c) => c.id !== id))
+  }
+
+  const startEdit = (c: Character) => {
+    setEditId(c.id)
+    setEditForm({
+      name: c.name, alias: c.alias ?? '', role: c.role ?? '', age: c.age ?? '',
+      personality: c.personality ?? '', appearance: c.appearance ?? '',
+      goals: c.goals ?? '', secrets: c.secrets ?? '',
+      first_appearance: c.first_appearance ?? '', notes: c.notes ?? '',
     })
-    setForm({ name: '', role: '', bio: '' })
-    const r = await fetch(`/api/projects/${projectId}/characters`)
-    setList(await r.json())
+  }
+
+  const saveEdit = async (id: string) => {
+    await api.patch(`/characters/${id}`, editForm)
+    setEditId(null)
+    load()
   }
 
   return (
-    <div className="mx-auto max-w-4xl p-6">
-      <h1 className="mb-4 text-2xl font-bold">Character Bible</h1>
-      <form onSubmit={submit} className="mb-6 grid gap-3 rounded-lg border border-slate-800 bg-slate-900/60 p-4">
-        <input
-          className="rounded-md bg-slate-800 p-2"
-          placeholder="Tên nhân vật"
-          value={form.name}
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
-        />
-        <input
-          className="rounded-md bg-slate-800 p-2"
-          placeholder="Vai trò"
-          value={form.role}
-          onChange={(e) => setForm({ ...form, role: e.target.value })}
-        />
-        <textarea
-          className="rounded-md bg-slate-800 p-2"
-          placeholder="Tiểu sử / đặc điểm"
-          value={form.bio}
-          onChange={(e) => setForm({ ...form, bio: e.target.value })}
-        />
-        <button type="submit" className="rounded-md bg-slate-800 px-3 py-2 text-sm text-slate-100">
-          Thêm nhân vật
-        </button>
-      </form>
-      {loading ? (
-        <div className="text-sm text-slate-500">Đang tải...</div>
-      ) : (
-        <div className="grid gap-3">
-          {list.map((c) => (
-            <div key={c.id} className="rounded-lg border border-slate-800 bg-slate-900/60 p-3">
-              <div className="font-medium">{c.name}</div>
-              {c.role && <div className="text-xs text-slate-400">{c.role}</div>}
-              {c.bio && <div className="mt-1 text-sm text-slate-300">{c.bio}</div>}
+    <div className="flex h-full overflow-hidden">
+      {/* Main content */}
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <div className="flex items-center justify-between border-b border-slate-800 px-6 py-3">
+        <h1 className="text-lg font-semibold text-slate-100">Character Bible</h1>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowAgent((v) => !v)}
+            title="AI Agent"
+            className={`flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm transition-colors ${
+              showAgent
+                ? 'border-indigo-700 bg-indigo-900/40 text-indigo-300'
+                : 'border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+            }`}
+          >
+            <Bot className="h-3.5 w-3.5" />
+            Agent
+          </button>
+          <button
+            onClick={() => setShowForm((v) => !v)}
+            className="flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-1.5 text-sm text-white hover:bg-indigo-700"
+          >
+            <Plus className="h-4 w-4" />
+            Thêm nhân vật
+          </button>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-6">
+        {showForm && (
+          <form onSubmit={create} className="mb-4 rounded-lg border border-slate-800 bg-slate-900 p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-slate-300">Nhân vật mới</span>
+              <button type="button" onClick={() => setShowForm(false)} className="text-slate-500 hover:text-slate-300">
+                <X className="h-4 w-4" />
+              </button>
             </div>
-          ))}
-          {!list.length && <div className="text-sm text-slate-500">Chưa có nhân vật nào.</div>}
+            <div className="grid grid-cols-2 gap-3">
+              {(['name', 'alias', 'role', 'age', 'first_appearance'] as const).map((f) => (
+                <input
+                  key={f}
+                  className="rounded-md border border-slate-800 bg-slate-800 px-3 py-1.5 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-600 focus:outline-none"
+                  placeholder={f === 'name' ? 'Tên *' : f === 'alias' ? 'Bí danh' : f === 'role' ? 'Vai trò' : f === 'age' ? 'Tuổi' : 'Xuất hiện lần đầu'}
+                  required={f === 'name'}
+                  value={form[f]}
+                  onChange={(e) => setForm({ ...form, [f]: e.target.value })}
+                />
+              ))}
+            </div>
+            {(['personality', 'appearance', 'goals', 'secrets', 'notes'] as const).map((f) => (
+              <textarea
+                key={f}
+                rows={2}
+                className="w-full rounded-md border border-slate-800 bg-slate-800 px-3 py-1.5 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-600 focus:outline-none"
+                placeholder={f === 'personality' ? 'Tính cách' : f === 'appearance' ? 'Ngoại hình' : f === 'goals' ? 'Mục tiêu' : f === 'secrets' ? 'Bí mật' : 'Ghi chú'}
+                value={form[f]}
+                onChange={(e) => setForm({ ...form, [f]: e.target.value })}
+              />
+            ))}
+            <button type="submit" className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
+              Lưu nhân vật
+            </button>
+          </form>
+        )}
+
+        {loading ? (
+          <div className="text-sm text-slate-500">Đang tải...</div>
+        ) : (
+          <div className="space-y-2">
+            {list.map((c) => (
+              <div key={c.id} className="rounded-lg border border-slate-800 bg-slate-900">
+                <div
+                  className="flex cursor-pointer items-center justify-between px-4 py-3"
+                  onClick={() => setExpandedId(expandedId === c.id ? null : c.id)}
+                >
+                  <div>
+                    <span className="font-medium text-slate-100">{c.name}</span>
+                    {c.alias && <span className="ml-2 text-sm text-slate-500">({c.alias})</span>}
+                    {c.role && <span className="ml-2 text-xs text-indigo-400">{c.role}</span>}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button onClick={(e) => { e.stopPropagation(); startEdit(c) }} className="p-1 text-slate-600 hover:text-slate-300">
+                      <Edit2 className="h-3.5 w-3.5" />
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); remove(c.id) }} className="p-1 text-slate-600 hover:text-red-400">
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                    {expandedId === c.id ? <ChevronUp className="h-4 w-4 text-slate-500" /> : <ChevronDown className="h-4 w-4 text-slate-500" />}
+                  </div>
+                </div>
+
+                {expandedId === c.id && (
+                  <div className="border-t border-slate-800 px-4 pb-4 pt-3">
+                    {editId === c.id ? (
+                      <div className="space-y-2">
+                        <div className="grid grid-cols-2 gap-2">
+                          {(['name','alias','role','age','first_appearance'] as const).map((f) => (
+                            <input key={f}
+                              className="rounded border border-slate-800 bg-slate-800 px-2 py-1 text-sm text-slate-200"
+                              value={editForm[f]}
+                              onChange={(e) => setEditForm({ ...editForm, [f]: e.target.value })}
+                              placeholder={f}
+                            />
+                          ))}
+                        </div>
+                        {(['personality','appearance','goals','secrets','notes'] as const).map((f) => (
+                          <textarea key={f} rows={2}
+                            className="w-full rounded border border-slate-800 bg-slate-800 px-2 py-1 text-sm text-slate-200"
+                            value={editForm[f]}
+                            onChange={(e) => setEditForm({ ...editForm, [f]: e.target.value })}
+                            placeholder={f}
+                          />
+                        ))}
+                        <div className="flex gap-2">
+                          <button onClick={() => saveEdit(c.id)} className="flex items-center gap-1 rounded bg-indigo-600 px-3 py-1.5 text-xs text-white hover:bg-indigo-700">
+                            <Check className="h-3 w-3" /> Lưu
+                          </button>
+                          <button onClick={() => setEditId(null)} className="rounded border border-slate-700 px-3 py-1.5 text-xs text-slate-400 hover:text-slate-200">
+                            Hủy
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                        {c.age && <Field label="Tuổi" value={c.age} />}
+                        {c.first_appearance && <Field label="Xuất hiện" value={c.first_appearance} />}
+                        {c.personality && <Field label="Tính cách" value={c.personality} full />}
+                        {c.appearance && <Field label="Ngoại hình" value={c.appearance} full />}
+                        {c.goals && <Field label="Mục tiêu" value={c.goals} full />}
+                        {c.secrets && <Field label="Bí mật" value={c.secrets} full />}
+                        {c.notes && <Field label="Ghi chú" value={c.notes} full />}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+            {!list.length && <div className="text-sm text-slate-500">Chưa có nhân vật nào.</div>}
+          </div>
+        )}
+      </div>
+      </div>{/* end main content */}
+
+      {/* Agent panel */}
+      {showAgent && (
+        <div className="border-l border-slate-800">
+          <AgentPanel projectId={projectId} />
         </div>
       )}
+    </div>
+  )
+}
+
+function Field({ label, value, full }: { label: string; value: string; full?: boolean }) {
+  return (
+    <div className={full ? 'col-span-2' : ''}>
+      <div className="text-[10px] uppercase tracking-wide text-slate-600">{label}</div>
+      <div className="text-slate-300">{value}</div>
     </div>
   )
 }

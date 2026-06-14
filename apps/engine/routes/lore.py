@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from db.session import SessionLocal
-from models.lore import Lore
+from models.extra import Lore
 import uuid
 from datetime import datetime
 
@@ -57,7 +57,7 @@ def list_lore(project_id: str):
         db.close()
 
 
-@router.post("/")
+@router.post("/", status_code=201)
 def create_lore(payload: LoreIn):
     db: Session = SessionLocal()
     try:
@@ -97,5 +97,23 @@ def update_lore(lore_id: str, payload: LoreUpdate):
         db.commit()
         db.refresh(row)
         return to_dict(row)
+    finally:
+        db.close()
+
+
+@router.delete("/{lore_id}", status_code=204)
+def delete_lore(lore_id: str):
+    db: Session = SessionLocal()
+    try:
+        row = db.query(Lore).filter(Lore.id == lore_id).first()
+        if not row:
+            raise HTTPException(status_code=404, detail="Not found")
+        db.delete(row)
+        db.commit()
+        try:
+            from services.search import remove_lore
+            remove_lore(lore_id)
+        except Exception:
+            pass
     finally:
         db.close()

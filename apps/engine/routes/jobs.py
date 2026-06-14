@@ -1,13 +1,253 @@
-from fastapi import APIRouter
-from db.session import SessionLocal
-from models.job import Job
+from __future__ import annotations
 
+import asyncio
+import json
+import logging
+import uuid
+from datetime import datetime, timezone
+
+from fastapi import APIRouter, BackgroundTasks, HTTPException, WebSocket, WebSocketDisconnect
+from pydantic import BaseModel
+
+from db.session import SessionLocal
+from models.extra import Job
+
+logger = logging.getLogger("novelforge.jobs")
 router = APIRouter()
 
+# In-memory registry of active job cancel events keyed by job_id
+_cancel_events: dict[str, asyncio.Event] = {}
+
+
+def _to_dict(j: Job) -> dict:
+    params: dict | None = None
+    result: dict | None = None
+    try:
+        if j.params:
+            params = json.loads(j.params)
+    except Exception:
+        params = {"raw": j.params}
+    try:
+        if j.result:
+            result = json.loads(j.result)
+    except Exception:
+        result = {"raw": j.result}
+    return {
+        "id": j.id,
+        "project_id": j.project_id,
+        "kind": j.kind,
+        "status": j.status,
+        "params": params,
+        "result": result,
+        "error": j.error,
+        "created_at": j.created_at.isoformat() if j.created_at else None,
+        "updated_at": j.updated_at.isoformat() if j.updated_at else None,
+    }
+
+
+class JobIn(BaseModel):
+    project_id: str
+    task: str
+    language: str = "vi"
+
+
 @router.get("/projects/{project_id}/jobs")
-async def list_jobs(project_id: str):
+def list_jobs(project_id: str, limit: int = 50) -> list[dict]:
     db = SessionLocal()
     try:
-        return db.query(Job).filter(Job.project_id == project_id).order_by(Job.created_at.desc()).all()
+        jobs = (
+            db.query(Job)
+            .filter(Job.project_id == project_id)
+            .order_by(Job.created_at.desc())
+            .limit(min(limit, 200))
+            .all()
+        )
+        return [_to_dict(j) for j in jobs]
+    finally:
+        db.close()
+
+
+@router.post("/agent/jobs", status_code=201)
+async def submit_job(payload: JobIn, background_tasks: BackgroundTasks) -> dict:
+    """Submit a new background agent job."""
+    db = SessionLocal()
+    try:
+        job = Job(
+            id=str(uuid.uuid4()),
+            project_id=payload.project_id,
+            kind="agent",
+            status="queued",
+            params=json.dumps({"task": payload.task, "language": payload.language}),
+        )
+        db.add(job)
+        db.commit()
+        db.refresh(job)
+        result = _to_dict(job)
+    finally:
+        db.close()
+
+    # Schedule background execution after response is returned
+    background_tasks.add_task(_run_agent_job, result["id"])
+    return result
+
+
+@router.post("/jobs/{job_id}/cancel")
+def cancel_job(job_id: str) -> dict:
+    """Signal a running job to cancel."""
+    db = SessionLocal()
+    try:
+        job = db.query(Job).filter(Job.id == job_id).first()
+        if not job:
+            raise HTTPException(status_code=404, detail="Job not found")
+        if job.status in ("done", "failed", "cancelled"):
+            return _to_dict(job)
+        job.status = "cancelled"
+        job.updated_at = datetime.now(timezone.utc)
+        db.commit()
+        db.refresh(job)
+        # Signal the background task if running
+        ev = _cancel_events.get(job_id)
+        if ev:
+            ev.set()
+        return _to_dict(job)
+    finally:
+        db.close()
+
+
+@router.websocket("/ws/jobs/{job_id}")
+async def job_ws(ws: WebSocket, job_id: str) -> None:
+    """Stream live job updates via WebSocket.
+
+    Sends the full job JSON whenever status or result changes.
+    Closes when the job reaches a terminal state.
+    """
+    await ws.accept()
+    try:
+        last_status = None
+        max_polls = 600  # 10 minutes at 1s interval
+        for _ in range(max_polls):
+            db = SessionLocal()
+            try:
+                job = db.query(Job).filter(Job.id == job_id).first()
+                if not job:
+                    await ws.send_json({"error": "Job not found"})
+                    return
+                current = _to_dict(job)
+            finally:
+                db.close()
+
+            if current["status"] != last_status:
+                last_status = current["status"]
+                try:
+                    await ws.send_json(current)
+                except Exception:
+                    return
+
+            if current["status"] in ("done", "failed", "cancelled"):
+                return
+
+            await asyncio.sleep(1.0)
+    except WebSocketDisconnect:
+        pass
+    finally:
+        try:
+            await ws.close()
+        except Exception:
+            pass
+
+
+async def _run_agent_job(job_id: str) -> None:
+    """Execute an agent job in the background, updating DB status as it progresses."""
+    cancel_ev = asyncio.Event()
+    _cancel_events[job_id] = cancel_ev
+
+    db = SessionLocal()
+    try:
+        job = db.query(Job).filter(Job.id == job_id).first()
+        if not job:
+            return
+        if job.status == "cancelled":
+            return
+        params: dict = {}
+        try:
+            if job.params:
+                params = json.loads(job.params)
+        except Exception:
+            pass
+
+        task: str = params.get("task", "")
+        language: str = params.get("language", "vi")
+        project_id: str = job.project_id
+
+        job.status = "running"
+        job.updated_at = datetime.now(timezone.utc)
+        db.commit()
+    except Exception as exc:
+        logger.error("Job %s startup failed: %s", job_id, exc)
+        return
+    finally:
+        db.close()
+
+    logs: list[str] = []
+    steps_completed = 0
+    output_summary = ""
+
+    try:
+        # Import here to avoid circular imports at module load time
+        from services.ai_service import AIEngine
+
+        engine = AIEngine(project_id=project_id)
+        await engine.prepare()
+
+        logs.append(f"Starting task: {task[:200]}")
+
+        # For the background job we use a single non-streaming AI call
+        result_text = await engine.run(
+            action="outline",
+            text=task,
+            instruction=f"Language: {language}. Complete the task thoroughly.",
+            chapter_id=None,
+        )
+        output_summary = result_text[:500]
+        steps_completed = 1
+        logs.append("Task completed.")
+
+        if cancel_ev.is_set():
+            _update_job(job_id, "cancelled", logs, output_summary, steps_completed, None)
+            return
+
+        _update_job(job_id, "done", logs, output_summary, steps_completed, None)
+
+    except Exception as exc:
+        logger.error("Job %s failed: %s", job_id, exc)
+        logs.append(f"Error: {exc}")
+        _update_job(job_id, "failed", logs, output_summary, steps_completed, str(exc))
+    finally:
+        _cancel_events.pop(job_id, None)
+
+
+def _update_job(
+    job_id: str,
+    status: str,
+    logs: list[str],
+    summary: str,
+    steps_completed: int,
+    error: str | None,
+) -> None:
+    db = SessionLocal()
+    try:
+        job = db.query(Job).filter(Job.id == job_id).first()
+        if not job:
+            return
+        job.status = status
+        job.result = json.dumps({
+            "logs": logs,
+            "output": {"summary": summary, "steps_completed": steps_completed},
+        })
+        job.error = error
+        job.updated_at = datetime.now(timezone.utc)
+        db.commit()
+    except Exception as exc:
+        logger.error("Failed to update job %s: %s", job_id, exc)
     finally:
         db.close()

@@ -1,46 +1,70 @@
-import os
-import sys
+#!/usr/bin/env python3
+"""Start both FastAPI engine and Vite frontend concurrently for development."""
+import pathlib
+import signal
 import subprocess
-import time
-import socket
+import sys
 
-REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-ENGINE = os.path.join(REPO, "apps", "engine", "run.py")
-DESKTOP = os.path.join(REPO, "apps", "desktop")
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+ENGINE_DIR = ROOT / "apps" / "engine"
+DESKTOP_DIR = ROOT / "apps" / "desktop"
 
 
-def get_free_port(start=5173, end=5200):
-    for port in range(start, end):
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+def find_python() -> str:
+    for candidate in [
+        ENGINE_DIR / ".venv" / "Scripts" / "python.exe",
+        ENGINE_DIR / ".venv" / "bin" / "python3",
+    ]:
+        if candidate.exists():
+            return str(candidate)
+    return sys.executable
+
+
+def find_npm() -> str:
+    return "npm.cmd" if sys.platform == "win32" else "npm"
+
+
+procs: list = []
+
+
+def cleanup(*_: object) -> None:
+    print("\nStopping servers...")
+    for p in procs:
         try:
-            s.bind(("127.0.0.1", port))
-            s.close()
-            return port
-        except OSError:
-            continue
-    return 5173
+            p.terminate()
+        except Exception:
+            pass
+    sys.exit(0)
 
 
-def main():
-    port = get_free_port()
-    print(f"[novelforge] Port {port}")
-    engine = subprocess.Popen(
-        [sys.executable, ENGINE],
-        env={**os.environ, "NOVELFORGE_PORT": str(port), "PYTHONUNBUFFERED": "1"},
-        cwd=os.path.dirname(ENGINE),
-    )
-    print(f"[novelforge] Engine pid={engine.pid}")
+signal.signal(signal.SIGINT, cleanup)
+signal.signal(signal.SIGTERM, cleanup)
 
-    time.sleep(0.9)
-    desktop = subprocess.Popen(
-        [sys.executable, "run-dev.py"],
-        cwd=DESKTOP,
-        env={**os.environ, "PORT": str(port)},
-    )
-    print(f"[novelforge] Desktop pid={desktop.pid}")
-    engine.wait()
-    sys.exit(engine.returncode or 0)
+python = find_python()
+npm = find_npm()
 
+print("=" * 55)
+print("  NovelForge Dev Environment")
+print("=" * 55)
+print(f"  Engine   -> http://127.0.0.1:9000")
+print(f"  Frontend -> http://127.0.0.1:5173")
+print(f"  API docs -> http://127.0.0.1:9000/docs")
+print("=" * 55)
 
-if __name__ == "__main__":
-    main()
+procs.append(subprocess.Popen(
+    [python, "-m", "uvicorn", "app:app",
+     "--host", "127.0.0.1", "--port", "9000", "--reload"],
+    cwd=str(ENGINE_DIR),
+))
+
+procs.append(subprocess.Popen(
+    [npm, "run", "dev"],
+    cwd=str(DESKTOP_DIR),
+))
+
+print("Both servers started. Press Ctrl+C to stop.\n")
+try:
+    for p in procs:
+        p.wait()
+except KeyboardInterrupt:
+    cleanup()

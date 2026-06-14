@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from db.session import SessionLocal
-from models.timeline import TimelineItem
+from models.extra import TimelineItem
 import uuid
 from datetime import datetime
 
@@ -57,7 +57,7 @@ def list_timeline(project_id: str):
         db.close()
 
 
-@router.post("/")
+@router.post("/", status_code=201)
 def create_timeline(payload: TimelineIn):
     db: Session = SessionLocal()
     try:
@@ -97,5 +97,18 @@ def update_timeline(event_id: str, payload: TimelineUpdate):
         db.commit()
         db.refresh(row)
         return to_dict(row)
+    finally:
+        db.close()
+
+
+@router.delete("/{event_id}", status_code=204)
+def delete_timeline(event_id: str):
+    db: Session = SessionLocal()
+    try:
+        row = db.query(TimelineItem).filter(TimelineItem.id == event_id).first()
+        if not row:
+            raise HTTPException(status_code=404, detail="Not found")
+        db.delete(row)
+        db.commit()
     finally:
         db.close()

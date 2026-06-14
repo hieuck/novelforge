@@ -1,13 +1,12 @@
-from sqlalchemy import Column, String, Text, DateTime, ForeignKey
-from sqlalchemy.sql import func
+from sqlalchemy import Column, String, Text, DateTime, Boolean, Integer, Float, func
+
 from db.base import Base
 
 
 class Character(Base):
     __tablename__ = "characters"
-
     id = Column(String, primary_key=True)
-    project_id = Column(String, ForeignKey("projects.id"), nullable=False)
+    project_id = Column(String, nullable=True, index=True)
     name = Column(String, nullable=False)
     alias = Column(String, nullable=True)
     role = Column(String, nullable=True)
@@ -19,5 +18,6 @@ class Character(Base):
     relationships = Column(Text, nullable=True)
     first_appearance = Column(String, nullable=True)
     notes = Column(Text, nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    summary = Column(Text, nullable=True)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, onupdate=func.now())

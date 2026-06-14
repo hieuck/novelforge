@@ -66,7 +66,7 @@ def list_chapters(project_id: str):
         db.close()
 
 
-@router.post("/")
+@router.post("/", status_code=201)
 def create_chapter(payload: ChapterIn):
     db: Session = SessionLocal()
     try:
@@ -106,11 +106,30 @@ def update_chapter(chapter_id: str, payload: ChapterUpdate):
         for k, v in data.items():
             setattr(c, k, v)
         if "content" in data:
-            c.word_count = count_words(data.get("content"))
+            c.word_count = count_words(data.get("content") or "")
         c.updated_at = datetime.utcnow()
         db.add(c)
         db.commit()
         db.refresh(c)
         return to_dict(c)
+    finally:
+        db.close()
+
+
+@router.delete("/{chapter_id}", status_code=204)
+def delete_chapter(chapter_id: str):
+    db: Session = SessionLocal()
+    try:
+        c = db.query(Chapter).filter(Chapter.id == chapter_id).first()
+        if not c:
+            raise HTTPException(status_code=404, detail="Not found")
+        db.delete(c)
+        db.commit()
+        # Remove from FTS index
+        try:
+            from services.search import remove_chapter
+            remove_chapter(chapter_id)
+        except Exception:
+            pass
     finally:
         db.close()

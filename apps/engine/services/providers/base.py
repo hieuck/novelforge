@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Optional
+from typing import AsyncGenerator, Optional
 
 
 @dataclass(frozen=True)
@@ -17,7 +19,18 @@ class LLMClient:
         self.settings = settings
 
     async def chat(self, *, system: str, user: str) -> str:
+        """Single-turn chat returning the full response."""
         raise NotImplementedError
+
+    async def chat_messages(self, messages: list[dict]) -> str:
+        """Multi-turn chat with a messages list, returning the full response."""
+        raise NotImplementedError
+
+    async def chat_stream(self, messages: list[dict]) -> AsyncGenerator[str, None]:
+        """Stream multi-turn chat, yielding text deltas."""
+        raise NotImplementedError
+        # This line keeps type checkers happy for the async generator protocol.
+        yield ""  # type: ignore[misc]
 
     @property
     def provider_name(self) -> str:

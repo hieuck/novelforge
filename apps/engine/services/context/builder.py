@@ -4,11 +4,9 @@ import json
 from typing import Any
 
 from db.session import SessionLocal
-from models.character import Character
+from models.extra import Character, Lore, TimelineItem
 from models.chapter import Chapter
-from models.lore import Lore
 from models.project import Project
-from models.timeline import TimelineItem
 
 
 class ProjectContext:
