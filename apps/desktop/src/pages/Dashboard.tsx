@@ -63,10 +63,12 @@ export default function Dashboard() {
   }, [fetchProjects])
 
   const newProject = async () => {
+    const title = prompt('Nhập tên project:', 'Truyện mới')?.trim()
+    if (!title) return
     setCreating(true)
     try {
-      const p = await createProject({ title: 'Untitled project' })
-      navigate(`/projects/${p.id}`)
+      const p = await createProject({ title })
+      navigate(`/projects/${p.id}/chapters`)
     } finally {
       setCreating(false)
     }
