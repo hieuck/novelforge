@@ -16,12 +16,21 @@ jobs:
         with:
           node-version: 20
           cache: npm
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
       - run: npm ci
+      - run: pip install -r apps/engine/requirements.txt uvicorn
       - run: npx vitest run
         working-directory: apps/desktop
       - run: npx tsc --noEmit
         working-directory: apps/desktop
       - run: npm run build
+        working-directory: apps/desktop
+      - name: Playwright E2E
+        run: |
+          npx playwright install chromium --with-deps
+          npx playwright test tests_e2e/ --config=tests_e2e/playwright.config.ts
         working-directory: apps/desktop
 
   backend:
