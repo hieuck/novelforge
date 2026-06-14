@@ -6,6 +6,26 @@ import * as http from 'http'
 
 declare function require(name: string): any
 
+// ── Global error handlers ──────────────────────────────────────────────────────
+
+function logToFile(msg: string): void {
+  try {
+    const logDir = path.join(process.env.LOCALAPPDATA || '.', 'novelforge', 'logs')
+    fs.mkdirSync(logDir, { recursive: true })
+    fs.appendFileSync(path.join(logDir, 'electron.log'), `${new Date().toISOString()} ${msg}\n`)
+  } catch {}
+}
+
+process.on('uncaughtException', (err) => {
+  logToFile(`[FATAL] uncaughtException: ${err?.message || err}\n${err?.stack || ''}`)
+  console.error('[main] UNCAUGHT:', err)
+})
+
+process.on('unhandledRejection', (reason) => {
+  logToFile(`[FATAL] unhandledRejection: ${reason}`)
+  console.error('[main] UNHANDLED REJECTION:', reason)
+})
+
 const isDev = !app.isPackaged
 const ENGINE_PORT = 9000
 const MAX_ENGINE_RESTARTS = 5
@@ -57,14 +77,17 @@ function startEngine(): void {
   engineProcess.stdout?.on('data', (d: Buffer) => process.stdout.write(`[engine] ${d}`))
   engineProcess.stderr?.on('data', (d: Buffer) => process.stderr.write(`[engine] ${d}`))
   engineProcess.on('exit', (code) => {
+    logToFile(`engine exited with code ${code}`)
     console.log(`[main] Engine exited: ${code}`)
     engineProcess = null
-    if (isQuitting) return
+    if (isQuitting) { logToFile('engine exit suppressed (quitting)'); return }
     if (engineRestartCount >= MAX_ENGINE_RESTARTS) {
+      logToFile('max engine restarts reached, giving up')
       console.error('[main] Max engine restarts reached, giving up')
       return
     }
     engineRestartCount++
+    logToFile(`restarting engine (attempt ${engineRestartCount}/${MAX_ENGINE_RESTARTS})`)
     console.log(`[main] Restarting engine in ${ENGINE_RESTART_DELAY}ms (attempt ${engineRestartCount}/${MAX_ENGINE_RESTARTS})`)
     setTimeout(() => startEngine(), ENGINE_RESTART_DELAY)
   })
@@ -262,9 +285,11 @@ app.whenReady().then(async () => {
     try {
       await waitForEngine(ENGINE_PORT, 60000)
       engineRestartCount = 0
+      logToFile('engine ready')
       console.log('[main] Engine ready on port', ENGINE_PORT)
     } catch (err) {
       splashWindow?.close(); splashWindow = null
+      logToFile(`engine failed to start: ${err}`)
       console.error('[main] Engine failed to start:', err)
       createMainWindow()
       return
