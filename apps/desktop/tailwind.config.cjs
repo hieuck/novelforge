@@ -1,7 +1,4 @@
-import tailwindcss from 'tailwindcss';
-import autoprefixer from 'autoprefixer';
-
-export default {
+module.exports = {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx,mdx}'],
   theme: {
     extend: {
@@ -10,5 +7,5 @@ export default {
       },
     },
   },
-  plugins: [tailwindcss, autoprefixer],
+  plugins: [],
 };

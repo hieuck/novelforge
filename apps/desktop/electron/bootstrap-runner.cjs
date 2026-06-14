@@ -15,8 +15,12 @@ async function runBootstrap(onEvent) {
   };
 
   try {
+    const logPath = path.join(require('os').homedir(), 'novelforge-bootstrap-verbose.log');
+    const log = (m) => { try { fs.appendFileSync(logPath, m + '\n'); } catch {} };
+    log(`bootstrap starting, NOVELFORGE_HOME=${NOVELFORGE_HOME}`);
     fs.mkdirSync(NOVELFORGE_HOME, { recursive: true });
     fs.mkdirSync(path.join(NOVELFORGE_HOME, 'logs'), { recursive: true });
+    log('mkdirs done');
 
     // 1. Git clone
     emit('stage', { name: 'clone', message: 'Cloning repository...' });
@@ -32,7 +36,7 @@ async function runBootstrap(onEvent) {
       ? path.join(VENV_ROOT, 'Scripts', 'python.exe')
       : path.join(VENV_ROOT, 'bin', 'python');
     const reqFile = path.join(AGENT_ROOT, 'apps', 'engine', 'requirements.txt');
-    await runCommand('uv', ['pip', '--python', pythonExe, 'install', '-r', reqFile], { emit });
+    await runCommand('uv', ['pip', 'install', '--python', pythonExe, '-r', reqFile], { emit });
 
     // 4. Write desktop content-hash stamp
     const desktopDir = path.join(AGENT_ROOT, 'apps', 'desktop');

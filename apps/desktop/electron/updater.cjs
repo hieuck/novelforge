@@ -50,6 +50,9 @@ function applyUpdates(branch = DEFAULT_BRANCH) {
   );
   const logFile = path.join(NOVELFORGE_HOME, 'logs', 'update.log');
 
+  // Determine current exe path for updater to relaunch
+  const exePath = process.env.PORTABLE_EXECUTABLE_FILE || process.execPath;
+
   const proc = spawn(powershellPath, [
     '-NoProfile', '-ExecutionPolicy', 'Bypass',
     '-File', scriptPath,
@@ -58,6 +61,7 @@ function applyUpdates(branch = DEFAULT_BRANCH) {
     '-Branch', branch,
     '-DesktopStampPath', DESKTOP_STAMP,
     '-LogFile', logFile,
+    '-ExePath', exePath,
   ], {
     detached: true,
     stdio: 'ignore',
@@ -67,12 +71,17 @@ function applyUpdates(branch = DEFAULT_BRANCH) {
 }
 
 function getUpdaterScriptPath() {
+  // Dev mode: scripts/ is at repo root
   const devPath = path.join(__dirname, '..', 'scripts', 'update-novelforge.ps1');
   if (fs.existsSync(devPath)) return devPath;
 
-  // Production: check resources/scripts (unpacked from asar)
-  const prodPath = path.join(process.resourcesPath, 'scripts', 'update-novelforge.ps1');
+  // Production: scripts/ is unpacked from asar to app.asar.unpacked/scripts/
+  const prodPath = path.join(process.resourcesPath, 'app.asar.unpacked', 'scripts', 'update-novelforge.ps1');
   if (fs.existsSync(prodPath)) return prodPath;
+
+  // Fallback for older electron-builder versions
+  const prodPath2 = path.join(process.resourcesPath, 'scripts', 'update-novelforge.ps1');
+  if (fs.existsSync(prodPath2)) return prodPath2;
 
   return null;
 }

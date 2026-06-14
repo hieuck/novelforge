@@ -213,11 +213,22 @@ function showErrorDialog(title: string, message: string): void {
 }
 
 app.whenReady().then(async () => {
-  registerIpcHandlers()
+  try {
+    registerIpcHandlers()
+  } catch (err: any) {
+    showErrorDialog('NovelForge — IPC Error', `registerIpcHandlers failed:\n${err?.message || err}`)
+    return
+  }
 
   if (!isDev) {
-    const probes = loadCJS('backend-probes')
-    const backend = probes.resolveBackend()
+    let probes, backend
+    try {
+      probes = loadCJS('backend-probes')
+      backend = probes.resolveBackend()
+    } catch (err: any) {
+      showErrorDialog('NovelForge — Probe Error', `Backend probe failed:\n${err?.message || err}`)
+      return
+    }
 
     if (backend.kind === 'bootstrap-needed') {
       createBootstrapSplash()
@@ -225,7 +236,7 @@ app.whenReady().then(async () => {
       if (!result.success) {
         showErrorDialog('NovelForge — Setup Failed',
           `Could not set up the application on first launch:\n\n${result.error}\n\n` +
-          'Please check your internet connection and make sure Git is installed.')
+          'Please check your internet connection and make sure Git, Python and uv are installed.')
         return
       }
     }

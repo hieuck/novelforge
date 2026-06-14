@@ -3,7 +3,8 @@ param(
     [string]$VenvRoot,
     [string]$Branch = "main",
     [string]$DesktopStampPath,
-    [string]$LogFile
+    [string]$LogFile,
+    [string]$ExePath
 )
 
 $ErrorActionPreference = "Stop"
@@ -110,41 +111,32 @@ if (-not (Test-Path $venvPython)) {
     & "uv" venv $VenvRoot 2>&1 | ForEach-Object { Write-Log $_ }
 }
 $reqFile = Join-Path $AgentRoot "apps\engine\requirements.txt"
-& "uv" "pip" "--python" $venvPython "install" "-r" $reqFile 2>&1 | ForEach-Object { Write-Log $_ }
+& "uv" "pip" "install" "--python" $venvPython "-r" $reqFile 2>&1 | ForEach-Object { Write-Log $_ }
 
-# Step 5: Rebuild desktop if source changed
+# Step 5: Update content-hash stamp (desktop rebuild not applicable for cloned repo without node_modules)
+# Desktop rebuild requires npm/npx which is only available in the developer's environment.
+# When desktop source changes significantly, a new installer is distributed separately.
 $desktopSrc = Join-Path $AgentRoot "apps\desktop"
 $stampPath = if ($DesktopStampPath) { $DesktopStampPath } else { Join-Path $env:LOCALAPPDATA "novelforge\desktop-build-stamp.json" }
-$needRebuild = $true
-if (Test-Path $stampPath) {
-    $stamp = Get-Content $stampPath -Raw | ConvertFrom-Json
-    $currentHash = Compute-ContentHash $desktopSrc
-    if ($currentHash -and $currentHash -eq $stamp.contentHash) {
-        Write-Log "Desktop source unchanged, skipping rebuild"
-        $needRebuild = $false
-    }
-}
-if ($needRebuild) {
-    Write-Log "Rebuilding desktop..."
-    Set-Location $desktopSrc
-    & "npm" "run" "pack" 2>&1 | ForEach-Object { Write-Log $_ }
-    if ($LASTEXITCODE -ne 0) {
-        Write-Log "npm run pack failed (exit $LASTEXITCODE)"
-        exit 1
-    }
-    # Write new stamp
-    $hash = Compute-ContentHash $desktopSrc
+$hash = Compute-ContentHash $desktopSrc
+if ($hash) {
     $newStamp = @{ contentHash = $hash; builtAt = (Get-Date -Format o) } | ConvertTo-Json
     $newStamp | Out-File -FilePath $stampPath -Encoding utf8
+    Write-Log "Desktop content-hash stamp updated"
 }
 
-# Step 6: Launch
-$exePath = Join-Path $desktopSrc "release\win-unpacked\NovelForge.exe"
-if (Test-Path $exePath) {
-    Write-Log "Launching $exePath"
-    Start-Process -FilePath $exePath
+# Step 6: Launch (use original install path passed as -ExePath)
+$launchExe = if ($ExePath) { $ExePath } else {
+    # Fallback: try common locations
+    $candidate = Join-Path (Split-Path $AgentRoot) "NovelForge.exe"
+    if (-not (Test-Path $candidate)) { $candidate = Join-Path $desktopSrc "release\win-unpacked\NovelForge.exe" }
+    $candidate
+}
+if (Test-Path $launchExe) {
+    Write-Log "Launching $launchExe"
+    Start-Process -FilePath $launchExe
 } else {
-    Write-Log "ERROR: NovelForge.exe not found at $exePath"
+    Write-Log "ERROR: NovelForge.exe not found — tried: $launchExe"
     exit 1
 }
 
