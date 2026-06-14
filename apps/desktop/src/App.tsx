@@ -17,7 +17,7 @@ export default function App() {
   return (
     <div className="flex h-screen overflow-hidden bg-slate-950 text-slate-100">
       <Sidebar />
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-hidden">
         <Routes>
           <Route path="/" element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
           <Route path="/projects/:projectId" element={<ErrorBoundary><ProjectPage /></ErrorBoundary>} />

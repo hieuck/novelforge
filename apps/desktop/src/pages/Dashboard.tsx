@@ -77,7 +77,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl p-6">
+    <div className="mx-auto max-w-3xl h-full overflow-y-auto p-6">
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
