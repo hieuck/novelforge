@@ -1,0 +1,621 @@
+# Instincts generated from https://github.com/hieuck/novelforge
+# Generated: 2026-06-14T08:43:52.090Z
+# Version: 2.0
+# NOTE: This file supplements (does not replace) any existing curated instincts.
+# High-confidence manually curated instincts should be preserved alongside these.
+
+---
+id: novelforge-commit-conventional
+trigger: "when writing a commit message"
+confidence: 0.85
+domain: git
+source: repo-analysis
+source_repo: https://github.com/hieuck/novelforge
+---
+
+# Novelforge Commit Conventional
+
+## Action
+
+Use conventional commit format with prefixes: feat, refactor, fix, chore
+
+## Evidence
+
+- 12 commits analyzed
+- Detected conventional commit pattern
+- Examples: refactor(engine): overhaul routes, services, and models; remove legacy bootstrap scripts, feat(desktop): add standalone updater script
+
+---
+id: novelforge-commit-length
+trigger: "when writing a commit message"
+confidence: 0.6
+domain: git
+source: repo-analysis
+source_repo: https://github.com/hieuck/novelforge
+---
+
+# Novelforge Commit Length
+
+## Action
+
+Write moderate-length commit messages (~54 characters)
+
+## Evidence
+
+- Average commit message length: 54 chars
+- Based on 12 commits
+
+---
+id: novelforge-naming-files
+trigger: "when creating a new file"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/hieuck/novelforge
+---
+
+# Novelforge Naming Files
+
+## Action
+
+Use camelCase naming convention
+
+## Evidence
+
+- Analyzed file naming patterns in repository
+- Dominant pattern: camelCase
+
+---
+id: novelforge-import-relative
+trigger: "when importing modules"
+confidence: 0.75
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/hieuck/novelforge
+---
+
+# Novelforge Import Relative
+
+## Action
+
+Use relative imports for project files
+
+## Evidence
+
+- Import analysis shows relative import pattern
+- Example: import { x } from '../lib/x'
+
+---
+id: novelforge-export-style
+trigger: "when exporting from a module"
+confidence: 0.7
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/hieuck/novelforge
+---
+
+# Novelforge Export Style
+
+## Action
+
+Prefer mixed exports
+
+## Evidence
+
+- Export pattern analysis
+- Dominant style: mixed
+
+---
+id: novelforge-arch-type-based
+trigger: "when adding new code"
+confidence: 0.8
+domain: architecture
+source: repo-analysis
+source_repo: https://github.com/hieuck/novelforge
+---
+
+# Novelforge Arch Type Based
+
+## Action
+
+Place code in the appropriate type folder (components/, services/, utils/, etc.)
+
+## Evidence
+
+- Type-based module organization detected
+- Folders: 
+
+---
+id: novelforge-test-separate
+trigger: "when writing tests"
+confidence: 0.8
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/hieuck/novelforge
+---
+
+# Novelforge Test Separate
+
+## Action
+
+Place tests in the tests/ or __tests__/ directory, mirroring src structure
+
+## Evidence
+
+- Separate test directory pattern detected
+- Tests live in dedicated test folders
+
+---
+id: novelforge-test-framework
+trigger: "when writing tests"
+confidence: 0.9
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/hieuck/novelforge
+---
+
+# Novelforge Test Framework
+
+## Action
+
+Use vitest as the test framework
+
+## Evidence
+
+- Test framework detected: vitest
+- File pattern: *.test.ts
+
+---
+id: novelforge-test-naming
+trigger: "when creating a test file"
+confidence: 0.85
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/hieuck/novelforge
+---
+
+# Novelforge Test Naming
+
+## Action
+
+Name test files using the pattern: *.test.ts
+
+## Evidence
+
+- File pattern: *.test.ts
+- Consistent across test files
+
+---
+id: novelforge-test-types
+trigger: "when planning tests for a feature"
+confidence: 0.7
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/hieuck/novelforge
+---
+
+# Novelforge Test Types
+
+## Action
+
+Write unit, integration, e2e tests to match project standards
+
+## Evidence
+
+- Test types detected: unit, integration, e2e
+- Coverage config: yes
+
+---
+id: novelforge-workflow-feature-development
+trigger: "when implementing a new feature"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/hieuck/novelforge
+---
+
+# Novelforge Workflow Feature Development
+
+## Action
+
+Follow the feature-development workflow:
+1. Add feature implementation
+2. Add tests for feature
+3. Update documentation
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~23x per month
+- Files: apps/desktop/apps/desktop/src/*, apps/desktop/apps/desktop/src/pages/*, apps/desktop/electron/*
+
+---
+id: novelforge-workflow-engine-api-route-addition-or-refactor
+trigger: "when doing engine api route addition or refactor"
+confidence: 0.6
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/hieuck/novelforge
+---
+
+# Novelforge Workflow Engine Api Route Addition Or Refactor
+
+## Action
+
+Follow the engine-api-route-addition-or-refactor workflow:
+1. Edit or add files in apps/engine/routes/*.py for endpoint logic.
+2. Edit or add files in apps/engine/models/*.py for data models.
+3. Edit or add files in apps/engine/services/*.py for business logic.
+4. Update or add tests in apps/engine/tests/*.py.
+5. Update apps/engine/app.py or apps/engine/http_main.py if route registration changes.
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~2x per month
+- Files: apps/engine/routes/*.py, apps/engine/models/*.py, apps/engine/services/*.py
+
+---
+id: novelforge-workflow-desktop-feature-development
+trigger: "when doing desktop feature development"
+confidence: 0.6
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/hieuck/novelforge
+---
+
+# Novelforge Workflow Desktop Feature Development
+
+## Action
+
+Follow the desktop-feature-development workflow:
+1. Add or edit React components in apps/desktop/src/components/*.tsx.
+2. Add or edit pages in apps/desktop/src/pages/*.tsx.
+3. Update or add state management in apps/desktop/src/stores/*.ts.
+4. Add or update hooks in apps/desktop/src/hooks/*.ts.
+5. Update types in apps/desktop/src/types/*.ts.
+6. Write or update tests in apps/desktop/tests/*.ts.
+7. Update entry points or main app file if needed.
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~2x per month
+- Files: apps/desktop/src/components/*.tsx, apps/desktop/src/pages/*.tsx, apps/desktop/src/stores/*.ts
+
+---
+id: novelforge-workflow-engine-bootstrap-or-build-script-update
+trigger: "when doing engine bootstrap or build script update"
+confidence: 0.6
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/hieuck/novelforge
+---
+
+# Novelforge Workflow Engine Bootstrap Or Build Script Update
+
+## Action
+
+Follow the engine-bootstrap-or-build-script-update workflow:
+1. Edit or remove scripts in apps/engine/_bootstrap*.py or scripts/build_engine.py.
+2. Update .gitignore if new artifacts are generated or old ones are removed.
+3. Remove or add files in apps/engine/build_pyinstaller/ if build artifacts change.
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~2x per month
+- Files: apps/engine/_bootstrap*.py, scripts/build_engine.py, apps/engine/build_pyinstaller/*
+
+---
+id: novelforge-instinct-file-naming-camelCase
+trigger: "When creating a new file in the codebase"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: hieuck/novelforge
+---
+
+# Novelforge Instinct File Naming CamelCase
+
+## Action
+
+Name the file using camelCase (e.g., myFileName.ts)
+
+## Evidence
+
+- Pattern in codeStyle.namingConventions.files
+- Observed in apps/desktop/src/pages/App.tsx
+
+---
+id: novelforge-instinct-function-naming-camelCase
+trigger: "When defining a new function"
+confidence: 0.85
+domain: code-style
+source: repo-analysis
+source_repo: hieuck/novelforge
+---
+
+# Novelforge Instinct Function Naming CamelCase
+
+## Action
+
+Name the function using camelCase (e.g., fetchData)
+
+## Evidence
+
+- Pattern in codeStyle.namingConventions.functions
+
+---
+id: novelforge-instinct-class-naming-PascalCase
+trigger: "When defining a new class"
+confidence: 0.85
+domain: code-style
+source: repo-analysis
+source_repo: hieuck/novelforge
+---
+
+# Novelforge Instinct Class Naming PascalCase
+
+## Action
+
+Name the class using PascalCase (e.g., UserProfile)
+
+## Evidence
+
+- Pattern in codeStyle.namingConventions.classes
+
+---
+id: novelforge-instinct-constant-naming-SCREAMING_SNAKE_CASE
+trigger: "When defining a constant"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: hieuck/novelforge
+---
+
+# Novelforge Instinct Constant Naming SCREAMING_SNAKE_CASE
+
+## Action
+
+Name the constant using SCREAMING_SNAKE_CASE (e.g., MAX_RETRIES)
+
+## Evidence
+
+- Pattern in codeStyle.namingConventions.constants
+
+---
+id: novelforge-instinct-imports-relative
+trigger: "When importing modules in Python or TypeScript"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: hieuck/novelforge
+---
+
+# Novelforge Instinct Imports Relative
+
+## Action
+
+Use relative imports (e.g., import x from './module')
+
+## Evidence
+
+- Pattern in codeStyle.importStyle
+
+---
+id: novelforge-instinct-exports-mixed
+trigger: "When exporting modules or functions"
+confidence: 0.7
+domain: code-style
+source: repo-analysis
+source_repo: hieuck/novelforge
+---
+
+# Novelforge Instinct Exports Mixed
+
+## Action
+
+Use both named and default exports as appropriate
+
+## Evidence
+
+- Pattern in codeStyle.exportStyle
+
+---
+id: novelforge-instinct-test-file-pattern
+trigger: "When creating a test file"
+confidence: 0.9
+domain: testing
+source: repo-analysis
+source_repo: hieuck/novelforge
+---
+
+# Novelforge Instinct Test File Pattern
+
+## Action
+
+Name the test file with the pattern *.test.ts
+
+## Evidence
+
+- Pattern in testing.filePattern
+- apps/desktop/tests/*.ts
+
+---
+id: novelforge-instinct-test-framework-vitest
+trigger: "When writing tests for TypeScript/React code"
+confidence: 0.85
+domain: testing
+source: repo-analysis
+source_repo: hieuck/novelforge
+---
+
+# Novelforge Instinct Test Framework Vitest
+
+## Action
+
+Use the Vitest framework
+
+## Evidence
+
+- Pattern in testing.framework
+- apps/desktop/tests/*.ts
+
+---
+id: novelforge-instinct-test-types-multi
+trigger: "When writing tests"
+confidence: 0.8
+domain: testing
+source: repo-analysis
+source_repo: hieuck/novelforge
+---
+
+# Novelforge Instinct Test Types Multi
+
+## Action
+
+Include unit, integration, and e2e test types as appropriate
+
+## Evidence
+
+- Pattern in testing.testTypes
+
+---
+id: novelforge-instinct-test-coverage-config
+trigger: "When configuring tests"
+confidence: 0.8
+domain: testing
+source: repo-analysis
+source_repo: hieuck/novelforge
+---
+
+# Novelforge Instinct Test Coverage Config
+
+## Action
+
+Enable test coverage reporting
+
+## Evidence
+
+- Pattern in testing.coverageConfig
+
+---
+id: novelforge-instinct-git-commit-conventional
+trigger: "When writing a commit message"
+confidence: 0.9
+domain: git
+source: repo-analysis
+source_repo: hieuck/novelforge
+---
+
+# Novelforge Instinct Git Commit Conventional
+
+## Action
+
+Use Conventional Commits format: <type>(<scope>): <description>
+
+## Evidence
+
+- Pattern in commits.type: conventional
+- Examples: 'feat(desktop): add standalone updater script', 'fix(desktop): address code review issues in updater script'
+
+---
+id: novelforge-instinct-git-commit-prefixes
+trigger: "When choosing a commit type"
+confidence: 0.9
+domain: git
+source: repo-analysis
+source_repo: hieuck/novelforge
+---
+
+# Novelforge Instinct Git Commit Prefixes
+
+## Action
+
+Use one of: feat, refactor, fix, chore
+
+## Evidence
+
+- Pattern in commits.prefixes
+- Examples: 'feat(desktop): ...', 'refactor(engine): ...', 'fix(desktop): ...', 'chore: ...'
+
+---
+id: novelforge-instinct-git-commit-length
+trigger: "When writing a commit message"
+confidence: 0.7
+domain: git
+source: repo-analysis
+source_repo: hieuck/novelforge
+---
+
+# Novelforge Instinct Git Commit Length
+
+## Action
+
+Keep the commit message concise (average length ~54 characters)
+
+## Evidence
+
+- Pattern in commits.averageLength
+
+---
+id: novelforge-instinct-engine-api-route-workflow
+trigger: "When someone wants to add, update, or refactor an API endpoint in the engine backend"
+confidence: 0.95
+domain: workflow
+source: repo-analysis
+source_repo: hieuck/novelforge
+---
+
+# Novelforge Instinct Engine Api Route Workflow
+
+## Action
+
+Edit or add files in apps/engine/routes/*.py, models/*.py, services/*.py, update/add tests in tests/*.py, and update app.py or http_main.py if route registration changes
+
+## Evidence
+
+- Workflow: engine-api-route-addition-or-refactor
+- Example commit sequences and file patterns
+
+---
+id: novelforge-instinct-desktop-feature-workflow
+trigger: "When someone wants to add a new feature, panel, or page to the desktop app"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: hieuck/novelforge
+---
+
+# Novelforge Instinct Desktop Feature Workflow
+
+## Action
+
+Add/edit React components, pages, stores, hooks, types, and tests in the appropriate apps/desktop/src folders
+
+## Evidence
+
+- Workflow: desktop-feature-development
+- Example commit sequences and file patterns
+
+---
+id: novelforge-instinct-engine-bootstrap-build-workflow
+trigger: "When someone wants to change how the engine is started, built, or bundled"
+confidence: 0.85
+domain: workflow
+source: repo-analysis
+source_repo: hieuck/novelforge
+---
+
+# Novelforge Instinct Engine Bootstrap Build Workflow
+
+## Action
+
+Edit/remove scripts in apps/engine/_bootstrap*.py or scripts/build_engine.py, update .gitignore, and update build_pyinstaller artifacts as needed
+
+## Evidence
+
+- Workflow: engine-bootstrap-or-build-script-update
+- Example commit sequences and file patterns
+
