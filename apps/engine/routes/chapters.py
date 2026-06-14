@@ -46,8 +46,8 @@ def to_dict(c: Chapter):
         "word_count": c.word_count,
         "summary": c.summary,
         "notes": c.notes,
-        "created_at": c.created_at.isoformat() if c.created_at else None,
-        "updated_at": c.updated_at.isoformat() if c.updated_at else None,
+        "created_at": c.created_at.isoformat()+'Z' if c.created_at else None,
+        "updated_at": c.updated_at.isoformat()+'Z' if c.updated_at else None,
     }
 
 
@@ -133,6 +133,7 @@ def delete_chapter(chapter_id: str):
             pass
     finally:
         db.close()
+
 
 
 

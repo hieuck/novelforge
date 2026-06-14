@@ -40,8 +40,8 @@ def _to_dict(j: Job) -> dict:
         "params": params,
         "result": result,
         "error": j.error,
-        "created_at": j.created_at.isoformat() if j.created_at else None,
-        "updated_at": j.updated_at.isoformat() if j.updated_at else None,
+        "created_at": j.created_at.isoformat()+'Z' if j.created_at else None,
+        "updated_at": j.updated_at.isoformat()+'Z' if j.updated_at else None,
     }
 
 
@@ -251,3 +251,4 @@ def _update_job(
         logger.error("Failed to update job %s: %s", job_id, exc)
     finally:
         db.close()
+

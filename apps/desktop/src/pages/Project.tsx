@@ -254,8 +254,8 @@ export default function ProjectPage() {
             <div className="rounded-lg border border-slate-800 bg-slate-900 p-3 text-xs text-slate-500">
               <div className="font-medium text-slate-400 mb-1">{t('project.stats_label')}</div>
               <div className="grid grid-cols-3 gap-3">
-                <Stat label={t('project.stat_created')} value={project.created_at ? new Date(project.created_at).toLocaleDateString('vi-VN') : '—'} />
-                <Stat label={t('project.stat_updated')} value={project.updated_at ? new Date(project.updated_at).toLocaleDateString('vi-VN') : '—'} />
+                <Stat label={t('project.stat_created')} value={project.created_at ? new Date(project.created_at).toLocaleDateString() : '—'} />
+                <Stat label={t('project.stat_updated')} value={project.updated_at ? new Date(project.updated_at).toLocaleDateString() : '—'} />
                 <Stat label={t('project.stat_language')} value={project.language?.toUpperCase() ?? 'VI'} />
               </div>
             </div>

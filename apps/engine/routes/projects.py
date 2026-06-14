@@ -37,8 +37,8 @@ def to_dict(p: Project):
         "language": p.language,
         "style_guide": p.style_guide,
         "summary": p.summary,
-        "created_at": p.created_at.isoformat() if p.created_at else None,
-        "updated_at": p.updated_at.isoformat() if p.updated_at else None,
+        "created_at": p.created_at.isoformat()+'Z' if p.created_at else None,
+        "updated_at": p.updated_at.isoformat()+'Z' if p.updated_at else None,
     }
 
 
@@ -147,6 +147,7 @@ def delete_project(project_id: str):
                 pass
     finally:
         db.close()
+
 
 
 

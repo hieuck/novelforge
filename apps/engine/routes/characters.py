@@ -57,8 +57,8 @@ def to_dict(c: Character):
         "first_appearance": c.first_appearance,
         "notes": c.notes,
         "summary": c.summary,
-        "created_at": c.created_at.isoformat() if c.created_at else None,
-        "updated_at": c.updated_at.isoformat() if c.updated_at else None,
+        "created_at": c.created_at.isoformat()+'Z' if c.created_at else None,
+        "updated_at": c.updated_at.isoformat()+'Z' if c.updated_at else None,
     }
 
 
@@ -132,6 +132,7 @@ def delete_character(character_id: str):
             pass
     finally:
         db.close()
+
 
 
 

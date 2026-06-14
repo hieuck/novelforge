@@ -42,8 +42,8 @@ def to_dict(row: TimelineItem):
         "involved_characters": row.involved_characters,
         "related_chapters": row.related_chapters,
         "metadata": row.meta_data,
-        "created_at": row.created_at.isoformat() if row.created_at else None,
-        "updated_at": row.updated_at.isoformat() if row.updated_at else None,
+        "created_at": row.created_at.isoformat()+'Z' if row.created_at else None,
+        "updated_at": row.updated_at.isoformat()+'Z' if row.updated_at else None,
     }
 
 
@@ -112,6 +112,7 @@ def delete_timeline(event_id: str):
         db.commit()
     finally:
         db.close()
+
 
 
 
