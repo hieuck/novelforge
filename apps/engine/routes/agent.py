@@ -1070,8 +1070,16 @@ async def agent_ws(ws: WebSocket) -> None:
         pass
     except Exception as e:
         logger.error("Agent: %s", e, exc_info=True)
+        msg = str(e)
+        err_lower = msg.lower()
+        if "connect" in err_lower and ("refused" in err_lower or "timed out" in err_lower or "econnrefused" in err_lower):
+            msg = f"Không thể kết nối AI provider ({msg}). Vào Settings → AI Provider để kiểm tra cấu hình (Ollama, OpenAI, v.v.)."
+        elif "404" in msg:
+            msg = f"AI provider trả về 404 — endpoint API không đúng. Kiểm tra Base URL trong Settings → AI Provider. ({msg})"
+        elif "401" in msg or "unauthorized" in err_lower:
+            msg = "API Key không hợp lệ. Vào Settings → AI Provider để cập nhật API Key."
         try:
-            await ws.send_json({"type": "error", "message": str(e)})
+            await ws.send_json({"type": "error", "message": msg})
         except Exception:
             pass
     finally:

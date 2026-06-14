@@ -117,8 +117,14 @@ async def ai_ws(ws: WebSocket) -> None:
         pass
     except Exception as exc:
         logger.error("AI stream error: %s", exc)
+        msg = str(exc)
+        err_lower = msg.lower()
+        if "connect" in err_lower and ("refused" in err_lower or "timed out" in err_lower or "econnrefused" in err_lower):
+            msg = f"Không thể kết nối AI provider ({msg}). Vào Settings → AI Provider để kiểm tra cấu hình (Ollama, OpenAI, v.v.)."
+        elif "404" in msg:
+            msg = f"AI provider trả về 404 — endpoint API không đúng. Kiểm tra Base URL trong Settings → AI Provider."
         try:
-            await ws.send_json({"error": str(exc)})
+            await ws.send_json({"error": msg})
         except Exception:
             pass
     finally:
