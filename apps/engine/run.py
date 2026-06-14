@@ -12,3 +12,8 @@ except Exception as exc:  # pragma: no cover - used as bootstrap guard only
 
 app = create_app()
 application = app
+
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.environ.get("ENGINE_PORT", "9000"))
+    uvicorn.run("run:app", host="127.0.0.1", port=port, reload=False, log_level="info")
