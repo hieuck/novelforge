@@ -638,7 +638,10 @@ async def agent_ws(ws: WebSocket) -> None:
             await send({"type": "error", "message": "Task cannot be empty"})
             return
 
-        settings = _get_settings()
+        settings = await _get_settings()
+        if not settings.base_url or not settings.model:
+            await send({"type": "error", "message": "AI provider chưa được cấu hình. Vào Settings → AI Provider để thiết lập."})
+            return
         client = build_client(settings)
 
         ctx = ProjectContext(pid or None)

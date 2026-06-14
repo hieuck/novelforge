@@ -125,7 +125,7 @@ async def _run_job(job_id: str, cancel_flag: asyncio.Event) -> None:
             _extract_chapter_content_from_memory,
         )
 
-        settings = _get_settings()
+        settings = await _get_settings()
         client = build_client(settings)
 
         ctx = ProjectContext(pid or None)
