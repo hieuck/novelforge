@@ -2,6 +2,8 @@
   "name": "@novelforge/desktop",
   "version": "0.1.0",
   "private": true,
+  "description": "Offline-first AI writing studio",
+  "author": "Lê Trung Hiếu <hieuck@users.noreply.github.com>",
   "type": "commonjs",
   "main": "dist-electron/main.cjs",
   "scripts": {
