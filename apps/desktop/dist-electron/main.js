@@ -84,13 +84,13 @@ async function runBootstrap() {
     return new Promise((resolve) => {
         bootstrap.runBootstrap((event) => {
             console.log(`[bootstrap] ${event.type}:`, event.data);
-            if (mainWindow && !mainWindow.isDestroyed()) {
-                mainWindow.webContents.send('novelforge:bootstrap:status', event);
+            if (splashWindow && !splashWindow.isDestroyed()) {
+                splashWindow.webContents.send('novelforge:bootstrap:status', event);
             }
             if (event.type === 'complete')
-                resolve(true);
+                resolve({ success: true });
             if (event.type === 'error')
-                resolve(false);
+                resolve({ success: false, error: event.data.message });
         });
     });
 }
@@ -220,6 +220,13 @@ function createMainWindow() {
         return { action: 'deny' };
     });
 }
+function showErrorDialog(title, message) {
+    splashWindow?.close();
+    splashWindow = null;
+    const { dialog } = require('electron');
+    dialog.showErrorBox(title, message);
+    electron_1.app.quit();
+}
 electron_1.app.whenReady().then(async () => {
     registerIpcHandlers();
     if (!isDev) {
@@ -227,9 +234,10 @@ electron_1.app.whenReady().then(async () => {
         const backend = probes.resolveBackend();
         if (backend.kind === 'bootstrap-needed') {
             createBootstrapSplash();
-            const success = await runBootstrap();
-            if (!success) {
-                console.error('[main] Bootstrap failed');
+            const result = await runBootstrap();
+            if (!result.success) {
+                showErrorDialog('NovelForge — Setup Failed', `Could not set up the application on first launch:\n\n${result.error}\n\n` +
+                    'Please check your internet connection and make sure Git is installed.');
                 return;
             }
         }
@@ -240,7 +248,11 @@ electron_1.app.whenReady().then(async () => {
             console.log('[main] Engine ready on port', ENGINE_PORT);
         }
         catch (err) {
+            splashWindow?.close();
+            splashWindow = null;
             console.error('[main] Engine failed to start:', err);
+            createMainWindow();
+            return;
         }
     }
     createMainWindow();

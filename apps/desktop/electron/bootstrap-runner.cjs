@@ -34,12 +34,8 @@ async function runBootstrap(onEvent) {
     const reqFile = path.join(AGENT_ROOT, 'apps', 'engine', 'requirements.txt');
     await runCommand('uv', ['pip', '--python', pythonExe, 'install', '-r', reqFile], { emit });
 
-    // 4. Build desktop
-    emit('stage', { name: 'build', message: 'Building desktop application...' });
+    // 4. Write desktop content-hash stamp
     const desktopDir = path.join(AGENT_ROOT, 'apps', 'desktop');
-    await runCommand('npm', ['run', 'pack'], { cwd: desktopDir, emit });
-
-    // 5. Write desktop content-hash stamp
     const hash = await computeContentHash(desktopDir);
     fs.writeFileSync(DESKTOP_STAMP, JSON.stringify({ contentHash: hash, builtAt: new Date().toISOString() }, null, 2));
 
