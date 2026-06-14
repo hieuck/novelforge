@@ -11,7 +11,9 @@ import Export from './pages/Export'
 import Search from './pages/Search'
 import ProjectPage from './pages/Project'
 import BackgroundJobsPanel from './components/BackgroundJobsPanel'
+import AgentPanel from './components/AgentPanel'
 import ToastContainer from './components/Toast'
+import { useAgentSessionStore } from './stores/agentSessionStore'
 
 export default function App() {
   return (
@@ -34,6 +36,7 @@ export default function App() {
         </Routes>
       </main>
       <ToastContainer />
+      <GlobalAgentPanel />
     </div>
   )
 }
@@ -44,6 +47,29 @@ function AgentJobsPage() {
       <div className="flex-1 overflow-hidden">
         <BackgroundJobsPanel />
       </div>
+    </div>
+  )
+}
+
+function GlobalAgentPanel() {
+  const session = useAgentSessionStore((s) => s.session)
+  const setPanelOpen = useAgentSessionStore((s) => s.setPanelOpen)
+  if (!session.panelOpen) return null
+  return (
+    <div className="fixed inset-y-0 right-0 z-40">
+      <AgentPanel
+        projectId={session.projectId}
+        chapterId={session.chapterId}
+        chapterTitle={session.chapterTitle}
+        onInsertText={() => {}}
+      />
+      <button
+        onClick={() => setPanelOpen(false)}
+        className="absolute top-2 right-2 rounded p-1 text-slate-500 hover:text-slate-300 z-50"
+        title="Close"
+      >
+        ✕
+      </button>
     </div>
   )
 }
