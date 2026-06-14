@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import os
 import sys
+import tempfile
 
 import pytest
 from fastapi.testclient import TestClient
@@ -15,24 +16,40 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from db.base import Base
 from db.session import SessionLocal as _RealSession
 
+# Import all models so they register on Base.metadata
+from models.project import Project  # noqa: F401
+from models.chapter import Chapter  # noqa: F401
+from models.extra import Character, Lore, TimelineItem, Job  # noqa: F401
+from models.summary import Summary  # noqa: F401
 
-# ── In-memory SQLite for tests ────────────────────────────────────────────────
-
-TEST_DB_URL = "sqlite:///:memory:"
+# ── File-based SQLite for tests ────────────────────────────────────────────────
+# NOT :memory: — TestClient runs route handlers in a thread pool, and each thread
+# would get its own private :memory: database with no tables.
+_test_db_fd, _test_db_path = tempfile.mkstemp(suffix=".novelforge_test.db")
 
 test_engine = create_engine(
-    TEST_DB_URL,
+    f"sqlite:///{_test_db_path}",
     connect_args={"check_same_thread": False},
 )
 TestingSession = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
 
 
+def pytest_sessionfinish(session: pytest.Session) -> None:
+    try:
+        os.close(_test_db_fd)
+    except OSError:
+        pass
+    try:
+        os.remove(_test_db_path)
+    except OSError:
+        pass
+
+
 @pytest.fixture(autouse=True)
 def setup_db(monkeypatch):
-    """Create all tables in the in-memory DB and patch SessionLocal for every test."""
+    """Create all tables and patch SessionLocal for every test."""
     Base.metadata.create_all(bind=test_engine)
 
-    # Patch SessionLocal everywhere it is imported
     import db.session as session_mod
     import db.base as base_mod
 
@@ -53,7 +70,6 @@ def setup_db(monkeypatch):
 @pytest.fixture
 def client():
     """FastAPI test client with a fresh app instance."""
-    # Patch search init so it doesn't touch real filesystem
     import services.search as search_mod
     from unittest.mock import patch
 

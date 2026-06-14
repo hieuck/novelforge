@@ -19,13 +19,13 @@ from routes.agent import router as agent_router
 from routes.update import router as update_router
 
 from _version import VERSION
-from db.base import Base, engine
+import db.base
 from services.search import init_fts
 
 
 def create_app() -> FastAPI:
     # Create all SQLAlchemy tables
-    Base.metadata.create_all(bind=engine)
+    db.base.Base.metadata.create_all(bind=db.base.engine)
 
     # Initialise FTS5 virtual tables (idempotent)
     init_fts()

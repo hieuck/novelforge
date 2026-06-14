@@ -98,6 +98,7 @@ def update_project(project_id: str, payload: ProjectUpdate):
 
 @router.delete("/{project_id}", status_code=204)
 def delete_project(project_id: str):
+    from models.chapter import Chapter
     from models.extra import Character, Lore, TimelineItem, Job
     from models.summary import Summary
     from services.search import remove_chapter, remove_character, remove_lore
