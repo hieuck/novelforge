@@ -252,8 +252,8 @@ export default function Chapters() {
       )}
 
       {/* ── AI Agent panel ── */}
-      {showAi && (
-        <div className="border-l border-slate-800">
+      <div className={`border-l border-slate-800 overflow-hidden transition-all duration-300 ${showAi ? 'w-80 opacity-100' : 'w-0 opacity-0'}`}>
+        <div className="w-80">
           <AgentPanel
             projectId={projectId}
             chapterId={chapterId}
@@ -261,7 +261,7 @@ export default function Chapters() {
             onInsertText={onInsertText}
           />
         </div>
-      )}
+      </div>
     </div>
   )
 }

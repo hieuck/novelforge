@@ -11,9 +11,7 @@ import Export from './pages/Export'
 import Search from './pages/Search'
 import ProjectPage from './pages/Project'
 import BackgroundJobsPanel from './components/BackgroundJobsPanel'
-import AgentPanel from './components/AgentPanel'
 import ToastContainer from './components/Toast'
-import { useAgentSessionStore } from './stores/agentSessionStore'
 
 export default function App() {
   return (
@@ -36,7 +34,6 @@ export default function App() {
         </Routes>
       </main>
       <ToastContainer />
-      <GlobalAgentPanel />
     </div>
   )
 }
@@ -47,43 +44,6 @@ function AgentJobsPage() {
       <div className="flex-1 overflow-hidden">
         <BackgroundJobsPanel />
       </div>
-    </div>
-  )
-}
-
-function GlobalAgentPanel() {
-  const session = useAgentSessionStore((s) => s.session)
-  const setPanelOpen = useAgentSessionStore((s) => s.setPanelOpen)
-  const isRunning = session.status === 'planning' || session.status === 'running' || session.status === 'asking'
-
-  return (
-    <div className={`fixed inset-y-0 right-0 z-40 transition-transform ${session.panelOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-      <div className="relative h-full">
-        <AgentPanel
-          projectId={session.projectId}
-          chapterId={session.chapterId}
-          chapterTitle={session.chapterTitle}
-          onInsertText={() => {}}
-        />
-        {/* Minimize button */}
-        <button
-          onClick={() => setPanelOpen(false)}
-          className="absolute top-2 right-2 rounded p-1 text-slate-500 hover:text-slate-300 z-50"
-          title="Close"
-        >
-          ✕
-        </button>
-      </div>
-      {/* When minimized but agent running: show a thin status bar */}
-      {!session.panelOpen && isRunning && (
-        <button
-          onClick={() => setPanelOpen(true)}
-          className="fixed bottom-0 left-0 right-0 z-50 flex items-center gap-2 border-t border-green-800/60 bg-slate-900 px-4 py-2 text-sm text-green-400 shadow-lg"
-        >
-          <span className="inline-block h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-          AI Agent đang chạy...
-        </button>
-      )}
     </div>
   )
 }
