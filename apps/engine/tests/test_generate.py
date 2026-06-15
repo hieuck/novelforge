@@ -30,6 +30,15 @@ def test_generate_image_no_api_key(client):
         assert "API key" in r.json()["detail"]
 
 
+def test_mock_provider_returns_placeholder(client):
+    """Mock provider returns SVG placeholder without API key."""
+    r = client.post("/api/generate/image", json={"prompt": "test", "provider": "mock", "size": "medium"})
+    assert r.status_code == 201
+    data = r.json()
+    assert "url" in data
+    assert data["mime"] == "image/svg+xml"
+
+
 def test_serve_generated_not_found(client):
     """GET /generated/unknown returns 404."""
     r = client.get("/api/generated/nonexistent.png")

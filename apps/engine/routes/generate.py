@@ -41,18 +41,18 @@ async def generate_image(payload: GenImageIn) -> dict:
     base_url = ""
 
     if not provider_name:
-        # Use AI settings
         settings = await _get_settings()
-        provider_name = settings.provider or "openai"
+        provider_name = settings.provider or "mock"
         api_key = settings.api_key or ""
-        model = settings.model or "dall-e-3"
+        model = settings.model or ""
         base_url = settings.base_url or ""
-        # For OpenAI-compatible image gen, we need to detect if this provider supports it
-        if provider_name in ("ollama",):
-            raise HTTPException(status_code=400, detail="Ollama does not support image generation. Use OpenAI, Stability AI, or configure an API key.")
 
-    if not api_key:
-        raise HTTPException(status_code=400, detail="API key required for image generation. Configure in Settings → AI Provider.")
+    if provider_name in ("ollama",):
+        raise HTTPException(status_code=400, detail="Ollama does not support image generation. Use 'mock' for placeholder, ComfyUI for local, or configure an API key.")
+
+    needs_key = provider_name not in ("mock", "comfyui")
+    if needs_key and not api_key:
+        raise HTTPException(status_code=400, detail=f"API key required for {provider_name}. Use 'mock' for placeholder images, 'comfyui' for local generation, or configure an API key in Settings.")
 
     try:
         provider = create_provider(provider_name, api_key, model, base_url)
