@@ -6,6 +6,7 @@ export interface Project {
   language?: string
   style_guide?: string
   summary?: string
+  word_count?: number
   created_at?: string
   updated_at?: string
 }
