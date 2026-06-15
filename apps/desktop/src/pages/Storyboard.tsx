@@ -90,12 +90,25 @@ export default function Storyboard() {
           </div>
         ) : (
           <div className="space-y-6">
-            {chapters.sort((a, b) => (a.scene_order ?? 0) - (b.scene_order ?? 0)).map((ch, idx) => {
+            {[...chapters].sort((a, b) => (a.scene_order ?? 0) - (b.scene_order ?? 0)).map((ch, idx) => {
               const imgUrl = getImageUrl(ch)
+              const moveChapter = async (fromIdx: number, toIdx: number) => {
+                const ordered = [...chapters].sort((a, b) => (a.scene_order ?? 0) - (b.scene_order ?? 0))
+                const [moved] = ordered.splice(fromIdx, 1)
+                ordered.splice(toIdx, 0, moved)
+                try {
+                  await api.post('/chapters/reorder', { ordered_ids: ordered.map((c) => c.id) })
+                  load()
+                } catch { /* ignore */ }
+              }
               return (
                 <div key={ch.id} className="flex gap-4 rounded-lg border border-slate-800 bg-slate-900/60 p-4 hover:border-slate-700">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-900/50 text-sm font-bold text-indigo-400">
-                    {idx + 1}
+                  <div className="flex flex-col items-center gap-1">
+                    <button onClick={() => moveChapter(idx, idx - 1)} disabled={idx === 0}
+                      className="h-6 w-6 rounded border border-slate-700 text-xs text-slate-500 hover:text-slate-200 disabled:opacity-20 disabled:cursor-not-allowed">▲</button>
+                    <span className="text-sm font-bold text-indigo-400">{idx + 1}</span>
+                    <button onClick={() => moveChapter(idx, idx + 1)} disabled={idx >= chapters.length - 1}
+                      className="h-6 w-6 rounded border border-slate-700 text-xs text-slate-500 hover:text-slate-200 disabled:opacity-20 disabled:cursor-not-allowed">▼</button>
                   </div>
                   <div className="w-48 shrink-0">
                     {imgUrl ? (

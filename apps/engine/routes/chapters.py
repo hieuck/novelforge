@@ -139,5 +139,22 @@ def delete_chapter(chapter_id: str):
         db.close()
 
 
+class ReorderIn(BaseModel):
+    ordered_ids: list[str]
+
+
+@router.post("/chapters/reorder", status_code=200)
+def reorder_chapters(payload: ReorderIn):
+    """Batch update scene_order based on the provided ID order."""
+    db: Session = SessionLocal()
+    try:
+        for idx, ch_id in enumerate(payload.ordered_ids):
+            db.query(Chapter).filter(Chapter.id == ch_id).update(
+                {"scene_order": idx, "updated_at": datetime.now(timezone.utc)}
+            )
+        db.commit()
+        return {"success": True, "count": len(payload.ordered_ids)}
+    finally:
+        db.close()
 
 

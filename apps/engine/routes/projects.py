@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from db.session import SessionLocal
 from models.project import Project
@@ -41,13 +42,34 @@ def to_dict(p: Project):
         "updated_at": p.updated_at.isoformat()+'Z' if p.updated_at else None,
     }
 
+def to_dict_with_stats(p: Project, db=None):
+    """Project dict with computed word_count."""
+    d = to_dict(p)
+    if db is None:
+        db = SessionLocal()
+        close_db = True
+    else:
+        close_db = False
+    try:
+        from models.chapter import Chapter
+        total = db.query(func.coalesce(func.sum(Chapter.word_count), 0)).filter(
+            Chapter.project_id == p.id
+        ).scalar()
+        d["word_count"] = total or 0
+    except Exception:
+        d["word_count"] = 0
+    finally:
+        if close_db:
+            db.close()
+    return d
+
 
 @router.get("/projects/")
 def list_projects():
     db: Session = SessionLocal()
     try:
         items = db.query(Project).order_by(Project.updated_at.desc()).all()
-        return [to_dict(p) for p in items]
+        return [to_dict_with_stats(p, db) for p in items]
     finally:
         db.close()
 

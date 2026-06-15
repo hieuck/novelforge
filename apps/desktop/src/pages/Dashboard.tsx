@@ -127,6 +127,9 @@ export default function Dashboard() {
                 {p.updated_at && (
                   <span>{t('dashboard.updated_at', { date: new Date(p.updated_at).toLocaleString() })}</span>
                 )}
+                {p.word_count !== undefined && (
+                  <span className="text-indigo-400/70">{p.word_count.toLocaleString()} từ</span>
+                )}
               </div>
             </button>
             <button
