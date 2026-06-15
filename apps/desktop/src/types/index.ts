@@ -30,6 +30,7 @@ export interface Character {
   name: string
   alias?: string
   gender?: string | null
+  portrait_url?: string | null
   role?: string
   age?: string
   personality?: string
@@ -108,4 +109,5 @@ export const AI_ACTIONS = [
 ] as const
 
 export type AIAction = typeof AI_ACTIONS[number]['value']
+
 

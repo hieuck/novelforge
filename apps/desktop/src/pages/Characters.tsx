@@ -149,6 +149,12 @@ export default function Characters() {
 
                 {expandedId === c.id && (
                   <div className="border-t border-slate-800 px-4 pb-4 pt-3">
+                    {/* Portrait */}
+                    {c.portrait_url && (
+                      <div className="mb-3 flex justify-center">
+                        <img src={c.portrait_url} alt={c.name} className="h-32 w-32 rounded-lg object-cover border border-slate-700" />
+                      </div>
+                    )}
                     {editId === c.id ? (
                       <div className="space-y-2">
                         <div className="grid grid-cols-2 gap-2">

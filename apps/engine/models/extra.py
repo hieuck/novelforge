@@ -44,6 +44,7 @@ class Character(Base):
     first_appearance = Column(String, nullable=True)
     notes = Column(Text, nullable=True)
     summary = Column(Text, nullable=True)
+    portrait_url = Column(String, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
 

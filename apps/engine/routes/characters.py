@@ -25,6 +25,7 @@ class CharacterIn(BaseModel):
     first_appearance: str | None = None
     notes: str | None = None
     summary: str | None = None
+    portrait_url: str | None = None
 
 
 class CharacterUpdate(BaseModel):
@@ -41,6 +42,7 @@ class CharacterUpdate(BaseModel):
     first_appearance: str | None = None
     notes: str | None = None
     summary: str | None = None
+    portrait_url: str | None = None
 
 
 def to_dict(c: Character):
@@ -53,6 +55,7 @@ def to_dict(c: Character):
         "role": c.role,
         "age": c.age,
         "personality": c.personality,
+        "portrait_url": c.portrait_url,
         "appearance": c.appearance,
         "goals": c.goals,
         "secrets": c.secrets,

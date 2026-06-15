@@ -17,6 +17,7 @@ from routes.imports import router as imports_router
 from routes.search import router as search_router
 from routes.agent import router as agent_router
 from routes.update import router as update_router
+from routes.generate import router as generate_router
 
 from _version import VERSION
 import db.base
@@ -61,6 +62,7 @@ def create_app() -> FastAPI:
         search_router,
         agent_router,
         update_router,
+        generate_router,
     ]:
         application.include_router(rtr, prefix="/api")
 

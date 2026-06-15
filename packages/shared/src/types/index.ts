@@ -32,6 +32,7 @@ export interface Character {
   name: string
   alias?: string | null
   gender?: string | null
+  portrait_url?: string | null
   role?: string | null
   age?: string | null
   personality?: string | null
@@ -85,4 +86,5 @@ export interface AppInfo {
   repo: string
   error?: string
 }
+
 

@@ -131,6 +131,7 @@ def _create_char(pid: str, p: dict) -> dict:
             personality=p.get("personality"), appearance=p.get("appearance"),
             goals=_serialize_field(p.get("goals")),
             secrets=_serialize_field(p.get("secrets")),
+            portrait_url=p.get("portrait_url"),
         )
         db.add(c)
         db.commit()
