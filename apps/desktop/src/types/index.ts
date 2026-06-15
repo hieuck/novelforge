@@ -20,6 +20,7 @@ export interface Chapter {
   scene_order?: number
   summary?: string
   notes?: string
+  illustration_url?: string | null
   created_at?: string
   updated_at?: string
 }
@@ -40,6 +41,7 @@ export interface Character {
   relationships?: Record<string, string>
   first_appearance?: string
   notes?: string
+  illustration_url?: string | null
   summary?: string
   created_at?: string
   updated_at?: string
@@ -109,5 +111,6 @@ export const AI_ACTIONS = [
 ] as const
 
 export type AIAction = typeof AI_ACTIONS[number]['value']
+
 
 

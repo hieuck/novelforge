@@ -5,11 +5,7 @@ import { Loader2, Film, Plus, Trash2, Image as ImageIcon } from 'lucide-react'
 import { api } from '../lib/api'
 
 interface Chapter {
-  id: string; title?: string; content?: string; scene_order?: number
-}
-
-interface GalleryImage {
-  id: string; url: string; prompt: string; entity_type: string | null; entity_id: string | null
+  id: string; title?: string; content?: string; scene_order?: number; illustration_url?: string | null
 }
 
 export default function Storyboard() {
@@ -17,38 +13,35 @@ export default function Storyboard() {
   const { projectId } = useParams()
   const navigate = useNavigate()
   const [chapters, setChapters] = useState<Chapter[]>([])
-  const [images, setImages] = useState<GalleryImage[]>([])
   const [loading, setLoading] = useState(true)
 
   const load = async () => {
     if (!projectId) return
     setLoading(true)
     try {
-      const [chData, imgData] = await Promise.all([
-        api.get<Chapter[]>(`/projects/${projectId}/chapters`),
-        api.get<GalleryImage[]>(`/projects/${projectId}/images`),
-      ])
+      const chData = await api.get<Chapter[]>(`/projects/${projectId}/chapters`)
       setChapters(chData)
-      setImages(imgData)
     } catch { /* ignore */ }
     setLoading(false)
   }
 
   useEffect(() => { load() }, [projectId])
 
-  const getImageForChapter = (ch: Chapter) => {
-    return images.find((img) => img.entity_id === ch.id)
-  }
+  const getImageUrl = (ch: Chapter) => ch.illustration_url
 
   const handleGenerate = async (ch: Chapter) => {
-    const prompt = `Scene illustration: ${ch.title || 'Chapter'}, ${(ch.content || '').slice(0, 200)}, cinematic lighting, fantasy art, wide shot`.trim()
+    const prompt = `Scene: ${ch.title || 'Chapter'}, ${(ch.content || '').slice(0, 200)}, cinematic`.trim()
     try {
       const r = await fetch('/api/generate/image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt, size: 'medium', project_id: projectId, entity_type: 'chapter', entity_id: ch.id }),
       })
-      if (r.ok) load()
+      if (r.ok) {
+        const data = await r.json()
+        await api.patch(`/chapters/${ch.id}`, { illustration_url: data.url })
+        load()
+      }
     } catch { /* ignore */ }
   }
 
@@ -77,18 +70,15 @@ export default function Storyboard() {
         ) : (
           <div className="space-y-6">
             {chapters.sort((a, b) => (a.scene_order ?? 0) - (b.scene_order ?? 0)).map((ch, idx) => {
-              const img = getImageForChapter(ch)
+              const imgUrl = getImageUrl(ch)
               return (
                 <div key={ch.id} className="flex gap-4 rounded-lg border border-slate-800 bg-slate-900/60 p-4 hover:border-slate-700">
-                  {/* Scene number */}
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-900/50 text-sm font-bold text-indigo-400">
                     {idx + 1}
                   </div>
-
-                  {/* Image */}
                   <div className="w-48 shrink-0">
-                    {img ? (
-                      <img src={img.url} alt={ch.title || ''} className="h-28 w-48 rounded-lg object-cover border border-slate-700" />
+                    {imgUrl ? (
+                      <img src={imgUrl} alt={ch.title || ''} className="h-28 w-48 rounded-lg object-cover border border-slate-700" />
                     ) : (
                       <div className="flex h-28 w-48 items-center justify-center rounded-lg border border-dashed border-slate-700 bg-slate-800/50">
                         <button onClick={() => handleGenerate(ch)} className="flex flex-col items-center gap-1 text-slate-500 hover:text-slate-300">
@@ -106,7 +96,7 @@ export default function Storyboard() {
                     <div className="mt-2 flex gap-2">
                       <button onClick={() => navigate(`/projects/${projectId}/chapters/${ch.id}`)}
                         className="text-[10px] text-indigo-400 hover:text-indigo-300">Sửa</button>
-                      {img && (
+                      {imgUrl && (
                         <button onClick={() => handleGenerate(ch)}
                           className="text-[10px] text-slate-500 hover:text-slate-300">Tạo lại ảnh</button>
                       )}

@@ -18,6 +18,8 @@ class ChapterIn(BaseModel):
     status: str | None = "draft"
     summary: str | None = None
     notes: str | None = None
+    illustration_url: str | None = None
+    illustration_url: str | None = None
 
 
 class ChapterUpdate(BaseModel):
@@ -27,6 +29,7 @@ class ChapterUpdate(BaseModel):
     status: str | None = None
     summary: str | None = None
     notes: str | None = None
+    illustration_url: str | None = None
 
 
 def count_words(text: str) -> int:
@@ -46,6 +49,7 @@ def to_dict(c: Chapter):
         "word_count": c.word_count,
         "summary": c.summary,
         "notes": c.notes,
+        "illustration_url": c.illustration_url,
         "created_at": c.created_at.isoformat()+'Z' if c.created_at else None,
         "updated_at": c.updated_at.isoformat()+'Z' if c.updated_at else None,
     }

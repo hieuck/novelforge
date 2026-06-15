@@ -22,6 +22,7 @@ export interface Chapter {
   word_count?: number
   summary?: string | null
   notes?: string | null
+  illustration_url?: string | null
   created_at?: string
   updated_at?: string
 }
@@ -42,6 +43,7 @@ export interface Character {
   relationships?: Record<string, string> | null
   first_appearance?: string | null
   notes?: string | null
+  illustration_url?: string | null
   summary?: string | null
 }
 
@@ -86,5 +88,6 @@ export interface AppInfo {
   repo: string
   error?: string
 }
+
 
 
