@@ -33,3 +33,7 @@ apps/desktop/release/
 # Coverage artifacts
 .coverage
 *.py,cover
+
+# Generated images
+apps/engine/data/generated/
+test-results/
