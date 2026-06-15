@@ -10,6 +10,7 @@ from pydantic import BaseModel
 
 from db.session import SessionLocal
 from models.image import GeneratedImage
+from models.chapter import Chapter
 from services.image_gen.factory import create_provider
 from services.ai_service import _get_settings
 
@@ -155,3 +156,86 @@ async def serve_generated(filename: str):
     ext = filepath.suffix.lower()
     media_type = {"png": "image/png", "jpg": "image/jpeg", "jpeg": "image/jpeg", "webp": "image/webp"}.get(ext, "application/octet-stream")
     return FileResponse(str(filepath), media_type=media_type)
+
+
+@router.post("/projects/{project_id}/storyboard/export-video")
+async def export_storyboard_video(project_id: str) -> FileResponse:
+    """Export storyboard as MP4 video slideshow. Requires FFmpeg."""
+    import asyncio
+    import subprocess
+    import tempfile
+
+    db = SessionLocal()
+    try:
+        chapters = db.query(Chapter).filter(
+            Chapter.project_id == project_id
+        ).order_by(Chapter.scene_order).all()
+    finally:
+        db.close()
+
+    chapters = [c for c in chapters if c.illustration_url]
+
+    if not chapters:
+        raise HTTPException(status_code=400, detail="No chapters with illustrations found. Generate scene images first.")
+
+    temp_dir = Path(tempfile.mkdtemp())
+    output_path = DATA_DIR / f"storyboard_{uuid.uuid4()}.mp4"
+
+    try:
+        # Download each image and create a concat file for FFmpeg
+        import httpx
+        concat_lines = []
+        async with httpx.AsyncClient() as client:
+            for ch in chapters:
+                img_url = ch.illustration_url.lstrip("/")
+                # Construct full URL from relative path
+                img_path = DATA_DIR / Path(img_url).name
+                if img_path.exists():
+                    ext = img_path.suffix or ".jpg"
+                    dest = temp_dir / f"scene_{ch.scene_order:03d}{ext}"
+                    import shutil
+                    shutil.copy2(img_path, dest)
+                    concat_lines.append(f"file '{dest.name}'\nduration 3\n")
+
+        if not concat_lines:
+            raise HTTPException(status_code=400, detail="Could not load illustration files")
+
+        # Write concat file
+        concat_file = temp_dir / "concat.txt"
+        concat_file.write_text("".join(concat_lines))
+
+        # Run FFmpeg
+        cmd = [
+            "ffmpeg", "-y", "-f", "concat", "-safe", "0",
+            "-i", str(concat_file),
+            "-vf", "fps=24,format=yuv420p",
+            "-c:v", "libx264", "-preset", "fast",
+            str(output_path),
+        ]
+        proc = await asyncio.create_subprocess_exec(
+            *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
+        )
+        try:
+            await asyncio.wait_for(proc.communicate(), timeout=120)
+        except asyncio.TimeoutError:
+            proc.kill()
+            raise HTTPException(status_code=500, detail="Video export timed out")
+
+        if proc.returncode != 0:
+            raise HTTPException(status_code=500, detail="FFmpeg processing failed")
+
+        return FileResponse(str(output_path), media_type="video/mp4", filename="storyboard.mp4")
+
+    except HTTPException:
+        raise
+    except FileNotFoundError:
+        raise HTTPException(status_code=500, detail="FFmpeg not found. Install FFmpeg to export video.")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Video export failed: {e}")
+    finally:
+        # Cleanup temp files
+        import shutil
+        try:
+            shutil.rmtree(temp_dir, ignore_errors=True)
+        except Exception:
+            pass

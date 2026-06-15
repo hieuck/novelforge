@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Loader2, Film, Plus, Trash2, Image as ImageIcon } from 'lucide-react'
+import { Loader2, Film, Plus, Trash2, Image as ImageIcon, Video } from 'lucide-react'
 import { api } from '../lib/api'
 
 interface Chapter {
@@ -14,6 +14,7 @@ export default function Storyboard() {
   const navigate = useNavigate()
   const [chapters, setChapters] = useState<Chapter[]>([])
   const [loading, setLoading] = useState(true)
+  const [exporting, setExporting] = useState(false)
 
   const load = async () => {
     if (!projectId) return
@@ -57,10 +58,30 @@ export default function Storyboard() {
             <Film className="h-5 w-5 text-indigo-400" />
             <h1 className="text-xl font-bold text-slate-100">Storyboard</h1>
           </div>
-          <button onClick={() => navigate(`/projects/${projectId}/chapters`)}
-            className="flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-1.5 text-sm text-white hover:bg-indigo-700">
-            <Plus className="h-4 w-4" /> Thêm chương
-          </button>
+          <div className="flex gap-2">
+            <button onClick={async () => {
+              if (!projectId) return
+              setExporting(true)
+              try {
+                const r = await fetch(`/api/projects/${projectId}/storyboard/export-video`, { method: 'POST' })
+                if (!r.ok) { const e = await r.json(); alert(e.detail || 'Export failed'); return }
+                const blob = await r.blob()
+                const url = URL.createObjectURL(blob)
+                const a = document.createElement('a')
+                a.href = url; a.download = 'storyboard.mp4'; a.click()
+                URL.revokeObjectURL(url)
+              } catch (e: any) { alert(e.message) }
+              setExporting(false)
+            }} disabled={exporting}
+              className="flex items-center gap-2 rounded-md border border-slate-700 px-3 py-1.5 text-sm text-slate-300 hover:border-slate-500 hover:text-white disabled:opacity-40">
+              {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Video className="h-4 w-4" />}
+              {exporting ? 'Exporting...' : 'Export Video'}
+            </button>
+            <button onClick={() => navigate(`/projects/${projectId}/chapters`)}
+              className="flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-1.5 text-sm text-white hover:bg-indigo-700">
+              <Plus className="h-4 w-4" /> Thêm chương
+            </button>
+          </div>
         </div>
 
         {chapters.length === 0 ? (
