@@ -33,6 +33,7 @@ export default function Chapters() {
   const [status, setStatus] = useState<string>('draft')
   const [saved, setSaved] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [sceneUrl, setSceneUrl] = useState<string | null>(null)
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const mountedRef = useRef(true)
@@ -207,8 +208,33 @@ export default function Chapters() {
               <span>{saving ? t('chapters.saving') : saved ? t('chapters.saved') : t('chapters.unsaved')}</span>
             </div>
 
-
+            {/* Scene illustration */}
+            {chapterId && activeChapter && (
+              <button
+                onClick={async () => {
+                  const prompt = `Scene illustration: ${activeChapter.title}, ${content?.slice(0, 200) || ''}, fantasy art style, cinematic lighting, digital painting`.trim()
+                  const r = await fetch('/api/generate/image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt, size: 'medium' }),
+                  })
+                  if (!r.ok) { const e = await r.json(); alert(e.detail || 'Generate failed'); return }
+                  setSceneUrl((await r.json()).url)
+                }}
+                className="flex items-center gap-1.5 rounded-md border border-slate-700 px-2.5 py-1 text-[11px] text-slate-400 hover:border-slate-500 hover:text-slate-200"
+                title="Generate scene illustration"
+              >
+                🎨 Scene
+              </button>
+            )}
           </div>
+
+          {/* Scene image display */}
+          {sceneUrl && (
+            <div className="border-b border-slate-800">
+              <img src={sceneUrl} alt="Scene illustration" className="w-full max-h-64 object-cover" />
+            </div>
+          )}
 
           {/* Writing area */}
           <textarea

@@ -150,11 +150,28 @@ export default function Characters() {
                 {expandedId === c.id && (
                   <div className="border-t border-slate-800 px-4 pb-4 pt-3">
                     {/* Portrait */}
-                    {c.portrait_url && (
-                      <div className="mb-3 flex justify-center">
+                    <div className="mb-3 flex flex-col items-center gap-2">
+                      {c.portrait_url && (
                         <img src={c.portrait_url} alt={c.name} className="h-32 w-32 rounded-lg object-cover border border-slate-700" />
-                      </div>
-                    )}
+                      )}
+                      <button
+                        onClick={async () => {
+                          const prompt = `Character portrait: ${c.name}, ${c.role || ''}, ${c.appearance || ''}, ${c.personality || ''}, fantasy art style, digital painting, detailed character design`.trim()
+                          const r = await fetch('/api/generate/image', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ prompt, size: 'medium' }),
+                          })
+                          if (!r.ok) { const e = await r.json(); alert(e.detail || 'Generate failed'); return }
+                          const data = await r.json()
+                          await api.patch(`/characters/${c.id}`, { portrait_url: data.url })
+                          load()
+                        }}
+                        className="flex items-center gap-1.5 rounded-md border border-slate-700 px-2.5 py-1 text-[11px] text-slate-400 hover:border-slate-500 hover:text-slate-200"
+                      >
+                        ✨ Generate Portrait
+                      </button>
+                    </div>
                     {editId === c.id ? (
                       <div className="space-y-2">
                         <div className="grid grid-cols-2 gap-2">
