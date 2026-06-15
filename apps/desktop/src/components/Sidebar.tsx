@@ -1,6 +1,6 @@
 ﻿import { useEffect, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
-import { BookOpen, Settings, LayoutDashboard, Users, Globe, Clock, FileText, Download, Search, SlidersHorizontal, Sparkles } from 'lucide-react'
+import { BookOpen, Settings, LayoutDashboard, Users, Globe, Clock, FileText, Download, Search, SlidersHorizontal, Sparkles, Image as ImageIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useProjectStore } from '../stores/projectStore'
 import { useConnectionStore } from '../stores/connectionStore'
@@ -85,6 +85,9 @@ export default function Sidebar() {
             </NavLink>
             <NavLink to={`/projects/${projectId}/search`} className={navCls}>
               <Search className="h-4 w-4" />{t('nav.search')}
+            </NavLink>
+            <NavLink to={`/projects/${projectId}/gallery`} className={navCls}>
+              <ImageIcon className="h-4 w-4" />Gallery
             </NavLink>
             <NavLink to={`/projects/${projectId}/agent-jobs`} className={navCls}>
               <Sparkles className="h-4 w-4" />

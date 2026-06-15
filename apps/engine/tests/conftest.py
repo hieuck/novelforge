@@ -21,6 +21,7 @@ from models.project import Project  # noqa: F401
 from models.chapter import Chapter  # noqa: F401
 from models.extra import Character, Lore, TimelineItem, Job  # noqa: F401
 from models.summary import Summary  # noqa: F401
+from models.image import GeneratedImage  # noqa: F401
 
 # ── File-based SQLite for tests ────────────────────────────────────────────────
 # NOT :memory: — TestClient runs route handlers in a thread pool, and each thread

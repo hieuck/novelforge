@@ -11,6 +11,7 @@ import Timeline from './pages/Timeline'
 import Settings from './pages/Settings'
 import Export from './pages/Export'
 import Search from './pages/Search'
+import Gallery from './pages/Gallery'
 import ProjectPage from './pages/Project'
 import BackgroundJobsPanel from './components/BackgroundJobsPanel'
 import ToastContainer from './components/Toast'
@@ -46,6 +47,7 @@ export default function App() {
             <Route path="/projects/:projectId/timeline" element={<ErrorBoundary><Timeline /></ErrorBoundary>} />
             <Route path="/projects/:projectId/export" element={<ErrorBoundary><Export /></ErrorBoundary>} />
             <Route path="/projects/:projectId/search" element={<ErrorBoundary><Search /></ErrorBoundary>} />
+            <Route path="/projects/:projectId/gallery" element={<ErrorBoundary><Gallery /></ErrorBoundary>} />
             <Route path="/projects/:projectId/agent-jobs" element={<ErrorBoundary><AgentJobsPage /></ErrorBoundary>} />
             <Route path="/settings" element={<ErrorBoundary><Settings /></ErrorBoundary>} />
             <Route path="*" element={<Navigate to="/" replace />} />
