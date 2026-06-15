@@ -37,7 +37,7 @@ export default function Gallery() {
   const handleDelete = async (id: string) => {
     if (!confirm('Xóa ảnh này?')) return
     try {
-      await fetch(`/api/projects/${projectId}/images/${id}`, { method: 'DELETE' })
+      await api.delete(`/projects/${projectId}/images/${id}`)
       load()
     } catch { /* ignore */ }
   }
@@ -61,7 +61,7 @@ export default function Gallery() {
             {images.map((img) => (
               <div key={img.id} className="group relative rounded-lg border border-slate-800 bg-slate-900 overflow-hidden">
                 <button onClick={() => setPreview(img.url)} className="block w-full">
-                  <img src={img.url} alt={img.prompt || ''} className="w-full h-48 object-cover" />
+                  <img src={img.url} alt={img.prompt || ''} className="w-full h-48 object-cover" loading="lazy" />
                 </button>
                 <div className="p-2">
                   <p className="text-[10px] text-slate-500 line-clamp-2">{img.prompt || '(no prompt)'}</p>

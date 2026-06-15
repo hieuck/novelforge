@@ -1,7 +1,9 @@
 from __future__ import annotations
+import logging
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from routes.health import router as health_router
 from routes.projects import router as projects_router
@@ -25,11 +27,17 @@ from services.search import init_fts
 
 
 def create_app() -> FastAPI:
-    # Create all SQLAlchemy tables
+    # Create all SQLAlchemy tables (safe — only creates missing tables)
     db.base.Base.metadata.create_all(bind=db.base.engine)
+
+    # Schema migration: add columns added after initial release
+    from scripts.migrate import run as run_migration
+    run_migration()
 
     # Initialise FTS5 virtual tables (idempotent)
     init_fts()
+
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 
     application = FastAPI(
         title="NovelForge Engine",
@@ -45,6 +53,11 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    @application.exception_handler(Exception)
+    async def global_exception_handler(request: Request, exc: Exception):
+        logging.exception("Unhandled exception on %s %s", request.method, request.url.path)
+        return JSONResponse(status_code=500, content={"detail": "Internal server error"})
 
     # Register all routers under /api prefix
     for rtr in [
