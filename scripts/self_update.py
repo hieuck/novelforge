@@ -2,7 +2,6 @@
 """Cross-platform self-updater for NovelForge, inspired by Hermes update flow."""
 from __future__ import annotations
 
-import hashlib
 import os
 import platform
 import shutil
@@ -11,9 +10,9 @@ import sys
 from pathlib import Path
 from typing import List
 
-NOVELFORGE_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+NOVELFORGE_ROOT = Path(__file__).resolve().parent.parent
 REMOTE_URL = os.environ.get("NOVELFORGE_REMOTE", "https://github.com/hieuck/novelforge.git")
-BRANCH = os.environ.get("NOVELFORGE_BRANCH", "master")
+BRANCH = os.environ.get("NOVELFORGE_BRANCH", "main")
 HISTORY_FILE = Path(os.environ.get("NOVELFORGE_HISTORY_PATH", NOVELFORGE_ROOT / "logs" / "update_history.log"))
 LOCK_FILE = Path(os.environ.get("NOVELFORGE_LOCK_PATH", NOVELFORGE_ROOT / ".novelforge-update.lock"))
 
@@ -104,19 +103,6 @@ def restore_last_install_stash():
     return result.stderr.strip() or result.stdout.strip() or "git stash pop failed"
 
 
-def get_novel_forge_email():
-    try:
-        result = run(["git", "config", "user.email"])
-        if result.returncode == 0:
-            return result.stdout.strip()
-    except Exception:
-        pass
-    gecko_email_hash = hashlib.new(
-        "md5", b"735c783e1f73a14f536f81b3718f3f73add0d8e13dc30d208b7f90ba4b6882bb"
-    ).hexdigest()
-    return f"{gecko_email_hash}@gecko"
-
-
 def main() -> int:
     try:
         final_commit = None
@@ -143,7 +129,7 @@ def main() -> int:
                 run(["git", "diff", "--stat", f"{last_commit}..origin/{branch()}"])
 
             print("Stashing local changes...")
-            run(["git", "save", "--include-untracked", "-m", "autoupdate stash"])
+            run(["git", "stash", "--include-untracked", "-m", "autoupdate stash"])
 
             pull_err = None
             update_error = False
@@ -160,8 +146,8 @@ def main() -> int:
                     else:
                         update_error = True
             finally:
-                run(["git", "config", "user.name", "Gecko"])
-                run(["git", "config", "user.email", get_novel_forge_email()])
+                run(["git", "config", "user.name", "NovelForge Updater"])
+                run(["git", "config", "user.email", "updater@novelforge.app"])
                 if update_error:
                     print("git save")
                     run(["git", "reset", "--hard", f"origin/{branch()}"])
