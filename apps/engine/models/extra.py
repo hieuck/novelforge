@@ -6,7 +6,7 @@ from db.base import Base
 class Settings(Base):
     __tablename__ = "settings"
     id = Column(String, primary_key=True, default="app-settings")
-    project_id = Column(String, nullable=True)
+    project_id = Column(String, nullable=True, index=True)
     key = Column(String, nullable=False)
     value = Column(Text, nullable=False)
     is_secret = Column(Boolean, nullable=False, default=False)

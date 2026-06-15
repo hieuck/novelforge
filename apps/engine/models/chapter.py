@@ -8,7 +8,7 @@ class Chapter(Base):
     __tablename__ = "chapters"
 
     id = Column(String, primary_key=True)
-    project_id = Column(String, ForeignKey("projects.id"), nullable=False)
+    project_id = Column(String, ForeignKey("projects.id"), nullable=False, index=True)
     title = Column(String, nullable=False)
     content = Column(Text, nullable=False)
     status = Column(String, nullable=False, default="draft")

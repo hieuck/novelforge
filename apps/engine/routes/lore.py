@@ -1,7 +1,7 @@
 import json
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from db.session import SessionLocal
 from models.extra import Lore
@@ -14,8 +14,8 @@ router = APIRouter()
 
 class LoreIn(BaseModel):
     project_id: str | None = None
-    lore_type: str
-    name: str
+    lore_type: str = Field(max_length=100)
+    name: str = Field(max_length=200)
     description: str | None = None
     tags: list | None = None
     related_chapters: list | None = None

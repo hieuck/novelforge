@@ -6,7 +6,7 @@ from db.base import Base
 class Summary(Base):
     __tablename__ = "summaries"
     id = Column(String, primary_key=True)
-    project_id = Column(String, ForeignKey("projects.id"), nullable=False)
+    project_id = Column(String, ForeignKey("projects.id"), nullable=False, index=True)
     kind = Column(String, nullable=False)
     subject_id = Column(String, nullable=True)
     text = Column(Text, nullable=False)

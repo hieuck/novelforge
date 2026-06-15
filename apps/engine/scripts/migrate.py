@@ -6,13 +6,25 @@ from sqlalchemy import inspect, text
 from db.base import engine
 
 
-ADD_COLUMNS = {
+ADD_COLUMNS: dict[str, list[tuple[str, str]]] = {
     "chapters": [
         ("illustration_url", "VARCHAR"),
     ],
     "characters": [
         ("gender", "VARCHAR"),
         ("portrait_url", "VARCHAR"),
+    ],
+}
+
+ADD_INDEXES: dict[str, list[tuple[str, str]]] = {
+    "chapters": [
+        ("ix_chapters_project_id", "project_id"),
+    ],
+    "summaries": [
+        ("ix_summaries_project_id", "project_id"),
+    ],
+    "settings": [
+        ("ix_settings_project_id", "project_id"),
     ],
 }
 
@@ -29,6 +41,14 @@ def run():
                     print(f"  + added {table}.{col_name}")
                 else:
                     print(f"  = {table}.{col_name} already exists")
+        for table, indexes in ADD_INDEXES.items():
+            existing = {ix["name"] for ix in inspector.get_indexes(table)}
+            for ix_name, col_name in indexes:
+                if ix_name not in existing:
+                    conn.execute(text(f"CREATE INDEX IF NOT EXISTS {ix_name} ON {table}({col_name})"))
+                    print(f"  + added index {ix_name} on {table}({col_name})")
+                else:
+                    print(f"  = index {ix_name} already exists")
         conn.commit()
     print("Migration complete.")
 

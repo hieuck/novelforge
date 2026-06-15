@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from db.session import SessionLocal
 from models.chapter import Chapter
@@ -12,18 +12,17 @@ router = APIRouter()
 
 class ChapterIn(BaseModel):
     project_id: str
-    title: str
+    title: str = Field(max_length=200)
     content: str | None = ""
     scene_order: int = 0
     status: str | None = "draft"
     summary: str | None = None
     notes: str | None = None
     illustration_url: str | None = None
-    illustration_url: str | None = None
 
 
 class ChapterUpdate(BaseModel):
-    title: str | None = None
+    title: str | None = Field(default=None, max_length=200)
     content: str | None = None
     scene_order: int | None = None
     status: str | None = None

@@ -23,7 +23,7 @@ type UpdateSummary = {
 
 export default function Dashboard() {
   const { t } = useTranslation()
-  const { projects, fetchProjects, createProject } = useProjectStore()
+  const { projects, loadingProjects, fetchProjects, createProject } = useProjectStore()
   const navigate = useNavigate()
   const [appInfo, setAppInfo] = useState<AppInfo | null>(null)
   const [updateSummary, setUpdateSummary] = useState<UpdateSummary | null>(null)
@@ -115,7 +115,18 @@ export default function Dashboard() {
         <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-600">
           {t('dashboard.projects_count', { count: projects.length })}
         </h2>
-        {projects.map((p) => (
+        {loadingProjects ? (
+          Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="animate-pulse rounded-lg border border-slate-800 bg-slate-900/40 p-4">
+              <div className="h-4 w-3/5 rounded bg-slate-800" />
+              <div className="mt-2 h-3 w-2/5 rounded bg-slate-800/70" />
+            </div>
+          ))
+        ) : projects.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-slate-800 p-8 text-center text-sm text-slate-600">
+            {t('dashboard.empty_state')}
+          </div>
+        ) : projects.map((p) => (
           <div key={p.id} className="group relative">
             <button
               onClick={() => navigate(`/projects/${p.id}/chapters`)}
@@ -146,11 +157,6 @@ export default function Dashboard() {
             </button>
           </div>
         ))}
-        {!projects.length && (
-          <div className="rounded-lg border border-dashed border-slate-800 p-8 text-center text-sm text-slate-600">
-            {t('dashboard.empty_state')}
-          </div>
-        )}
       </div>
     </div>
   )

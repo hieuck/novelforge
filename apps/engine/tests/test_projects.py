@@ -80,3 +80,15 @@ def test_delete_project_cascades_chapters(client):
     assert r.status_code in (200, 404)
     if r.status_code == 200:
         assert r.json() is not None
+
+
+def test_project_list_word_count(client):
+    """Project list includes computed word_count from chapters."""
+    proj = client.post("/api/projects/", json={"title": "WordCount"}).json()
+    client.post("/api/chapters/", json={"project_id": proj["id"], "title": "C1", "content": "one two three"})
+    client.post("/api/chapters/", json={"project_id": proj["id"], "title": "C2", "content": "four five six seven"})
+
+    r = client.get("/api/projects/")
+    assert r.status_code == 200
+    data = next(p for p in r.json() if p["id"] == proj["id"])
+    assert data["word_count"] == 7  # 3 + 4

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from db.session import SessionLocal
 from models.extra import Character
@@ -12,7 +12,7 @@ router = APIRouter()
 
 class CharacterIn(BaseModel):
     project_id: str | None = None
-    name: str
+    name: str = Field(max_length=200)
     alias: str | None = None
     gender: str | None = None
     role: str | None = None

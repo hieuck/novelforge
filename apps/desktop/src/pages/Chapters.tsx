@@ -5,6 +5,7 @@ import {
   Plus, Trash2, CheckCircle, Save, Loader2,
   FileText,
 } from 'lucide-react'
+import { api } from '../lib/api'
 import { useChapterStore } from '../stores/chapterStore'
 
 import type { Chapter } from '../types'
@@ -213,17 +214,11 @@ export default function Chapters() {
               <button
                 onClick={async () => {
                   const prompt = `Scene: ${activeChapter.title}, ${content?.slice(0, 200) || ''}, cinematic`.trim()
-                  try {
-                    const r = await fetch('/api/generate/image', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ prompt, size: 'medium', project_id: projectId, entity_type: 'chapter', entity_id: chapterId }),
-                    })
-                    if (!r.ok) { const e = await r.json(); alert(e.detail || 'Failed'); return }
-                    const data = await r.json()
+                  const data = await api.post<{ url: string }>('/generate/image', { prompt, size: 'medium', project_id: projectId, entity_type: 'chapter', entity_id: chapterId }, true)
+                  if (data) {
                     await updateChapter(chapterId, { illustration_url: data.url })
                     setSceneUrl(data.url)
-                  } catch { /* ignore */ }
+                  }
                 }}
                 className="flex items-center gap-1.5 rounded-md border border-slate-700 px-2.5 py-1 text-[11px] text-slate-400 hover:border-slate-500 hover:text-slate-200"
                 title="Generate scene illustration"

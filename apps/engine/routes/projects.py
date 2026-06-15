@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 from db.session import SessionLocal
@@ -12,7 +12,7 @@ router = APIRouter()
 
 
 class ProjectIn(BaseModel):
-    title: str
+    title: str = Field(max_length=200)
     description: str | None = None
     genre: str | None = None
     language: str = "vi"
@@ -21,7 +21,7 @@ class ProjectIn(BaseModel):
 
 
 class ProjectUpdate(BaseModel):
-    title: str | None = None
+    title: str | None = Field(default=None, max_length=200)
     description: str | None = None
     genre: str | None = None
     language: str | None = None

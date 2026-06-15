@@ -157,15 +157,11 @@ export default function Characters() {
                       <button
                         onClick={async () => {
                           const prompt = `Character portrait: ${c.name}, ${c.role || ''}, ${c.appearance || ''}, ${c.personality || ''}, fantasy art style, digital painting, detailed character design`.trim()
-                          const r = await fetch('/api/generate/image', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ prompt, size: 'medium' }),
-                          })
-                          if (!r.ok) { const e = await r.json(); alert(e.detail || 'Generate failed'); return }
-                          const data = await r.json()
-                          await api.patch(`/characters/${c.id}`, { portrait_url: data.url })
-                          load()
+                          const data = await api.post<{ url: string }>('/generate/image', { prompt, size: 'medium' }, true)
+                          if (data) {
+                            await api.patch(`/characters/${c.id}`, { portrait_url: data.url }, true)
+                            load()
+                          }
                         }}
                         className="flex items-center gap-1.5 rounded-md border border-slate-700 px-2.5 py-1 text-[11px] text-slate-400 hover:border-slate-500 hover:text-slate-200"
                       >

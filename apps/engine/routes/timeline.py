@@ -1,7 +1,7 @@
 import json
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from db.session import SessionLocal
 from models.extra import TimelineItem
@@ -14,7 +14,7 @@ router = APIRouter()
 
 class TimelineIn(BaseModel):
     project_id: str | None = None
-    title: str
+    title: str = Field(max_length=200)
     event_date: str | None = None
     relative_order: str | None = None
     description: str | None = None

@@ -5,6 +5,7 @@ import type { Project } from '../types'
 interface ProjectStore {
   projects: Project[]
   activeProjectId?: string
+  loadingProjects: boolean
   setActiveProject: (id: string) => void
   fetchProjects: () => Promise<void>
   createProject: (values: Partial<Project>) => Promise<Project>
@@ -15,12 +16,14 @@ interface ProjectStore {
 export const useProjectStore = create<ProjectStore>((set) => ({
   projects: [],
   activeProjectId: undefined,
+  loadingProjects: false,
 
   setActiveProject: (id) => set({ activeProjectId: id }),
 
   fetchProjects: async () => {
+    set({ loadingProjects: true })
     const data = await api.get<Project[]>('/projects/')
-    set({ projects: Array.isArray(data) ? data : [] })
+    set({ projects: Array.isArray(data) ? data : [], loadingProjects: false })
   },
 
   createProject: async (values) => {

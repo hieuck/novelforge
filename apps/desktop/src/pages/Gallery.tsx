@@ -36,10 +36,8 @@ export default function Gallery() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Xóa ảnh này?')) return
-    try {
-      await api.delete(`/projects/${projectId}/images/${id}`)
-      load()
-    } catch { /* ignore */ }
+    await api.delete(`/projects/${projectId}/images/${id}`, true)
+    load()
   }
 
   return (

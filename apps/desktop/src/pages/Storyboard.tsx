@@ -32,18 +32,11 @@ export default function Storyboard() {
 
   const handleGenerate = async (ch: Chapter) => {
     const prompt = `Scene: ${ch.title || 'Chapter'}, ${(ch.content || '').slice(0, 200)}, cinematic`.trim()
-    try {
-      const r = await fetch('/api/generate/image', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, size: 'medium', project_id: projectId, entity_type: 'chapter', entity_id: ch.id }),
-      })
-      if (r.ok) {
-        const data = await r.json()
-        await api.patch(`/chapters/${ch.id}`, { illustration_url: data.url })
-        load()
-      }
-    } catch { /* ignore */ }
+    const data = await api.post<{ url: string }>('/generate/image', { prompt, size: 'medium', project_id: projectId, entity_type: 'chapter', entity_id: ch.id }, true)
+    if (data) {
+      await api.patch(`/chapters/${ch.id}`, { illustration_url: data.url }, true)
+      load()
+    }
   }
 
   if (loading) {
@@ -96,10 +89,8 @@ export default function Storyboard() {
                 const ordered = [...chapters].sort((a, b) => (a.scene_order ?? 0) - (b.scene_order ?? 0))
                 const [moved] = ordered.splice(fromIdx, 1)
                 ordered.splice(toIdx, 0, moved)
-                try {
-                  await api.post('/chapters/reorder', { ordered_ids: ordered.map((c) => c.id) })
-                  load()
-                } catch { /* ignore */ }
+                const ok = await api.post('/chapters/reorder', { ordered_ids: ordered.map((c) => c.id) }, true)
+                if (ok) load()
               }
               return (
                 <div key={ch.id} className="flex gap-4 rounded-lg border border-slate-800 bg-slate-900/60 p-4 hover:border-slate-700">
