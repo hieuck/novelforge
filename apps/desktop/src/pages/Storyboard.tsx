@@ -1,0 +1,123 @@
+import { useEffect, useState } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import { Loader2, Film, Plus, Trash2, Image as ImageIcon } from 'lucide-react'
+import { api } from '../lib/api'
+
+interface Chapter {
+  id: string; title?: string; content?: string; scene_order?: number
+}
+
+interface GalleryImage {
+  id: string; url: string; prompt: string; entity_type: string | null; entity_id: string | null
+}
+
+export default function Storyboard() {
+  const { t } = useTranslation()
+  const { projectId } = useParams()
+  const navigate = useNavigate()
+  const [chapters, setChapters] = useState<Chapter[]>([])
+  const [images, setImages] = useState<GalleryImage[]>([])
+  const [loading, setLoading] = useState(true)
+
+  const load = async () => {
+    if (!projectId) return
+    setLoading(true)
+    try {
+      const [chData, imgData] = await Promise.all([
+        api.get<Chapter[]>(`/projects/${projectId}/chapters`),
+        api.get<GalleryImage[]>(`/projects/${projectId}/images`),
+      ])
+      setChapters(chData)
+      setImages(imgData)
+    } catch { /* ignore */ }
+    setLoading(false)
+  }
+
+  useEffect(() => { load() }, [projectId])
+
+  const getImageForChapter = (ch: Chapter) => {
+    return images.find((img) => img.entity_id === ch.id)
+  }
+
+  const handleGenerate = async (ch: Chapter) => {
+    const prompt = `Scene illustration: ${ch.title || 'Chapter'}, ${(ch.content || '').slice(0, 200)}, cinematic lighting, fantasy art, wide shot`.trim()
+    try {
+      const r = await fetch('/api/generate/image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, size: 'medium', project_id: projectId, entity_type: 'chapter', entity_id: ch.id }),
+      })
+      if (r.ok) load()
+    } catch { /* ignore */ }
+  }
+
+  if (loading) {
+    return <div className="flex h-full items-center justify-center text-slate-500"><Loader2 className="h-5 w-5 animate-spin mr-2" />Loading...</div>
+  }
+
+  return (
+    <div className="h-full overflow-y-auto p-6">
+      <div className="mx-auto max-w-6xl">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            <Film className="h-5 w-5 text-indigo-400" />
+            <h1 className="text-xl font-bold text-slate-100">Storyboard</h1>
+          </div>
+          <button onClick={() => navigate(`/projects/${projectId}/chapters`)}
+            className="flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-1.5 text-sm text-white hover:bg-indigo-700">
+            <Plus className="h-4 w-4" /> Thêm chương
+          </button>
+        </div>
+
+        {chapters.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-slate-800 p-12 text-center text-sm text-slate-600">
+            Chưa có chương nào. Tạo chapter trước để xây dựng storyboard.
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {chapters.sort((a, b) => (a.scene_order ?? 0) - (b.scene_order ?? 0)).map((ch, idx) => {
+              const img = getImageForChapter(ch)
+              return (
+                <div key={ch.id} className="flex gap-4 rounded-lg border border-slate-800 bg-slate-900/60 p-4 hover:border-slate-700">
+                  {/* Scene number */}
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-900/50 text-sm font-bold text-indigo-400">
+                    {idx + 1}
+                  </div>
+
+                  {/* Image */}
+                  <div className="w-48 shrink-0">
+                    {img ? (
+                      <img src={img.url} alt={ch.title || ''} className="h-28 w-48 rounded-lg object-cover border border-slate-700" />
+                    ) : (
+                      <div className="flex h-28 w-48 items-center justify-center rounded-lg border border-dashed border-slate-700 bg-slate-800/50">
+                        <button onClick={() => handleGenerate(ch)} className="flex flex-col items-center gap-1 text-slate-500 hover:text-slate-300">
+                          <ImageIcon className="h-6 w-6" />
+                          <span className="text-[10px]">Tạo ảnh</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-sm font-medium text-slate-200 truncate">{ch.title || 'Untitled'}</h3>
+                    <p className="mt-1 text-xs text-slate-500 line-clamp-3">{ch.content?.slice(0, 200) || ''}</p>
+                    <div className="mt-2 flex gap-2">
+                      <button onClick={() => navigate(`/projects/${projectId}/chapters/${ch.id}`)}
+                        className="text-[10px] text-indigo-400 hover:text-indigo-300">Sửa</button>
+                      {img && (
+                        <button onClick={() => handleGenerate(ch)}
+                          className="text-[10px] text-slate-500 hover:text-slate-300">Tạo lại ảnh</button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
