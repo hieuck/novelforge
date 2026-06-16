@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Loader2, Film, Plus, Trash2, Image as ImageIcon, Video } from 'lucide-react'
+import { Loader2, Film, Plus, Image as ImageIcon, Video } from 'lucide-react'
 import { api } from '../lib/api'
 
 interface Chapter {

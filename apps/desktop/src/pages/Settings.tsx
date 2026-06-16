@@ -259,7 +259,7 @@ export default function Settings() {
                 try {
                   const data = await api.post<{filename:string}>('/backup', {}, true)
                   if (data) alert(`Backup created: ${data.filename}`)
-                } catch {}
+                } catch { /* toast shown by api client */ }
               }} className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs text-white hover:bg-indigo-700">
                 {t('settings.backup_create')}
               </button>
@@ -278,7 +278,7 @@ export default function Settings() {
                       }
                     }
                   }
-                } catch {}
+                } catch { /* toast shown by api client */ }
               }} className="rounded-md border border-slate-700 px-3 py-1.5 text-xs text-slate-300 hover:border-slate-500">
                 {t('settings.backup_restore')}
               </button>

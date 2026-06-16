@@ -20,7 +20,6 @@ export default function Characters() {
   const [editId, setEditId] = useState<string | null>(null)
   const [editForm, setEditForm] = useState({ ...EMPTY })
   const [loading, setLoading] = useState(false)
-  const [showAgent, setShowAgent] = useState(false)
   const [preview, setPreview] = useState<string | null>(null)
 
   const load = async () => {

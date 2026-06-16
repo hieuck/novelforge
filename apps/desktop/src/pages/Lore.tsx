@@ -4,7 +4,6 @@ import { useParams } from 'react-router-dom'
 import { Plus, Trash2, X, Edit2, Check } from 'lucide-react'
 import { api } from '../lib/api'
 import type { LoreItem } from '../types'
-import AgentPanel from '../components/AgentPanel'
 
 const LORE_TYPES = ['location', 'organization', 'rule', 'magic', 'technology', 'term', 'other']
 

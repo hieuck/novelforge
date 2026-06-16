@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
 import { Trash2, Loader2, Image as ImageIcon } from 'lucide-react'
 import { api } from '../lib/api'
 import ConfirmDialog from '../components/ConfirmDialog'
@@ -17,7 +16,6 @@ interface GalleryImage {
 }
 
 export default function Gallery() {
-  const { t } = useTranslation()
   const { projectId } = useParams()
   const [images, setImages] = useState<GalleryImage[]>([])
   const [loading, setLoading] = useState(true)
