@@ -126,11 +126,24 @@ export default function Chapters() {
   }, [saved])
 
   // Global keyboard shortcuts
+  // Focus editor when switching chapters
+  useEffect(() => {
+    if (textareaRef.current && chapterId) {
+      textareaRef.current.focus()
+    }
+  }, [chapterId])
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === '?' && !(e.ctrlKey || e.metaKey)) {
         e.preventDefault()
         setShowShortcuts((v) => !v)
+        return
+      }
+      if (e.key === 'Escape' && !(e.ctrlKey || e.metaKey)) {
+        if (showShortcuts) { setShowShortcuts(false); return }
+        if (previewImg) { setPreviewImg(null); return }
+        navigate(projectId ? `/projects/${projectId}` : '/')
         return
       }
       const ctrl = e.ctrlKey || e.metaKey

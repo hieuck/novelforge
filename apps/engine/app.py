@@ -95,6 +95,11 @@ def create_app() -> FastAPI:
     ]:
         application.include_router(rtr, prefix="/api")
 
+    @application.on_event("shutdown")
+    async def shutdown():
+        logger.info("Shutting down NovelForge Engine — closing DB connections")
+        db.base.engine.dispose()
+
     return application
 
 

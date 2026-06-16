@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState, useMemo } from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { Loader2, BookOpen } from 'lucide-react'
 import Sidebar from './components/Sidebar'
@@ -7,6 +7,7 @@ import AgentPanel from './components/AgentPanel'
 import BackgroundJobsPanel from './components/BackgroundJobsPanel'
 import ToastContainer from './components/Toast'
 import { useConnectionStore } from './stores/connectionStore'
+import { useProjectStore } from './stores/projectStore'
 import { useAgentSessionStore } from './stores/agentSessionStore'
 
 const Dashboard = lazy(() => import('./pages/Dashboard'))
@@ -52,8 +53,11 @@ export default function App() {
   const urlProjectId = pidMatch?.[1] ?? null
   const { session, start } = useAgentSessionStore()
   const { connected, checking, check } = useConnectionStore()
+  const { projects } = useProjectStore()
   const [initialCheckDone, setInitialCheckDone] = useState(false)
   const isRunning = session.status === 'planning' || session.status === 'running' || session.status === 'asking'
+
+  const currentProject = useMemo(() => projects.find((p) => p.id === urlProjectId), [projects, urlProjectId])
 
   useEffect(() => {
     check().finally(() => setInitialCheckDone(true))
@@ -106,20 +110,22 @@ export default function App() {
           </div>
         )}
       </div>
-      {/* Connection status bar */}
-      {!connected && (
-        <div className="flex items-center gap-2 border-t border-slate-800 bg-red-950/40 px-4 py-1.5 text-xs text-red-400">
-          <span className="inline-block h-2 w-2 rounded-full bg-red-500" />
-          Engine disconnected — retrying...
+      {/* Status bar */}
+      <div className="flex items-center gap-3 border-t border-slate-800 bg-slate-900/80 px-4 py-1.5 text-xs text-slate-500">
+        <div className="flex items-center gap-1.5">
+          <span className={`inline-block h-2 w-2 rounded-full ${connected ? 'bg-green-500' : 'bg-red-500'}`} />
+          <span>{connected ? 'Connected' : 'Disconnected'}</span>
         </div>
-      )}
-      {isRunning && (
-        <div className="flex items-center gap-2 border-t border-slate-800 bg-slate-900 px-4 py-1.5 text-xs text-slate-400">
-          <span className="inline-block h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-          AI Agent đang chạy
-          <span className="ml-auto text-slate-600">{session.status === 'planning' ? 'Planning...' : 'Đang thực thi...'}</span>
-        </div>
-      )}
+        {currentProject?.word_count !== undefined && currentProject.word_count > 0 && (
+          <span className="text-indigo-400/70">{currentProject.word_count.toLocaleString()} words</span>
+        )}
+        {isRunning && (
+          <span className="flex items-center gap-1.5 text-green-400/70">
+            <span className="inline-block h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+            AI Agent {session.status === 'planning' ? 'planning...' : 'running...'}
+          </span>
+        )}
+      </div>
       <ToastContainer />
     </div>
   )
