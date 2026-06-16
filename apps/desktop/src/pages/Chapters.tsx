@@ -39,6 +39,7 @@ export default function Chapters() {
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const mountedRef = useRef(true)
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null)
   useEffect(() => () => { mountedRef.current = false }, [])
 
   // Load chapters on project change
@@ -111,6 +112,31 @@ export default function Chapters() {
     })
   }, [title, status, scheduleAutosave])
 
+  // Global keyboard shortcuts
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const ctrl = e.ctrlKey || e.metaKey
+      if (ctrl && e.key === 'n') {
+        e.preventDefault()
+        if (!projectId) return
+        const n = useChapterStore.getState().chapters.length + 1
+        useChapterStore.getState().createChapter({ project_id: projectId, title: t('chapters.new_title', { n }), content: '', status: 'draft', scene_order: n }).then((ch) => navigate(`/projects/${projectId}/chapters/${ch.id}`))
+      }
+      if (ctrl && e.key === 'e' && textareaRef.current) {
+        e.preventDefault()
+        textareaRef.current.focus()
+      }
+      if (ctrl && e.shiftKey && e.key === 'D' && chapterId) {
+        e.preventDefault()
+        if (!confirm(t('chapters.delete_confirm'))) return
+        useChapterStore.getState().deleteChapter(chapterId)
+        navigate(`/projects/${projectId}/chapters`)
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [chapterId, projectId])
+
   // Ctrl+S manual save
   const onKeyDown = (e: React.KeyboardEvent) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 's') {
@@ -158,7 +184,22 @@ export default function Chapters() {
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto py-1">
+        <div className="flex-1 overflow-y-auto py-1"
+          onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move' }}
+          onDrop={async (e) => {
+            e.preventDefault()
+            const raw = e.dataTransfer.getData('text/plain')
+            if (!raw) return
+            const { chapterId: dragId } = JSON.parse(raw)
+            if (!dragId || dragId === chapterId) return
+            const ordered = [...chapters].sort((a, b) => (a.scene_order ?? 0) - (b.scene_order ?? 0))
+            const fromIdx = ordered.findIndex((c) => c.id === dragId)
+            if (fromIdx < 0) return
+            const [moved] = ordered.splice(fromIdx, 1)
+            ordered.splice(ordered.length, 0, moved)
+            await api.post('/chapters/reorder', { ordered_ids: ordered.map((c) => c.id) })
+            fetchChapters(projectId!)
+          }}>
           {chapters.map((ch) => (
             <ChapterItem
               key={ch.id}
@@ -245,6 +286,7 @@ export default function Chapters() {
 
           {/* Writing area */}
           <textarea
+            ref={textareaRef}
             className="flex-1 resize-none bg-transparent px-6 py-5 font-serif text-[15px] leading-relaxed text-slate-200 placeholder:text-slate-700 outline-none"
             value={content}
             onChange={(e) => onContentChange(e.target.value)}
@@ -292,29 +334,37 @@ function ChapterItem({
 }) {
   const { t } = useTranslation()
   return (
-    <button
-      onClick={onClick}
-      className={`group flex w-full items-center gap-2 px-3 py-2 text-left transition-colors ${
-        active
-          ? 'bg-slate-800 text-slate-100'
-          : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
-      }`}
-    >
-      <FileText className="h-3.5 w-3.5 shrink-0 text-slate-600" />
-      <div className="min-w-0 flex-1">
-        <div className="truncate text-sm">{chapter.title || t('chapters.untitled')}</div>
-        <div className={`text-[10px] ${STATUS_COLOR[chapter.status ?? 'draft'] ?? 'text-slate-500'}`}>
-          {chapter.status ?? 'draft'}
-          {chapter.word_count ? ` · ${t('chapters.word_count', { count: chapter.word_count })}` : ''}
+    <div className="group flex items-center rounded-md px-1 transition-colors">
+      <button
+        draggable
+        onDragStart={(e) => {
+          const dragEvent = e as unknown as React.DragEvent
+          dragEvent.dataTransfer.setData('text/plain', JSON.stringify({ chapterId: chapter.id }))
+          dragEvent.dataTransfer.effectAllowed = 'move'
+        }}
+        onClick={onClick}
+        className={`flex flex-1 items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors ${
+          active
+            ? 'bg-slate-800 text-slate-100'
+            : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
+        }`}
+      >
+        <FileText className="h-3.5 w-3.5 shrink-0 text-slate-600" />
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-sm">{chapter.title || t('chapters.untitled')}</div>
+          <div className={`text-[10px] ${STATUS_COLOR[chapter.status ?? 'draft'] ?? 'text-slate-500'}`}>
+            {chapter.status ?? 'draft'}
+            {chapter.word_count ? ` · ${t('chapters.word_count', { count: chapter.word_count })}` : ''}
+          </div>
         </div>
-      </div>
+      </button>
       <button
         onClick={onDelete}
-        className="hidden shrink-0 rounded p-0.5 text-slate-600 hover:text-red-400 group-hover:block"
+        className="shrink-0 rounded p-0.5 text-slate-600 hover:text-red-400"
         title={t('chapters.delete_tooltip')}
       >
         <Trash2 className="h-3 w-3" />
       </button>
-    </button>
+    </div>
   )
 }
