@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Trash2, Loader2, Image as ImageIcon } from 'lucide-react'
 import { api } from '../lib/api'
+import ConfirmDialog from '../components/ConfirmDialog'
 
 interface GalleryImage {
   id: string
@@ -21,6 +22,7 @@ export default function Gallery() {
   const [images, setImages] = useState<GalleryImage[]>([])
   const [loading, setLoading] = useState(true)
   const [preview, setPreview] = useState<string | null>(null)
+  const [deleteId, setDeleteId] = useState<string | null>(null)
 
   const load = async () => {
     if (!projectId) return
@@ -34,9 +36,10 @@ export default function Gallery() {
 
   useEffect(() => { load() }, [projectId])
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Xóa ảnh này?')) return
-    await api.delete(`/projects/${projectId}/images/${id}`, true)
+  const handleDelete = async () => {
+    if (!deleteId) return
+    await api.delete(`/projects/${projectId}/images/${deleteId}`, true)
+    setDeleteId(null)
     load()
   }
 
@@ -65,7 +68,7 @@ export default function Gallery() {
                   <p className="text-[10px] text-slate-500 line-clamp-2">{img.prompt || '(no prompt)'}</p>
                   <div className="flex items-center justify-between mt-1">
                     <span className="text-[10px] text-slate-600">{img.entity_type || 'general'}</span>
-                    <button onClick={() => handleDelete(img.id)} className="p-1 text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={() => setDeleteId(img.id)} className="p-1 text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Trash2 className="h-3 w-3" />
                     </button>
                   </div>
@@ -82,6 +85,13 @@ export default function Gallery() {
           <img src={preview} className="max-h-[90vh] max-w-[90vw] object-contain" alt="preview" />
         </div>
       )}
+      <ConfirmDialog
+        open={!!deleteId}
+        title="Xóa ảnh"
+        message="Bạn có chắc muốn xóa ảnh này?"
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteId(null)}
+      />
     </div>
   )
 }

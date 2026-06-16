@@ -16,6 +16,7 @@ export default function Storyboard() {
   const [loading, setLoading] = useState(true)
   const [exporting, setExporting] = useState(false)
   const [exportProgress, setExportProgress] = useState<{ current: number; total: number } | null>(null)
+  const [dragIdx, setDragIdx] = useState<number | null>(null)
 
   const load = async () => {
     if (!projectId) return
@@ -118,8 +119,30 @@ export default function Storyboard() {
                 const ok = await api.post('/chapters/reorder', { ordered_ids: ordered.map((c) => c.id) }, true)
                 if (ok) load()
               }
+              const isDragOver = dragIdx !== null && dragIdx !== idx
               return (
-                <div key={ch.id} className="flex gap-4 rounded-lg border border-slate-800 bg-slate-900/60 p-4 hover:border-slate-700">
+                <div key={ch.id}
+                  draggable
+                  onDragStart={() => setDragIdx(idx)}
+                  onDragOver={(e) => { if (isDragOver) { e.preventDefault() } }}
+                  onDrop={async (e) => {
+                    e.preventDefault()
+                    if (dragIdx === null || dragIdx === idx) { setDragIdx(null); return }
+                    const ordered = [...chapters].sort((a, b) => (a.scene_order ?? 0) - (b.scene_order ?? 0))
+                    const [moved] = ordered.splice(dragIdx, 1)
+                    ordered.splice(idx, 0, moved)
+                    const ok = await api.post('/chapters/reorder', { ordered_ids: ordered.map((c) => c.id) }, true)
+                    if (ok) load()
+                    setDragIdx(null)
+                  }}
+                  onDragEnd={() => setDragIdx(null)}
+                  className={`flex gap-4 rounded-lg border p-4 transition-colors ${
+                    dragIdx === idx
+                      ? 'border-indigo-500 bg-indigo-950/30 opacity-50'
+                      : isDragOver
+                        ? 'border-indigo-500/50 bg-slate-900'
+                        : 'border-slate-800 bg-slate-900/60 hover:border-slate-700'
+                  }`}>
                   <div className="flex flex-col items-center gap-1">
                     <button onClick={() => moveChapter(idx, idx - 1)} disabled={idx === 0}
                       className="h-6 w-6 rounded border border-slate-700 text-xs text-slate-500 hover:text-slate-200 disabled:opacity-20 disabled:cursor-not-allowed">▲</button>
