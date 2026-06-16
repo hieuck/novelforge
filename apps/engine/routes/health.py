@@ -1,9 +1,7 @@
+from db.base import engine
 from fastapi import APIRouter
 from pydantic import BaseModel
 from sqlalchemy import text
-
-from db.base import engine
-from db.session import SessionLocal
 
 router = APIRouter()
 

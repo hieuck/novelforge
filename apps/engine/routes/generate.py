@@ -222,7 +222,7 @@ async def _run_video_export(job_id: str) -> None:
     output_path = DATA_DIR / f"storyboard_{uuid.uuid4()}.mp4"
 
     try:
-        db2 = _DB()
+        db2 = _session_local()
         try:
             j = db2.query(JobModel).filter(JobModel.id == job_id_local).first()
             if j:

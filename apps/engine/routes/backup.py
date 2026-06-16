@@ -6,9 +6,11 @@ import shutil
 import uuid
 from datetime import UTC, datetime
 
+from db.base import engine
 from db.paths import get_data_dir
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
+from sqlalchemy import text
 
 router = APIRouter()
 BACKUP_DIR = get_data_dir() / "backups"
