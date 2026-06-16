@@ -1,4 +1,9 @@
+from __future__ import annotations
+
+from pathlib import Path
+
 from db.base import engine
+from db.paths import get_data_dir
 from fastapi import APIRouter
 from pydantic import BaseModel
 from sqlalchemy import text
@@ -19,3 +24,27 @@ async def health() -> HealthResponse:
         return HealthResponse(status="ok", db="ok")
     except Exception as e:
         return HealthResponse(status="degraded", db=str(e))
+
+
+@router.get("/health/db")
+async def health_db() -> dict:
+    db_path = get_data_dir() / "novelforge.db"
+    size = db_path.stat().st_size if db_path.exists() else 0
+    try:
+        with engine.connect() as conn:
+            tables = conn.execute(
+                text("SELECT count(*) FROM sqlite_master WHERE type='table'")
+            ).scalar() or 0
+            return {
+                "status": "ok",
+                "size_bytes": size,
+                "tables": tables,
+                "db_path": str(db_path),
+            }
+    except Exception as e:
+        return {
+            "status": "degraded",
+            "size_bytes": size,
+            "tables": 0,
+            "error": str(e),
+        }
