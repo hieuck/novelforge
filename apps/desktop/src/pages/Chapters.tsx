@@ -38,6 +38,7 @@ export default function Chapters() {
   const [previewImg, setPreviewImg] = useState<string | null>(null)
   const [showShortcuts, setShowShortcuts] = useState(false)
   const [zenMode, setZenMode] = useState(false)
+  const [preview, setPreview] = useState(false)
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const mountedRef = useRef(true)
@@ -147,6 +148,11 @@ export default function Chapters() {
         if (showShortcuts) { setShowShortcuts(false); return }
         if (previewImg) { setPreviewImg(null); return }
         navigate(projectId ? `/projects/${projectId}` : '/')
+        return
+      }
+      if (ctrl && e.shiftKey && e.key === 'P') {
+        e.preventDefault()
+        setPreview((v) => !v)
         return
       }
       if ((ctrl && e.shiftKey && e.key === 'F') || e.key === 'F11') {
@@ -291,6 +297,16 @@ export default function Chapters() {
               <span>{saving ? t('chapters.saving') : saved ? t('chapters.saved') : t('chapters.unsaved')}</span>
             </div>
 
+            {/* Preview toggle */}
+            <button onClick={() => setPreview((v) => !v)}
+              className={`rounded-md border px-2 py-1 text-[11px] transition-colors ${
+                preview ? 'border-indigo-700 bg-indigo-900/30 text-indigo-300' : 'border-slate-700 text-slate-500 hover:border-slate-500'
+              }`}
+              title={preview ? 'Edit mode' : 'Preview mode'}
+            >
+              {preview ? '✎ Edit' : '👁 Preview'}
+            </button>
+
             {/* Zen mode toggle */}
             <button onClick={() => setZenMode((v) => !v)}
               className={`rounded-md border px-2 py-1 text-[11px] transition-colors ${
@@ -343,6 +359,7 @@ export default function Chapters() {
                     ['Ctrl+N', 'New chapter'],
                     ['Ctrl+E', 'Focus editor'],
                     ['Ctrl+Shift+D', 'Delete chapter'],
+                    ['Ctrl+Shift+P', 'Preview toggle'],
                     ['Ctrl+S', 'Save'],
                     ['F11 / Ctrl+Shift+F', 'Full-screen'],
                     ['Escape', 'Exit full-screen / Back'],
@@ -361,18 +378,24 @@ export default function Chapters() {
           )}
 
           {/* Writing area */}
-          <textarea
-            ref={textareaRef}
-            className="flex-1 resize-none bg-transparent px-6 py-5 font-serif text-[15px] leading-relaxed text-slate-200 placeholder:text-slate-700 outline-none"
-            value={content}
-            onChange={(e) => onContentChange(e.target.value)}
-            placeholder={t('chapters.content_placeholder')}
-            spellCheck={false}
-          />
+          {preview ? (
+            <div className="flex-1 overflow-y-auto px-6 py-5 font-serif text-[15px] leading-relaxed text-slate-200 whitespace-pre-wrap">
+              {content || <span className="text-slate-600 italic">No content</span>}
+            </div>
+          ) : (
+            <textarea
+              ref={textareaRef}
+              className="flex-1 resize-none bg-transparent px-6 py-5 font-serif text-[15px] leading-relaxed text-slate-200 placeholder:text-slate-700 outline-none"
+              value={content}
+              onChange={(e) => onContentChange(e.target.value)}
+              placeholder={t('chapters.content_placeholder')}
+              spellCheck={false}
+            />
+          )}
 
           {/* Status bar */}
           <div className="flex items-center justify-between border-t border-slate-800/70 bg-slate-950 px-4 py-1.5 text-xs text-slate-600">
-            <span>{t('chapters.word_count', { count: wordCount })}</span>
+            <span>{preview ? '📖 ' : ''}{t('chapters.word_count', { count: wordCount })}</span>
             <span className={STATUS_COLOR[status] ?? 'text-slate-500'}>{status}</span>
           </div>
         </div>
