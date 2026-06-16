@@ -1,11 +1,12 @@
-import { lazy, Suspense, useEffect } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
-import { Loader2 } from 'lucide-react'
+import { Loader2, BookOpen } from 'lucide-react'
 import Sidebar from './components/Sidebar'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import AgentPanel from './components/AgentPanel'
 import BackgroundJobsPanel from './components/BackgroundJobsPanel'
 import ToastContainer from './components/Toast'
+import { useConnectionStore } from './stores/connectionStore'
 import { useAgentSessionStore } from './stores/agentSessionStore'
 
 const Dashboard = lazy(() => import('./pages/Dashboard'))
@@ -32,18 +33,43 @@ function Lazy({ children }: { children: React.ReactNode }) {
   return <Suspense fallback={<PageFallback />}><ErrorBoundary>{children}</ErrorBoundary></Suspense>
 }
 
+function SplashScreen() {
+  return (
+    <div className="flex h-screen flex-col items-center justify-center gap-4 bg-slate-950">
+      <BookOpen className="h-12 w-12 text-indigo-400" />
+      <div className="text-xl font-bold text-slate-100">NovelForge</div>
+      <div className="flex items-center gap-2 text-sm text-slate-500">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        Connecting to engine...
+      </div>
+    </div>
+  )
+}
+
 export default function App() {
   const loc = useLocation()
   const pidMatch = loc.pathname.match(/^\/projects\/([^/]+)/)
   const urlProjectId = pidMatch?.[1] ?? null
   const { session, start } = useAgentSessionStore()
+  const { connected, checking, check } = useConnectionStore()
+  const [initialCheckDone, setInitialCheckDone] = useState(false)
   const isRunning = session.status === 'planning' || session.status === 'running' || session.status === 'asking'
+
+  useEffect(() => {
+    check().finally(() => setInitialCheckDone(true))
+    const t = setInterval(check, 15000)
+    return () => clearInterval(t)
+  }, [check])
 
   useEffect(() => {
     if (urlProjectId && !session.projectId) {
       start(urlProjectId)
     }
   }, [urlProjectId])
+
+  if (!initialCheckDone || (checking && !connected)) {
+    return <SplashScreen />
+  }
 
   const showRight = urlProjectId || (session.projectId && session.status !== 'idle')
 
@@ -80,7 +106,13 @@ export default function App() {
           </div>
         )}
       </div>
-      {/* Bottom status bar */}
+      {/* Connection status bar */}
+      {!connected && (
+        <div className="flex items-center gap-2 border-t border-slate-800 bg-red-950/40 px-4 py-1.5 text-xs text-red-400">
+          <span className="inline-block h-2 w-2 rounded-full bg-red-500" />
+          Engine disconnected — retrying...
+        </div>
+      )}
       {isRunning && (
         <div className="flex items-center gap-2 border-t border-slate-800 bg-slate-900 px-4 py-1.5 text-xs text-slate-400">
           <span className="inline-block h-2 w-2 rounded-full bg-green-500 animate-pulse" />
@@ -90,58 +122,6 @@ export default function App() {
       )}
       <ToastContainer />
     </div>
-  )
-}
-
-function GlobalAgentFloating() {
-  const loc = useLocation()
-  const pidMatch = loc.pathname.match(/^\/projects\/([^/]+)/)
-  const urlProjectId = pidMatch?.[1] ?? null
-  const { session, start, setPanelOpen } = useAgentSessionStore()
-
-  useEffect(() => {
-    if (urlProjectId) {
-      if (!session.projectId) {
-        start(urlProjectId)
-      }
-    }
-  }, [urlProjectId])
-
-  const hasSession = session.projectId !== null && session.projectId !== undefined
-  const activePid = urlProjectId || session.projectId
-
-  // Only show button when on a project page; keep panel mounted if session exists
-  return (
-    <>
-      {urlProjectId && (
-        <button
-          onClick={() => setPanelOpen(!session.panelOpen)}
-          className={`fixed right-0 top-1/2 z-30 -translate-y-1/2 rounded-l-lg border border-r-0 border-slate-700 p-2 text-xs transition-colors ${
-            session.panelOpen
-              ? 'bg-indigo-900/70 text-indigo-300 border-indigo-700'
-              : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-          }`}
-          title="AI Agent"
-        >
-          🤖
-          {session.status !== 'idle' && (
-            <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-          )}
-        </button>
-      )}
-
-      {/* Panel — always mounted once started, CSS hide/show to preserve WebSocket */}
-      {hasSession && (
-        <div className={`fixed right-0 top-0 z-20 h-full border-l border-slate-800 bg-slate-950 shadow-2xl transition-all duration-300 ${session.panelOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-          <AgentPanel
-            projectId={activePid}
-            chapterId={null}
-            chapterTitle={null}
-            onInsertText={() => {}}
-          />
-        </div>
-      )}
-    </>
   )
 }
 
