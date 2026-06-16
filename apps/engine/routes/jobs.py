@@ -91,6 +91,19 @@ async def submit_job(payload: JobIn, background_tasks: BackgroundTasks) -> dict:
     return result
 
 
+@router.get("/jobs/{job_id}")
+def get_job(job_id: str) -> dict:
+    """Get a single job by ID."""
+    db = SessionLocal()
+    try:
+        job = db.query(Job).filter(Job.id == job_id).first()
+        if not job:
+            raise HTTPException(status_code=404, detail="Job not found")
+        return _to_dict(job)
+    finally:
+        db.close()
+
+
 @router.post("/jobs/{job_id}/cancel")
 def cancel_job(job_id: str) -> dict:
     """Signal a running job to cancel."""

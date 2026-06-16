@@ -4,7 +4,9 @@ from __future__ import annotations
 import uuid
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException
+import json
+
+from fastapi import APIRouter, BackgroundTasks, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
@@ -158,53 +160,99 @@ async def serve_generated(filename: str):
     return FileResponse(str(filepath), media_type=media_type)
 
 
-@router.post("/projects/{project_id}/storyboard/export-video")
-async def export_storyboard_video(project_id: str) -> FileResponse:
-    """Export storyboard as MP4 video slideshow. Requires FFmpeg."""
-    import asyncio
-    import subprocess
-    import tempfile
+@router.post("/projects/{project_id}/storyboard/export-video", status_code=201)
+async def export_storyboard_video(project_id: str, background_tasks: BackgroundTasks) -> dict:
+    """Start storyboard video export in background. Returns job_id. Poll /api/jobs/{job_id} or WS."""
+    from models.extra import Job as JobModel
 
     db = SessionLocal()
     try:
-        chapters = db.query(Chapter).filter(
-            Chapter.project_id == project_id
-        ).order_by(Chapter.scene_order).all()
+        job = JobModel(
+            id=str(uuid.uuid4()),
+            project_id=project_id,
+            kind="video_export",
+            status="queued",
+            params=json.dumps({"project_id": project_id}),
+        )
+        db.add(job)
+        db.commit()
+        db.refresh(job)
+        result = {"job_id": job.id, "status": job.status}
     finally:
         db.close()
 
-    chapters = [c for c in chapters if c.illustration_url]
+    background_tasks.add_task(_run_video_export, result["job_id"])
+    return result
+
+
+async def _run_video_export(job_id: str) -> None:
+    """Run video export in background, updating job status."""
+    import asyncio
+    import shutil
+    import subprocess
+    import tempfile
+
+    import httpx
+    from db.session import SessionLocal as _DB
+    from models.chapter import Chapter as ChapterModel
+    from models.extra import Job as JobModel
+
+    db = _DB()
+    try:
+        job = db.query(JobModel).filter(JobModel.id == job_id).first()
+        if not job or job.status == "cancelled":
+            return
+
+        params = json.loads(job.params or "{}")
+        project_id = params["project_id"]
+
+        chapters = db.query(ChapterModel).filter(
+            ChapterModel.project_id == project_id,
+            ChapterModel.illustration_url.isnot(None),
+        ).order_by(ChapterModel.scene_order).all()
+    finally:
+        db.close()
 
     if not chapters:
-        raise HTTPException(status_code=400, detail="No chapters with illustrations found. Generate scene images first.")
+        _update_job(job_id, "failed", "No chapters with illustrations found")
+        return
 
-    temp_dir = Path(tempfile.mkdtemp())
+    job_id_local = job_id
+    temp_dir_obj = tempfile.mkdtemp()
+    temp_dir = Path(temp_dir_obj)
     output_path = DATA_DIR / f"storyboard_{uuid.uuid4()}.mp4"
 
     try:
-        # Download each image and create a concat file for FFmpeg
-        import httpx
+        db2 = _DB()
+        try:
+            j = db2.query(JobModel).filter(JobModel.id == job_id_local).first()
+            if j:
+                j.status = "running"
+                j.updated_at = datetime.now(timezone.utc)
+                db2.commit()
+        finally:
+            db2.close()
+
         concat_lines = []
+        total = len(chapters)
         async with httpx.AsyncClient() as client:
-            for ch in chapters:
-                img_url = ch.illustration_url.lstrip("/")
-                # Construct full URL from relative path
-                img_path = DATA_DIR / Path(img_url).name
+            for idx, ch in enumerate(chapters):
+                img_path = DATA_DIR / Path(ch.illustration_url.lstrip("/")).name
                 if img_path.exists():
                     ext = img_path.suffix or ".jpg"
                     dest = temp_dir / f"scene_{ch.scene_order:03d}{ext}"
-                    import shutil
                     shutil.copy2(img_path, dest)
                     concat_lines.append(f"file '{dest.name}'\nduration 3\n")
+                # Update progress
+                _update_job_progress(job_id_local, idx + 1, total)
 
         if not concat_lines:
-            raise HTTPException(status_code=400, detail="Could not load illustration files")
+            _update_job(job_id_local, "failed", "Could not load illustration files")
+            return
 
-        # Write concat file
         concat_file = temp_dir / "concat.txt"
         concat_file.write_text("".join(concat_lines))
 
-        # Run FFmpeg
         cmd = [
             "ffmpeg", "-y", "-f", "concat", "-safe", "0",
             "-i", str(concat_file),
@@ -219,23 +267,73 @@ async def export_storyboard_video(project_id: str) -> FileResponse:
             await asyncio.wait_for(proc.communicate(), timeout=120)
         except asyncio.TimeoutError:
             proc.kill()
-            raise HTTPException(status_code=500, detail="Video export timed out")
+            _update_job(job_id_local, "failed", "Video export timed out")
+            return
 
         if proc.returncode != 0:
-            raise HTTPException(status_code=500, detail="FFmpeg processing failed")
+            _update_job(job_id_local, "failed", "FFmpeg processing failed")
+            return
 
-        return FileResponse(str(output_path), media_type="video/mp4", filename="storyboard.mp4")
+        _update_job(job_id_local, "done", str(output_path))
 
-    except HTTPException:
-        raise
     except FileNotFoundError:
-        raise HTTPException(status_code=500, detail="FFmpeg not found. Install FFmpeg to export video.")
+        _update_job(job_id_local, "failed", "FFmpeg not found")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Video export failed: {e}")
+        _update_job(job_id_local, "failed", f"Video export failed: {e}")
     finally:
-        # Cleanup temp files
-        import shutil
-        try:
-            shutil.rmtree(temp_dir, ignore_errors=True)
-        except Exception:
-            pass
+        shutil.rmtree(temp_dir, ignore_errors=True)
+
+
+@router.get("/jobs/{job_id}/video")
+def download_video(job_id: str) -> FileResponse:
+    """Download the completed video export."""
+    from models.extra import Job as JobModel
+    db = SessionLocal()
+    try:
+        job = db.query(JobModel).filter(JobModel.id == job_id).first()
+        if not job:
+            raise HTTPException(status_code=404, detail="Job not found")
+        if job.status != "done":
+            raise HTTPException(status_code=400, detail="Video export not completed yet")
+        result = json.loads(job.result or "{}")
+        path = result.get("message", "")
+        if not path or not Path(path).exists():
+            raise HTTPException(status_code=404, detail="Video file not found")
+        return FileResponse(path, media_type="video/mp4", filename="storyboard.mp4")
+    finally:
+        db.close()
+
+
+def _update_job(job_id: str, status: str, message: str = "") -> None:
+    from db.session import SessionLocal as _DB
+    from models.extra import Job as JobModel
+    db = _DB()
+    try:
+        job = db.query(JobModel).filter(JobModel.id == job_id).first()
+        if not job:
+            return
+        job.status = status
+        job.result = json.dumps({"message": message})
+        job.updated_at = datetime.now(timezone.utc)
+        db.commit()
+    except Exception:
+        pass
+    finally:
+        db.close()
+
+
+def _update_job_progress(job_id: str, current: int, total: int) -> None:
+    from db.session import SessionLocal as _DB
+    from models.extra import Job as JobModel
+    db = _DB()
+    try:
+        job = db.query(JobModel).filter(JobModel.id == job_id).first()
+        if not job:
+            return
+        job.result = json.dumps({"progress": current, "total": total, "message": f"Processing {current}/{total}"})
+        job.updated_at = datetime.now(timezone.utc)
+        db.commit()
+    except Exception:
+        pass
+    finally:
+        db.close()

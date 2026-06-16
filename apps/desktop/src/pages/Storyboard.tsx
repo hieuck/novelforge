@@ -15,6 +15,7 @@ export default function Storyboard() {
   const [chapters, setChapters] = useState<Chapter[]>([])
   const [loading, setLoading] = useState(true)
   const [exporting, setExporting] = useState(false)
+  const [exportProgress, setExportProgress] = useState<{ current: number; total: number } | null>(null)
 
   const load = async () => {
     if (!projectId) return
@@ -56,25 +57,50 @@ export default function Storyboard() {
               if (!projectId) return
               setExporting(true)
               try {
-                const r = await fetch(`/api/projects/${projectId}/storyboard/export-video`, { method: 'POST' })
-                if (!r.ok) { const e = await r.json(); alert(e.detail || 'Export failed'); return }
-                const blob = await r.blob()
-                const url = URL.createObjectURL(blob)
-                const a = document.createElement('a')
-                a.href = url; a.download = 'storyboard.mp4'; a.click()
-                URL.revokeObjectURL(url)
-              } catch (e: any) { alert(e.message) }
-              setExporting(false)
+                const { job_id } = await api.post<{ job_id: string }>(`/projects/${projectId}/storyboard/export-video`, {}, true)
+                // Poll for completion
+                const poll = async (): Promise<void> => {
+                  const job = await api.get<{ status: string; result?: { message?: string; progress?: number; total?: number }; error?: string }>(`/jobs/${job_id}`)
+                  if (job.result?.progress !== undefined) {
+                    setExportProgress({ current: job.result.progress, total: job.result.total ?? 1 })
+                  }
+                  if (job.status === 'done') {
+                    const r = await fetch(`/api/jobs/${job_id}/video`)
+                    const blob = await r.blob()
+                    const url = URL.createObjectURL(blob)
+                    const a = document.createElement('a')
+                    a.href = url; a.download = 'storyboard.mp4'; a.click()
+                    URL.revokeObjectURL(url)
+                    setExporting(false)
+                    setExportProgress(null)
+                  } else if (job.status === 'failed') {
+                    alert(job.error || 'Export failed')
+                    setExporting(false)
+                    setExportProgress(null)
+                  } else {
+                    setTimeout(poll, 1000)
+                  }
+                }
+                poll()
+              } catch (e: any) { alert(e.message); setExporting(false) }
             }} disabled={exporting}
               className="flex items-center gap-2 rounded-md border border-slate-700 px-3 py-1.5 text-sm text-slate-300 hover:border-slate-500 hover:text-white disabled:opacity-40">
               {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Video className="h-4 w-4" />}
-              {exporting ? 'Exporting...' : 'Export Video'}
+              {exporting
+                ? exportProgress ? `Exporting ${exportProgress.current}/${exportProgress.total}...` : 'Exporting...'
+                : 'Export Video'}
             </button>
             <button onClick={() => navigate(`/projects/${projectId}/chapters`)}
               className="flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-1.5 text-sm text-white hover:bg-indigo-700">
               <Plus className="h-4 w-4" /> Thêm chương
             </button>
           </div>
+          {exporting && exportProgress && (
+            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-800">
+              <div className="h-full rounded-full bg-indigo-500 transition-all duration-500"
+                style={{ width: `${(exportProgress.current / exportProgress.total) * 100}%` }} />
+            </div>
+          )}
         </div>
 
         {chapters.length === 0 ? (

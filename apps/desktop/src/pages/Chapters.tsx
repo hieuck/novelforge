@@ -35,6 +35,7 @@ export default function Chapters() {
   const [saved, setSaved] = useState(true)
   const [saving, setSaving] = useState(false)
   const [sceneUrl, setSceneUrl] = useState<string | null>(null)
+  const [previewImg, setPreviewImg] = useState<string | null>(null)
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const mountedRef = useRef(true)
@@ -231,7 +232,14 @@ export default function Chapters() {
           {/* Scene image display */}
           {(sceneUrl || activeChapter?.illustration_url) && (
             <div className="border-b border-slate-800">
-              <img src={sceneUrl || activeChapter?.illustration_url || ''} alt="Scene" className="w-full max-h-64 object-cover" />
+              <img src={sceneUrl || activeChapter?.illustration_url || ''} alt="Scene"
+                className="w-full max-h-64 object-cover cursor-pointer hover:opacity-90"
+                onClick={() => setPreviewImg(sceneUrl || activeChapter?.illustration_url || '')} />
+            </div>
+          )}
+          {previewImg && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80" onClick={() => setPreviewImg(null)}>
+              <img src={previewImg} className="max-h-[90vh] max-w-[90vw] object-contain" alt="preview" />
             </div>
           )}
 

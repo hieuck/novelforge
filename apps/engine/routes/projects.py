@@ -94,7 +94,7 @@ def get_project(project_id: str):
         p = db.query(Project).filter(Project.id == project_id).first()
         if not p:
             raise HTTPException(status_code=404, detail="Not found")
-        return to_dict(p)
+        return to_dict_with_stats(p, db)
     finally:
         db.close()
 

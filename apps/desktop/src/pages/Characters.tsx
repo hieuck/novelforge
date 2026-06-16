@@ -21,6 +21,7 @@ export default function Characters() {
   const [editForm, setEditForm] = useState({ ...EMPTY })
   const [loading, setLoading] = useState(false)
   const [showAgent, setShowAgent] = useState(false)
+  const [preview, setPreview] = useState<string | null>(null)
 
   const load = async () => {
     if (!projectId) return
@@ -152,7 +153,9 @@ export default function Characters() {
                     {/* Portrait */}
                     <div className="mb-3 flex flex-col items-center gap-2">
                       {c.portrait_url && (
-                        <img src={c.portrait_url} alt={c.name} className="h-32 w-32 rounded-lg object-cover border border-slate-700" />
+                        <img src={c.portrait_url} alt={c.name}
+                          className="h-32 w-32 cursor-pointer rounded-lg object-cover border border-slate-700 hover:border-indigo-500 transition-colors"
+                          onClick={() => setPreview(c.portrait_url!)} />
                       )}
                       <button
                         onClick={async () => {
@@ -217,6 +220,13 @@ export default function Characters() {
         )}
       </div>
       </div>{/* end main content */}
+
+      {/* Portrait lightbox */}
+      {preview && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80" onClick={() => setPreview(null)}>
+          <img src={preview} className="max-h-[90vh] max-w-[90vw] object-contain" alt="portrait preview" />
+        </div>
+      )}
     </div>
   )
 }
