@@ -3,6 +3,9 @@ from datetime import UTC, datetime
 
 from db.session import SessionLocal
 from fastapi import APIRouter, HTTPException
+from models.chapter import Chapter
+from models.extra import Character, Lore, TimelineItem
+from models.image import GeneratedImage
 from models.project import Project
 from pydantic import BaseModel, Field
 from sqlalchemy import func
@@ -95,6 +98,31 @@ def get_project(project_id: str):
         if not p:
             raise HTTPException(status_code=404, detail="Not found")
         return to_dict_with_stats(p, db)
+    finally:
+        db.close()
+
+
+@router.get("/projects/{project_id}/stats")
+def get_project_stats(project_id: str) -> dict:
+    db: Session = SessionLocal()
+    try:
+        p = db.query(Project).filter(Project.id == project_id).first()
+        if not p:
+            raise HTTPException(status_code=404, detail="Not found")
+        chapters = db.query(func.count(Chapter.id)).filter(Chapter.project_id == project_id).scalar() or 0
+        words = db.query(func.coalesce(func.sum(Chapter.word_count), 0)).filter(Chapter.project_id == project_id).scalar() or 0
+        characters = db.query(func.count(Character.id)).filter(Character.project_id == project_id).scalar() or 0
+        images = db.query(func.count(GeneratedImage.id)).filter(GeneratedImage.project_id == project_id).scalar() or 0
+        lore = db.query(func.count(Lore.id)).filter(Lore.project_id == project_id).scalar() or 0
+        timeline = db.query(func.count(TimelineItem.id)).filter(TimelineItem.project_id == project_id).scalar() or 0
+        return {
+            "chapters": chapters,
+            "words": words,
+            "characters": characters,
+            "images": images,
+            "lore": lore,
+            "timeline": timeline,
+        }
     finally:
         db.close()
 
