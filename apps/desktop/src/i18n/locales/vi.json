@@ -16,6 +16,8 @@
   "nav.agent_jobs": "Agent Jobs",
   "nav.projects": "Projects",
   "nav.settings": "Settings",
+  "nav.gallery": "Thư viện ảnh",
+  "nav.storyboard": "Storyboard",
   "nav.ai_engine": "AI Engine",
   "dashboard.title": "NovelForge",
   "dashboard.create_project": "Tạo project mới",
@@ -388,5 +390,9 @@
   "ai_actions.create_outline": "Tạo dàn ý",
   "ai_actions.translate_vi_en": "Dịch VI → EN",
   "ai_actions.translate_en_vi": "Dịch EN → VI",
-  "characters.field_gender": "Giới tính"
+  "characters.field_gender": "Giới tính",
+  "settings.backup_title": "Sao lưu & Phục hồi",
+  "settings.backup_desc": "Sao lưu toàn bộ database hoặc phục hồi từ bản sao lưu trước đó.",
+  "settings.backup_create": "Tạo bản sao lưu",
+  "settings.backup_restore": "Phục hồi…"
 }

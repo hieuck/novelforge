@@ -16,6 +16,8 @@
   "nav.agent_jobs": "Agent Jobs",
   "nav.projects": "Projects",
   "nav.settings": "Settings",
+  "nav.gallery": "Gallery",
+  "nav.storyboard": "Storyboard",
   "nav.ai_engine": "AI Engine",
   "dashboard.title": "NovelForge",
   "dashboard.create_project": "New Project",
@@ -388,5 +390,9 @@
   "ai_actions.create_outline": "Create Outline",
   "ai_actions.translate_vi_en": "Translate VI → EN",
   "ai_actions.translate_en_vi": "Translate EN → VI",
-  "characters.field_gender": "Gender"
+  "characters.field_gender": "Gender",
+  "settings.backup_title": "Backup & Restore",
+  "settings.backup_desc": "Backup the entire database or restore from a previous backup.",
+  "settings.backup_create": "Create Backup",
+  "settings.backup_restore": "Restore…"
 }
