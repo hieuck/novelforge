@@ -12,6 +12,8 @@ def test_stats_dashboard_empty(client):
     assert data["total_characters"] == 0
     assert data["total_words"] == 0
     assert data["total_images"] == 0
+    assert data["total_lore"] == 0
+    assert data["total_timeline"] == 0
 
 
 def test_stats_dashboard_with_data(client):
@@ -28,6 +30,12 @@ def test_stats_dashboard_with_data(client):
     client.post("/api/characters/", json={
         "project_id": proj["id"], "name": "Hero",
     })
+    client.post("/api/lore/", json={
+        "project_id": proj["id"], "lore_type": "location", "name": "Eldoria",
+    })
+    client.post("/api/timeline/", json={
+        "project_id": proj["id"], "title": "Great War",
+    })
 
     r = client.get("/api/stats/dashboard")
     assert r.status_code == 200
@@ -36,3 +44,5 @@ def test_stats_dashboard_with_data(client):
     assert data["total_chapters"] == 2
     assert data["total_characters"] == 1
     assert data["total_words"] == 5  # 3 + 2
+    assert data["total_lore"] == 1
+    assert data["total_timeline"] == 1
