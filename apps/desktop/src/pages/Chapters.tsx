@@ -107,13 +107,7 @@ export default function Chapters() {
     scheduleAutosave(title, content, v)
   }
 
-  const onInsertText = useCallback((text: string) => {
-    setContent((prev) => {
-      const updated = prev ? prev + '\n\n' + text : text
-      scheduleAutosave(title, updated, status)
-      return updated
-    })
-  }, [title, status, scheduleAutosave])
+
 
   // Warn on unsaved changes before closing
   useEffect(() => {

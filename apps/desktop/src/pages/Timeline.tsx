@@ -4,7 +4,6 @@ import { useParams } from 'react-router-dom'
 import { Plus, Trash2, X, Edit2, Check } from 'lucide-react'
 import { api } from '../lib/api'
 import type { TimelineEvent } from '../types'
-import AgentPanel from '../components/AgentPanel'
 
 const EMPTY = { title: '', event_date: '', description: '', relative_order: '' }
 
@@ -17,7 +16,6 @@ export default function Timeline() {
   const [editId, setEditId] = useState<string | null>(null)
   const [editForm, setEditForm] = useState({ ...EMPTY })
   const [loading, setLoading] = useState(false)
-  const [showAgent, setShowAgent] = useState(false)
 
   const load = async () => {
     if (!projectId) return
@@ -120,7 +118,7 @@ export default function Timeline() {
           <div className="relative">
             <div className="absolute left-4 top-0 bottom-0 w-px bg-slate-800" />
             <div className="space-y-4 pl-10">
-              {items.map((item, idx) => (
+              {items.map((item) => (
                 <div key={item.id} className="relative">
                   <div className="absolute -left-6 mt-1 h-3 w-3 rounded-full border-2 border-indigo-500 bg-slate-950" />
                   <div className="rounded-lg border border-slate-800 bg-slate-900 p-4">
@@ -192,12 +190,7 @@ export default function Timeline() {
       </div>
       </div>{/* end main content */}
 
-      {/* Agent panel */}
-      {showAgent && (
-        <div className="border-l border-slate-800">
-          <AgentPanel projectId={projectId} />
-        </div>
-      )}
+      {/* Agent panel is shown via App layout */}
     </div>
   )
 }

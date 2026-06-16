@@ -27,8 +27,6 @@ export default function Dashboard() {
   const navigate = useNavigate()
   const [appInfo, setAppInfo] = useState<AppInfo | null>(null)
   const [updateSummary, setUpdateSummary] = useState<UpdateSummary | null>(null)
-  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false)
-  const [updateMessage, setUpdateMessage] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
 
   const totalWords = projects.reduce((sum, p) => sum + (p.word_count ?? 0), 0)
@@ -37,15 +35,11 @@ export default function Dashboard() {
   const [stats, setStats] = useState<{ total_images?: number }>({})
 
   const checkForUpdates = useCallback(async () => {
-    setIsCheckingUpdate(true)
-    setUpdateMessage(null)
     try {
       const response = await api.get<UpdateSummary>('/update/check')
       setUpdateSummary(response)
     } catch {
       // non-critical — silently ignore on dashboard
-    } finally {
-      setIsCheckingUpdate(false)
     }
   }, [])
 

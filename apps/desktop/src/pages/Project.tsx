@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Save, CheckCircle, Loader2, BookOpen, AlignLeft, Paintbrush, Sparkles } from 'lucide-react'
 import { useProjectStore } from '../stores/projectStore'
-import { api, wsUrl } from '../lib/api'
+import { wsUrl } from '../lib/api'
 import type { Project } from '../types'
 
 type Tab = 'overview' | 'style'

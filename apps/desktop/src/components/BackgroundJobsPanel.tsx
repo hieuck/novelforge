@@ -9,7 +9,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
-  Play, Square, Trash2, Loader2, CheckCircle, AlertCircle,
+  Play, Square, Loader2, CheckCircle, AlertCircle,
   Clock, Sparkles, ChevronDown, ChevronUp, RefreshCw,
 } from 'lucide-react'
 import { api, wsUrl } from '../lib/api'
@@ -208,7 +208,7 @@ export default function BackgroundJobsPanel({ projectId: propId }: BackgroundJob
       setJobs((prev) => [job, ...prev])
       // Immediately start streaming logs for the new job
       streamJob(job.id)
-    } catch (e) {
+    } catch {
       // show error inline — not critical
     } finally {
       setSubmitting(false)
