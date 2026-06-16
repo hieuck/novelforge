@@ -6,6 +6,7 @@ import { ErrorBoundary } from './components/ErrorBoundary'
 import AgentPanel from './components/AgentPanel'
 import BackgroundJobsPanel from './components/BackgroundJobsPanel'
 import ToastContainer from './components/Toast'
+import { api } from './lib/api'
 import { useConnectionStore } from './stores/connectionStore'
 import { useProjectStore } from './stores/projectStore'
 import { useAgentSessionStore } from './stores/agentSessionStore'
@@ -55,12 +56,14 @@ export default function App() {
   const { connected, checking, check } = useConnectionStore()
   const { projects } = useProjectStore()
   const [initialCheckDone, setInitialCheckDone] = useState(false)
+  const [appVersion, setAppVersion] = useState('')
   const isRunning = session.status === 'planning' || session.status === 'running' || session.status === 'asking'
 
   const currentProject = useMemo(() => projects.find((p) => p.id === urlProjectId), [projects, urlProjectId])
 
   useEffect(() => {
     check().finally(() => setInitialCheckDone(true))
+    api.get<{ version?: string }>('/settings/about').then((d) => setAppVersion(d.version ?? '')).catch(() => {})
     const t = setInterval(check, 15000)
     return () => clearInterval(t)
   }, [check])
@@ -125,6 +128,7 @@ export default function App() {
             AI Agent {session.status === 'planning' ? 'planning...' : 'running...'}
           </span>
         )}
+        <span className="ml-auto text-slate-600">{appVersion ? `v${appVersion}` : ''}</span>
       </div>
       <ToastContainer />
     </div>

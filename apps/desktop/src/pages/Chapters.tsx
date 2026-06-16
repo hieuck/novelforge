@@ -37,6 +37,7 @@ export default function Chapters() {
   const [sceneUrl, setSceneUrl] = useState<string | null>(null)
   const [previewImg, setPreviewImg] = useState<string | null>(null)
   const [showShortcuts, setShowShortcuts] = useState(false)
+  const [zenMode, setZenMode] = useState(false)
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const mountedRef = useRef(true)
@@ -140,13 +141,19 @@ export default function Chapters() {
         setShowShortcuts((v) => !v)
         return
       }
-      if (e.key === 'Escape' && !(e.ctrlKey || e.metaKey)) {
+      const ctrl = e.ctrlKey || e.metaKey
+      if (e.key === 'Escape' && !ctrl) {
+        if (zenMode) { setZenMode(false); return }
         if (showShortcuts) { setShowShortcuts(false); return }
         if (previewImg) { setPreviewImg(null); return }
         navigate(projectId ? `/projects/${projectId}` : '/')
         return
       }
-      const ctrl = e.ctrlKey || e.metaKey
+      if ((ctrl && e.shiftKey && e.key === 'F') || e.key === 'F11') {
+        e.preventDefault()
+        setZenMode((v) => !v)
+        return
+      }
       if (ctrl && e.key === 'n') {
         e.preventDefault()
         if (!projectId) return
@@ -166,7 +173,7 @@ export default function Chapters() {
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [chapterId, projectId])
+  }, [chapterId, projectId, zenMode])
 
   // Ctrl+S manual save
   const onKeyDown = (e: React.KeyboardEvent) => {
@@ -201,8 +208,9 @@ export default function Chapters() {
   const wordCount = content.split(/\s+/).filter(Boolean).length
 
   return (
-    <div className="flex h-full overflow-hidden">
+    <div className={`flex h-full overflow-hidden ${zenMode ? 'bg-black' : ''}`}>
       {/* ── Chapter list sidebar ── */}
+      {!zenMode && (
       <aside className="flex w-60 flex-col border-r border-slate-800/70 bg-slate-900/60">
         <div className="flex items-center justify-between border-b border-slate-800/70 px-3 py-2">
           <span className="text-xs font-semibold text-slate-300">{t('chapters.sidebar_title')}</span>
@@ -247,6 +255,7 @@ export default function Chapters() {
           )}
         </div>
       </aside>
+      )}
 
       {/* ── Editor main area ── */}
       {activeChapter ? (
@@ -281,6 +290,16 @@ export default function Chapters() {
               )}
               <span>{saving ? t('chapters.saving') : saved ? t('chapters.saved') : t('chapters.unsaved')}</span>
             </div>
+
+            {/* Zen mode toggle */}
+            <button onClick={() => setZenMode((v) => !v)}
+              className={`rounded-md border px-2 py-1 text-[11px] transition-colors ${
+                zenMode ? 'border-indigo-700 bg-indigo-900/30 text-indigo-300' : 'border-slate-700 text-slate-500 hover:border-slate-500'
+              }`}
+              title={zenMode ? 'Exit full-screen' : 'Full-screen writing'}
+            >
+              {zenMode ? '✕ Exit' : '⛶ Full'}
+            </button>
 
             {/* Scene illustration */}
             {chapterId && activeChapter && (
@@ -325,6 +344,8 @@ export default function Chapters() {
                     ['Ctrl+E', 'Focus editor'],
                     ['Ctrl+Shift+D', 'Delete chapter'],
                     ['Ctrl+S', 'Save'],
+                    ['F11 / Ctrl+Shift+F', 'Full-screen'],
+                    ['Escape', 'Exit full-screen / Back'],
                     ['?', 'Toggle shortcuts'],
                     ['Click Scene 🎨', 'Generate illustration'],
                     ['Click portrait', 'Preview full size'],
