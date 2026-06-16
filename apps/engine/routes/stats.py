@@ -1,0 +1,33 @@
+"""Dashboard statistics endpoint."""
+from __future__ import annotations
+
+from fastapi import APIRouter
+from sqlalchemy import func
+
+from db.session import SessionLocal
+from models.chapter import Chapter
+from models.extra import Character
+from models.image import GeneratedImage
+from models.project import Project
+
+router = APIRouter()
+
+
+@router.get("/stats/dashboard")
+def dashboard_stats() -> dict:
+    db = SessionLocal()
+    try:
+        total_projects = db.query(func.count(Project.id)).scalar() or 0
+        total_chapters = db.query(func.count(Chapter.id)).scalar() or 0
+        total_characters = db.query(func.count(Character.id)).scalar() or 0
+        total_words = db.query(func.coalesce(func.sum(Chapter.word_count), 0)).scalar() or 0
+        total_images = db.query(func.count(GeneratedImage.id)).scalar() or 0
+        return {
+            "total_projects": total_projects,
+            "total_chapters": total_chapters,
+            "total_characters": total_characters,
+            "total_words": total_words,
+            "total_images": total_images,
+        }
+    finally:
+        db.close()

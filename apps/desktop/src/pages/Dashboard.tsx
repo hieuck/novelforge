@@ -34,6 +34,7 @@ export default function Dashboard() {
   const totalWords = projects.reduce((sum, p) => sum + (p.word_count ?? 0), 0)
   const projectCount = projects.length
   const avgWords = projectCount > 0 ? Math.round(totalWords / projectCount) : 0
+  const [stats, setStats] = useState<{ total_images?: number }>({})
 
   const checkForUpdates = useCallback(async () => {
     setIsCheckingUpdate(true)
@@ -59,6 +60,7 @@ export default function Dashboard() {
         repo: t('app.repo'),
         error: t('app.engine_not_reachable'),
       }))
+    api.get<typeof stats>('/stats/dashboard').then(setStats).catch(() => {})
     checkForUpdates()
     const interval = setInterval(checkForUpdates, 5 * 60 * 1000)
     return () => clearInterval(interval)
@@ -116,18 +118,22 @@ export default function Dashboard() {
 
       {/* Writing stats */}
       {projectCount > 0 && (
-        <div className="mb-4 grid grid-cols-3 gap-3">
+        <div className="mb-4 grid grid-cols-4 gap-3">
           <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-3 text-center">
             <div className="text-lg font-bold text-indigo-400">{totalWords.toLocaleString()}</div>
-            <div className="text-[10px] text-slate-500 uppercase tracking-wider">Total Words</div>
+            <div className="text-[10px] text-slate-500 uppercase tracking-wider">Words</div>
           </div>
           <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-3 text-center">
             <div className="text-lg font-bold text-indigo-400">{projectCount}</div>
             <div className="text-[10px] text-slate-500 uppercase tracking-wider">Projects</div>
           </div>
           <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-3 text-center">
+            <div className="text-lg font-bold text-indigo-400">{stats.total_images ?? '...'}</div>
+            <div className="text-[10px] text-slate-500 uppercase tracking-wider">Images</div>
+          </div>
+          <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-3 text-center">
             <div className="text-lg font-bold text-indigo-400">{avgWords.toLocaleString()}</div>
-            <div className="text-[10px] text-slate-500 uppercase tracking-wider">Avg / Project</div>
+            <div className="text-[10px] text-slate-500 uppercase tracking-wider">Avg/Project</div>
           </div>
         </div>
       )}

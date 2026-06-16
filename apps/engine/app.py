@@ -11,6 +11,7 @@ from routes.agent import router as agent_router
 from routes.ai import router as ai_router
 from routes.backup import router as backup_router
 from routes.chapters import router as chapters_router
+from routes.stats import router as stats_router
 from routes.characters import router as characters_router
 from routes.export import router as export_router
 from routes.generate import router as generate_router
@@ -92,6 +93,7 @@ def create_app() -> FastAPI:
         update_router,
         generate_router,
         backup_router,
+        stats_router,
     ]:
         application.include_router(rtr, prefix="/api")
 
