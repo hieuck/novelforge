@@ -8,16 +8,15 @@ from __future__ import annotations
 
 import logging
 import sqlite3
-from pathlib import Path
 from typing import Any
+
+from db.base import engine
 
 logger = logging.getLogger("novelforge.search")
 
-_DB_PATH = Path(__file__).resolve().parent.parent / "novelforge.db"
-
 
 def _conn() -> sqlite3.Connection:
-    con = sqlite3.connect(str(_DB_PATH))
+    con = engine.raw_connection()
     con.row_factory = sqlite3.Row
     return con
 
