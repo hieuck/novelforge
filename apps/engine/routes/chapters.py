@@ -1,5 +1,5 @@
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timezone
 
 from db.session import SessionLocal
 from fastapi import APIRouter, HTTPException
@@ -116,6 +116,36 @@ def duplicate_chapter(chapter_id: str):
         db.commit()
         db.refresh(new)
         return to_dict(new)
+    finally:
+        db.close()
+
+
+@router.post("/chapters/{chapter_id}/move")
+def move_chapter(chapter_id: str, position: int = 0):
+    db: Session = SessionLocal()
+    try:
+        ch = db.query(Chapter).filter(Chapter.id == chapter_id).first()
+        if not ch:
+            raise HTTPException(status_code=404, detail="Not found")
+        all_ch = db.query(Chapter).filter(Chapter.project_id == ch.project_id).order_by(Chapter.scene_order).all()
+        if position < 0 or position >= len(all_ch):
+            raise HTTPException(status_code=400, detail=f"Position must be between 0 and {len(all_ch) - 1}")
+        current_order = ch.scene_order
+        if current_order == position:
+            return to_dict(ch)
+        if current_order < position:
+            for c in all_ch:
+                if current_order < c.scene_order <= position:
+                    c.scene_order -= 1
+        else:
+            for c in all_ch:
+                if position <= c.scene_order < current_order:
+                    c.scene_order += 1
+        ch.scene_order = position
+        ch.updated_at = datetime.now(timezone.utc)
+        db.commit()
+        db.refresh(ch)
+        return to_dict(ch)
     finally:
         db.close()
 
