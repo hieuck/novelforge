@@ -81,7 +81,7 @@ export default function App() {
     <div className="flex h-screen flex-col overflow-hidden bg-slate-950 text-slate-100">
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
-        <main className="flex-1 overflow-hidden">
+        <main className="flex-1 overflow-hidden animate-fade-in">
           <Routes>
             <Route path="/" element={<Lazy><Dashboard /></Lazy>} />
             <Route path="/projects/:projectId" element={<Lazy><ProjectPage /></Lazy>} />

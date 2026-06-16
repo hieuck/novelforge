@@ -105,8 +105,12 @@ export default function Storyboard() {
         </div>
 
         {chapters.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-slate-800 p-12 text-center text-sm text-slate-600">
-            Chưa có chương nào. Tạo chapter trước để xây dựng storyboard.
+          <div className="flex flex-col items-center gap-4 rounded-lg border border-dashed border-slate-800 p-16 text-center">
+            <Film className="h-12 w-12 text-slate-700" />
+            <div>
+              <p className="text-sm font-medium text-slate-400">Storyboard trống</p>
+              <p className="mt-1 text-xs text-slate-600">Tạo chapter trước, sau đó tạo scene illustrations để xây dựng storyboard.</p>
+            </div>
           </div>
         ) : (
           <div className="space-y-6">

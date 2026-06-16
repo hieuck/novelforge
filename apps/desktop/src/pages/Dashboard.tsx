@@ -130,7 +130,7 @@ export default function Dashboard() {
           <div key={p.id} className="group relative">
             <button
               onClick={() => navigate(`/projects/${p.id}/chapters`)}
-              className="block w-full rounded-lg border border-slate-800 bg-slate-900/60 p-4 pr-10 text-left transition-colors hover:border-slate-700 hover:bg-slate-900"
+              className="card-hover block w-full rounded-lg border border-slate-800 bg-slate-900/60 p-4 pr-10 text-left"
             >
               <div className="font-medium text-slate-100">{p.title}</div>
               <div className="mt-0.5 flex items-center gap-3 text-xs text-slate-500">

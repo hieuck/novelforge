@@ -64,3 +64,41 @@ def restore_backup(filename: str) -> dict:
     db_path = get_data_dir() / "novelforge.db"
     shutil.copy2(backup_path, db_path)
     return {"message": f"Restored {filename}. Restart the engine for changes to take effect."}
+
+
+@router.post("/maintenance/vacuum", status_code=200)
+def vacuum_database() -> dict:
+    """VACUUM the SQLite database to reclaim space."""
+    with engine.connect() as conn:
+        conn.execute(text("VACUUM"))
+    return {"message": "Database vacuumed successfully."}
+
+
+@router.post("/maintenance/cleanup-images", status_code=200)
+def cleanup_orphaned_images() -> dict:
+    """Delete generated images not referenced by any chapter or character."""
+    from db.session import SessionLocal
+    from models.chapter import Chapter
+    from models.extra import Character
+    from models.image import GeneratedImage
+
+    db = SessionLocal()
+    try:
+        chapters = {c.illustration_url for c in db.query(Chapter).filter(Chapter.illustration_url.isnot(None)).all()}
+        characters = {c.portrait_url for c in db.query(Character).filter(Character.portrait_url.isnot(None)).all()}
+        referenced = chapters | characters
+
+        orphans = db.query(GeneratedImage).all()
+        removed = 0
+        for img in orphans:
+            url = f"/api/generated/{img.filename}"
+            if url not in referenced:
+                file_path = get_data_dir() / "generated" / img.filename
+                if file_path.exists():
+                    file_path.unlink()
+                db.delete(img)
+                removed += 1
+        db.commit()
+        return {"message": f"Cleaned up {removed} orphaned images."}
+    finally:
+        db.close()
