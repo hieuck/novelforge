@@ -212,6 +212,7 @@ export default function Chapters() {
   }
 
   const wordCount = content.split(/\s+/).filter(Boolean).length
+  const charCount = content.length
 
   return (
     <div className={`flex h-full overflow-hidden ${zenMode ? 'bg-black' : ''}`}>
@@ -395,7 +396,10 @@ export default function Chapters() {
 
           {/* Status bar */}
           <div className="flex items-center justify-between border-t border-slate-800/70 bg-slate-950 px-4 py-1.5 text-xs text-slate-600">
-            <span>{preview ? '📖 ' : ''}{t('chapters.word_count', { count: wordCount })}</span>
+            <span className="flex gap-3">
+              <span>{t('chapters.word_count', { count: wordCount })}</span>
+              <span className="text-slate-600">{charCount.toLocaleString()} chars</span>
+            </span>
             <span className={STATUS_COLOR[status] ?? 'text-slate-500'}>{status}</span>
           </div>
         </div>

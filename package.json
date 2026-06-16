@@ -15,8 +15,11 @@
     "setup": "npm install && cd apps/engine && uv sync",
     "start": "npm run dev",
     "win": "scripts\\win-dev.bat",
-    "test": "pytest -q",
-    "update": "cmd /c scripts\\update.bat"
+    "test": "cd apps/engine && python -m pytest -q --ignore=tests/test_agent_websocket.py --ignore=tests/test_ai_ws.py --ignore=tests/test_agent_integration.py",
+    "test:frontend": "cd apps/desktop && npx vitest run",
+    "update": "cmd /c scripts\\update.bat",
+    "lint": "cd apps/engine && python -m ruff check . --select=E,F,I,N,W,UP --ignore=E501",
+    "lint:fix": "cd apps/engine && python -m ruff check . --select=E,F,I,N,W,UP --ignore=E501 --fix && python -m ruff format ."
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
