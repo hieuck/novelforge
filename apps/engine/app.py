@@ -11,7 +11,6 @@ from routes.agent import router as agent_router
 from routes.ai import router as ai_router
 from routes.backup import router as backup_router
 from routes.chapters import router as chapters_router
-from routes.stats import router as stats_router
 from routes.characters import router as characters_router
 from routes.export import router as export_router
 from routes.generate import router as generate_router
@@ -22,6 +21,7 @@ from routes.lore import router as lore_router
 from routes.projects import router as projects_router
 from routes.search import router as search_router
 from routes.settings import router as settings_router
+from routes.stats import router as stats_router
 from routes.timeline import router as timeline_router
 from routes.update import router as update_router
 from services.search import init_fts

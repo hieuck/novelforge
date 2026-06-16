@@ -13,11 +13,11 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from models.chapter import Chapter
 from models.extra import Character, Lore, TimelineItem
 from models.project import Project
+from services.ai_service import _get_settings
 from services.context.builder import ProjectContext
 from services.providers.openai_compat import build_client
 
 from routes.ai import _system_prompt
-from services.ai_service import _get_settings
 
 logger = logging.getLogger("novelforge.agent")
 router = APIRouter()

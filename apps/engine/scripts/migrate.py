@@ -3,7 +3,7 @@
 import os
 import shutil
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -35,7 +35,6 @@ ADD_INDEXES: dict[str, list[tuple[str, str]]] = {
 
 def _auto_backup():
     """Create a pre-migration backup if the DB has pending changes."""
-    from pathlib import Path
     from db.paths import get_data_dir
 
     db_path = get_data_dir() / "novelforge.db"
@@ -43,7 +42,7 @@ def _auto_backup():
         return
     backup_dir = get_data_dir() / "backups"
     backup_dir.mkdir(parents=True, exist_ok=True)
-    ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    ts = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
     backup_path = backup_dir / f"pre_migration_{ts}.db"
     shutil.copy2(db_path, backup_path)
     print(f"  → pre-migration backup saved: {backup_path.name}")

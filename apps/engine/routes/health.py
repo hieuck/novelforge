@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 from db.base import engine
 from db.paths import get_data_dir
 from fastapi import APIRouter

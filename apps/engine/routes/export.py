@@ -273,8 +273,8 @@ async def export_project(payload: ProjectExportIn) -> Response:
                     for c in characters
                 ],
                 "lore": [
-                    {"id": l.id, "name": l.name, "lore_type": l.lore_type, "description": l.description}
-                    for l in lore_items
+                    {"id": li.id, "name": li.name, "lore_type": li.lore_type, "description": li.description}
+                    for li in lore_items
                 ],
                 "timeline": [
                     {"id": t.id, "title": t.title, "event_date": t.event_date, "description": t.description}

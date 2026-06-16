@@ -1,14 +1,13 @@
 """Dashboard statistics endpoint."""
 from __future__ import annotations
 
-from fastapi import APIRouter
-from sqlalchemy import func
-
 from db.session import SessionLocal
+from fastapi import APIRouter
 from models.chapter import Chapter
 from models.extra import Character, Lore, TimelineItem
 from models.image import GeneratedImage
 from models.project import Project
+from sqlalchemy import func
 
 router = APIRouter()
 

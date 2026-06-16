@@ -1,5 +1,5 @@
 import uuid
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 
 from db.session import SessionLocal
 from fastapi import APIRouter, HTTPException
@@ -142,7 +142,7 @@ def move_chapter(chapter_id: str, position: int = 0):
                 if position <= c.scene_order < current_order:
                     c.scene_order += 1
         ch.scene_order = position
-        ch.updated_at = datetime.now(timezone.utc)
+        ch.updated_at = datetime.now(UTC)
         db.commit()
         db.refresh(ch)
         return to_dict(ch)
