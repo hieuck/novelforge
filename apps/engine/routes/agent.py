@@ -6,17 +6,18 @@ import json
 import logging
 import re
 import uuid
-from datetime import datetime, timezone
-
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from datetime import UTC, datetime
 
 from db.session import SessionLocal
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from models.chapter import Chapter
 from models.extra import Character, Lore, TimelineItem
 from models.project import Project
-from routes.ai import _get_settings, _system_prompt
 from services.context.builder import ProjectContext
 from services.providers.openai_compat import build_client
+
+from routes.ai import _system_prompt
+from services.ai_service import _get_settings
 
 logger = logging.getLogger("novelforge.agent")
 router = APIRouter()
@@ -162,7 +163,7 @@ def _update_character(pid: str, p: dict) -> dict:
                 setattr(c, field, val)
         if "age" in p:
             c.age = str(p["age"])
-        c.updated_at = datetime.now(timezone.utc)
+        c.updated_at = datetime.now(UTC)
         db.commit()
         db.refresh(c)
         index_character(c.id, pid, c.name or "", c.personality or "", c.goals or "", "")
@@ -231,7 +232,7 @@ def _update_chapter(pid: str, p: dict) -> dict:
             c.word_count = len(p["content"].split())
         if "status" in p:
             c.status = p["status"]
-        c.updated_at = datetime.now(timezone.utc)
+        c.updated_at = datetime.now(UTC)
         db.commit()
         db.refresh(c)
         index_chapter(c.id, pid, c.title or "", c.content or "")
@@ -263,7 +264,7 @@ def _edit_chapter_section(pid: str, p: dict) -> dict:
             return {"error": "old_text_excerpt not found in chapter"}
         c.content = content[:idx] + new_text + content[idx + len(old_excerpt):]
         c.word_count = len(c.content.split())
-        c.updated_at = datetime.now(timezone.utc)
+        c.updated_at = datetime.now(UTC)
         db.commit()
         db.refresh(c)
         index_chapter(c.id, pid, c.title or "", c.content or "")
@@ -278,7 +279,7 @@ def _update_summary(pid: str, p: dict) -> dict:
         proj = db.query(Project).filter(Project.id == pid).first()
         if proj:
             proj.summary = p.get("summary", "")
-            proj.updated_at = datetime.now(timezone.utc)
+            proj.updated_at = datetime.now(UTC)
             db.commit()
         return {"updated": True}
     finally:
@@ -367,7 +368,7 @@ def _update_lore(pid: str, p: dict) -> dict:
         if "tags" in p:
             tv = p["tags"]
             item.tags = json.dumps(tv, ensure_ascii=False) if isinstance(tv, list) else tv
-        item.updated_at = datetime.now(timezone.utc)
+        item.updated_at = datetime.now(UTC)
         db.commit()
         db.refresh(item)
         index_lore(item.id, pid, item.name or "", item.description or "")
@@ -619,7 +620,7 @@ def _tool_result_summary(tool: str, result: dict) -> str:
         return f"[read_lore] Found {result.get('count', 0)}: {entries}"
     if tool == "read_project_summary":
         chaps = ", ".join(
-            f'"{c.get("title","?")} (id={c.get("id","")})' 
+            f'"{c.get("title","?")} (id={c.get("id","")})'
             for c in (result.get("chapters") or [])[:10]
         )
         return (
@@ -842,7 +843,7 @@ async def agent_ws(ws: WebSocket) -> None:
                                     f"- Ch{c['scene_order']+1} '{c['title']}': {c['preview'][:300]}"
                                     for c in raw_data["chapters"]
                                 )
-                                + f"\n\nCharacters:\n"
+                                + "\n\nCharacters:\n"
                                 + "\n".join(
                                     f"- {c['name']} ({c['role']}): {c['personality'] or 'no info'}"
                                     for c in raw_data["characters"]
@@ -975,7 +976,7 @@ async def agent_ws(ws: WebSocket) -> None:
                             answer = ""
                         else:
                             answer = answer_data.get("answer", "") if isinstance(answer_data, dict) else ""
-                    except asyncio.TimeoutError:
+                    except TimeoutError:
                         await send({"type": "status", "message": "No answer received, continuing..."})
                         answer = ""
                     result = {"question": question, "answer": answer}

@@ -1,28 +1,27 @@
 from __future__ import annotations
+
 import logging
 
+import db.base
+from _version import VERSION
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-
-from routes.health import router as health_router
-from routes.projects import router as projects_router
+from routes.agent import router as agent_router
+from routes.ai import router as ai_router
 from routes.chapters import router as chapters_router
 from routes.characters import router as characters_router
-from routes.lore import router as lore_router
-from routes.timeline import router as timeline_router
-from routes.settings import router as settings_router
-from routes.ai import router as ai_router
-from routes.jobs import router as jobs_router
 from routes.export import router as export_router
-from routes.imports import router as imports_router
-from routes.search import router as search_router
-from routes.agent import router as agent_router
-from routes.update import router as update_router
 from routes.generate import router as generate_router
-
-from _version import VERSION
-import db.base
+from routes.health import router as health_router
+from routes.imports import router as imports_router
+from routes.jobs import router as jobs_router
+from routes.lore import router as lore_router
+from routes.projects import router as projects_router
+from routes.search import router as search_router
+from routes.settings import router as settings_router
+from routes.timeline import router as timeline_router
+from routes.update import router as update_router
 from services.search import init_fts
 
 
@@ -38,6 +37,7 @@ def create_app() -> FastAPI:
     init_fts()
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+    logger = logging.getLogger("novelforge.engine")
 
     application = FastAPI(
         title="NovelForge Engine",
@@ -53,6 +53,18 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    import time as _time
+    @application.middleware("http")
+    async def request_logging(request: Request, call_next):
+        start = _time.perf_counter()
+        response = await call_next(request)
+        elapsed = _time.perf_counter() - start
+        if elapsed > 0.5:
+            logger.warning("SLOW %s %s (%.2fs)", request.method, request.url.path, elapsed)
+        else:
+            logger.info("%s %s (%.2fs)", request.method, request.url.path, elapsed)
+        return response
 
     @application.exception_handler(Exception)
     async def global_exception_handler(request: Request, exc: Exception):

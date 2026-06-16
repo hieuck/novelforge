@@ -1,20 +1,18 @@
 """Image generation routes."""
 from __future__ import annotations
 
+import json
 import uuid
+from datetime import UTC, datetime
 from pathlib import Path
 
-import json
-
+from db.session import SessionLocal
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from fastapi.responses import FileResponse
-from pydantic import BaseModel
-
-from db.session import SessionLocal
 from models.image import GeneratedImage
-from models.chapter import Chapter
-from services.image_gen.factory import create_provider
+from pydantic import BaseModel
 from services.ai_service import _get_settings
+from services.image_gen.factory import create_provider
 
 router = APIRouter()
 
@@ -189,15 +187,13 @@ async def _run_video_export(job_id: str) -> None:
     """Run video export in background, updating job status."""
     import asyncio
     import shutil
-    import subprocess
     import tempfile
 
-    import httpx
-    from db.session import SessionLocal as _DB
+    from db.session import SessionLocal as _session_local
     from models.chapter import Chapter as ChapterModel
     from models.extra import Job as JobModel
 
-    db = _DB()
+    db = _session_local()
     try:
         job = db.query(JobModel).filter(JobModel.id == job_id).first()
         if not job or job.status == "cancelled":
@@ -228,21 +224,20 @@ async def _run_video_export(job_id: str) -> None:
             j = db2.query(JobModel).filter(JobModel.id == job_id_local).first()
             if j:
                 j.status = "running"
-                j.updated_at = datetime.now(timezone.utc)
+                j.updated_at = datetime.now(UTC)
                 db2.commit()
         finally:
             db2.close()
 
         concat_lines = []
         total = len(chapters)
-        async with httpx.AsyncClient() as client:
-            for idx, ch in enumerate(chapters):
-                img_path = DATA_DIR / Path(ch.illustration_url.lstrip("/")).name
-                if img_path.exists():
-                    ext = img_path.suffix or ".jpg"
-                    dest = temp_dir / f"scene_{ch.scene_order:03d}{ext}"
-                    shutil.copy2(img_path, dest)
-                    concat_lines.append(f"file '{dest.name}'\nduration 3\n")
+        for idx, ch in enumerate(chapters):
+            img_path = DATA_DIR / Path(ch.illustration_url.lstrip("/")).name
+            if img_path.exists():
+                ext = img_path.suffix or ".jpg"
+                dest = temp_dir / f"scene_{ch.scene_order:03d}{ext}"
+                shutil.copy2(img_path, dest)
+                concat_lines.append(f"file '{dest.name}'\nduration 3\n")
                 # Update progress
                 _update_job_progress(job_id_local, idx + 1, total)
 
@@ -265,7 +260,7 @@ async def _run_video_export(job_id: str) -> None:
         )
         try:
             await asyncio.wait_for(proc.communicate(), timeout=120)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             proc.kill()
             _update_job(job_id_local, "failed", "Video export timed out")
             return
@@ -305,16 +300,16 @@ def download_video(job_id: str) -> FileResponse:
 
 
 def _update_job(job_id: str, status: str, message: str = "") -> None:
-    from db.session import SessionLocal as _DB
+    from db.session import SessionLocal as _session_local
     from models.extra import Job as JobModel
-    db = _DB()
+    db = _session_local()
     try:
         job = db.query(JobModel).filter(JobModel.id == job_id).first()
         if not job:
             return
         job.status = status
         job.result = json.dumps({"message": message})
-        job.updated_at = datetime.now(timezone.utc)
+        job.updated_at = datetime.now(UTC)
         db.commit()
     except Exception:
         pass
@@ -323,15 +318,15 @@ def _update_job(job_id: str, status: str, message: str = "") -> None:
 
 
 def _update_job_progress(job_id: str, current: int, total: int) -> None:
-    from db.session import SessionLocal as _DB
+    from db.session import SessionLocal as _session_local
     from models.extra import Job as JobModel
-    db = _DB()
+    db = _session_local()
     try:
         job = db.query(JobModel).filter(JobModel.id == job_id).first()
         if not job:
             return
         job.result = json.dumps({"progress": current, "total": total, "message": f"Processing {current}/{total}"})
-        job.updated_at = datetime.now(timezone.utc)
+        job.updated_at = datetime.now(UTC)
         db.commit()
     except Exception:
         pass
