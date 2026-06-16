@@ -8,6 +8,26 @@ on:
   workflow_dispatch:
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: npm
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: npm ci
+      - run: pip install ruff
+      - run: npx eslint src --ext ts,tsx --no-error-on-unmatched-pattern || echo "ESLint warnings OK"
+        working-directory: apps/desktop
+      - run: npx tsc --noEmit
+        working-directory: apps/desktop
+      - run: ruff check apps/engine/ --select=E,F,I,N,W,UP --ignore=E501 --output-format=concise
+      - run: ruff format apps/engine/ --check
+
   frontend:
     runs-on: ubuntu-latest
     steps:
@@ -22,8 +42,6 @@ jobs:
       - run: npm ci
       - run: pip install -r apps/engine/requirements.txt uvicorn
       - run: npx vitest run
-        working-directory: apps/desktop
-      - run: npx tsc --noEmit
         working-directory: apps/desktop
       - run: npm run build
         working-directory: apps/desktop

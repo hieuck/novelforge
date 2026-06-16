@@ -1,22 +1,36 @@
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { Loader2 } from 'lucide-react'
 import Sidebar from './components/Sidebar'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import AgentPanel from './components/AgentPanel'
-import Dashboard from './pages/Dashboard'
-import Chapters from './pages/Chapters'
-import Characters from './pages/Characters'
-import Lore from './pages/Lore'
-import Timeline from './pages/Timeline'
-import Settings from './pages/Settings'
-import Export from './pages/Export'
-import Search from './pages/Search'
-import Gallery from './pages/Gallery'
-import Storyboard from './pages/Storyboard'
-import ProjectPage from './pages/Project'
 import BackgroundJobsPanel from './components/BackgroundJobsPanel'
 import ToastContainer from './components/Toast'
 import { useAgentSessionStore } from './stores/agentSessionStore'
+
+const Dashboard = lazy(() => import('./pages/Dashboard'))
+const ChapterPage = lazy(() => import('./pages/Chapters'))
+const Characters = lazy(() => import('./pages/Characters'))
+const Lore = lazy(() => import('./pages/Lore'))
+const Timeline = lazy(() => import('./pages/Timeline'))
+const Settings = lazy(() => import('./pages/Settings'))
+const Export = lazy(() => import('./pages/Export'))
+const Search = lazy(() => import('./pages/Search'))
+const Gallery = lazy(() => import('./pages/Gallery'))
+const Storyboard = lazy(() => import('./pages/Storyboard'))
+const ProjectPage = lazy(() => import('./pages/Project'))
+
+function PageFallback() {
+  return (
+    <div className="flex h-full items-center justify-center text-slate-500">
+      <Loader2 className="h-5 w-5 animate-spin" />
+    </div>
+  )
+}
+
+function Lazy({ children }: { children: React.ReactNode }) {
+  return <Suspense fallback={<PageFallback />}><ErrorBoundary>{children}</ErrorBoundary></Suspense>
+}
 
 export default function App() {
   const loc = useLocation()
@@ -39,19 +53,19 @@ export default function App() {
         <Sidebar />
         <main className="flex-1 overflow-hidden">
           <Routes>
-            <Route path="/" element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
-            <Route path="/projects/:projectId" element={<ErrorBoundary><ProjectPage /></ErrorBoundary>} />
-            <Route path="/projects/:projectId/chapters" element={<ErrorBoundary><Chapters /></ErrorBoundary>} />
-            <Route path="/projects/:projectId/chapters/:chapterId" element={<ErrorBoundary><Chapters /></ErrorBoundary>} />
-            <Route path="/projects/:projectId/characters" element={<ErrorBoundary><Characters /></ErrorBoundary>} />
-            <Route path="/projects/:projectId/lore" element={<ErrorBoundary><Lore /></ErrorBoundary>} />
-            <Route path="/projects/:projectId/timeline" element={<ErrorBoundary><Timeline /></ErrorBoundary>} />
-            <Route path="/projects/:projectId/export" element={<ErrorBoundary><Export /></ErrorBoundary>} />
-            <Route path="/projects/:projectId/search" element={<ErrorBoundary><Search /></ErrorBoundary>} />
-            <Route path="/projects/:projectId/gallery" element={<ErrorBoundary><Gallery /></ErrorBoundary>} />
-            <Route path="/projects/:projectId/storyboard" element={<ErrorBoundary><Storyboard /></ErrorBoundary>} />
-            <Route path="/projects/:projectId/agent-jobs" element={<ErrorBoundary><AgentJobsPage /></ErrorBoundary>} />
-            <Route path="/settings" element={<ErrorBoundary><Settings /></ErrorBoundary>} />
+            <Route path="/" element={<Lazy><Dashboard /></Lazy>} />
+            <Route path="/projects/:projectId" element={<Lazy><ProjectPage /></Lazy>} />
+            <Route path="/projects/:projectId/chapters" element={<Lazy><ChapterPage /></Lazy>} />
+            <Route path="/projects/:projectId/chapters/:chapterId" element={<Lazy><ChapterPage /></Lazy>} />
+            <Route path="/projects/:projectId/characters" element={<Lazy><Characters /></Lazy>} />
+            <Route path="/projects/:projectId/lore" element={<Lazy><Lore /></Lazy>} />
+            <Route path="/projects/:projectId/timeline" element={<Lazy><Timeline /></Lazy>} />
+            <Route path="/projects/:projectId/export" element={<Lazy><Export /></Lazy>} />
+            <Route path="/projects/:projectId/search" element={<Lazy><Search /></Lazy>} />
+            <Route path="/projects/:projectId/gallery" element={<Lazy><Gallery /></Lazy>} />
+            <Route path="/projects/:projectId/storyboard" element={<Lazy><Storyboard /></Lazy>} />
+            <Route path="/projects/:projectId/agent-jobs" element={<Lazy><AgentJobsPage /></Lazy>} />
+            <Route path="/settings" element={<Lazy><Settings /></Lazy>} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>

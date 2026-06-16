@@ -35,7 +35,7 @@ export default defineConfig({
       port: 5173,
       cwd: root,
       timeout: 45000,
-      reuseExistingServer: true,
+      reuseExistingServer: process.env.CI ? false : true,
       env: { PYTHONUNBUFFERED: '1' },
     },
   ],
