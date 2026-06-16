@@ -93,6 +93,33 @@ def get_chapter(chapter_id: str):
         db.close()
 
 
+@router.post("/chapters/{chapter_id}/duplicate", status_code=201)
+def duplicate_chapter(chapter_id: str):
+    db: Session = SessionLocal()
+    try:
+        orig = db.query(Chapter).filter(Chapter.id == chapter_id).first()
+        if not orig:
+            raise HTTPException(status_code=404, detail="Not found")
+        new = Chapter(
+            id=str(uuid.uuid4()),
+            project_id=orig.project_id,
+            title=(orig.title or "Untitled") + " (Copy)",
+            content=orig.content or "",
+            status="draft",
+            word_count=orig.word_count or 0,
+            scene_order=(orig.scene_order or 0) + 1,
+            summary=orig.summary,
+            notes=orig.notes,
+            illustration_url=orig.illustration_url,
+        )
+        db.add(new)
+        db.commit()
+        db.refresh(new)
+        return to_dict(new)
+    finally:
+        db.close()
+
+
 @router.patch("/chapters/{chapter_id}")
 def update_chapter(chapter_id: str, payload: ChapterUpdate):
     db: Session = SessionLocal()
