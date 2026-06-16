@@ -208,6 +208,17 @@ def export_single_chapter(chapter_id: str, format: str = "txt") -> Response:
             }, ensure_ascii=False, indent=2)
         elif format == "md":
             content = f"# {ch.title or 'Untitled'}\n\n{ch.content or ''}"
+        elif format == "html":
+            title = ch.title or "Untitled"
+            body = "".join(f"<p>{line}</p>" for line in (ch.content or "").split("\n") if line.strip())
+            content = (
+                f"<!DOCTYPE html><html><head><meta charset='utf-8'>"
+                f"<title>{title}</title>"
+                f"<style>body{{max-width:780px;margin:2rem auto;font-family:Georgia,serif;line-height:1.8;color:#222;padding:0 1rem}}"
+                f"h1{{font-size:2rem}}</style></head><body>"
+                f"<h1>{title}</h1>\n{body}"
+                f"</body></html>"
+            )
         else:
             content = f"{ch.title or 'Untitled'}\n{'=' * 40}\n\n{ch.content or ''}"
 
