@@ -57,7 +57,7 @@ export default function Sidebar() {
       </header>
 
       <nav className="flex-1 overflow-y-auto px-2 py-3 space-y-0.5">
-        <NavLink to="/" end className={navCls} title="Dashboard">
+        <NavLink to="/" end className={navCls} title={t('nav.dashboard')}>
           <LayoutDashboard className="h-4 w-4" />
           {t('nav.dashboard')}
         </NavLink>
@@ -65,34 +65,34 @@ export default function Sidebar() {
         {projectId && (
           <>
             <div className="mt-3 px-3 pb-1 text-[10px] uppercase tracking-wider text-slate-600">{t('nav.project')}</div>
-            <NavLink to={`/projects/${projectId}`} end className={navCls} title="Project settings">
+            <NavLink to={`/projects/${projectId}`} end className={navCls} title={t('nav.project_info')}>
               <SlidersHorizontal className="h-4 w-4" />{t('nav.project_info')}
             </NavLink>
-            <NavLink to={`/projects/${projectId}/chapters`} className={navCls} title="Edit chapters">
+            <NavLink to={`/projects/${projectId}/chapters`} className={navCls} title={t('nav.chapters')}>
               <FileText className="h-4 w-4" />{t('nav.chapters')}
             </NavLink>
-            <NavLink to={`/projects/${projectId}/characters`} className={navCls} title="Manage characters">
+            <NavLink to={`/projects/${projectId}/characters`} className={navCls} title={t('nav.characters')}>
               <Users className="h-4 w-4" />{t('nav.characters')}
             </NavLink>
-            <NavLink to={`/projects/${projectId}/lore`} className={navCls} title="World-building lore">
+            <NavLink to={`/projects/${projectId}/lore`} className={navCls} title={t('nav.lore')}>
               <Globe className="h-4 w-4" />{t('nav.lore')}
             </NavLink>
-            <NavLink to={`/projects/${projectId}/timeline`} className={navCls} title="Timeline events">
+            <NavLink to={`/projects/${projectId}/timeline`} className={navCls} title={t('nav.timeline')}>
               <Clock className="h-4 w-4" />{t('nav.timeline')}
             </NavLink>
-            <NavLink to={`/projects/${projectId}/export`} className={navCls} title="Export story">
+            <NavLink to={`/projects/${projectId}/export`} className={navCls} title={t('nav.export')}>
               <Download className="h-4 w-4" />{t('nav.export')}
             </NavLink>
-            <NavLink to={`/projects/${projectId}/search`} className={navCls} title="Search">
+            <NavLink to={`/projects/${projectId}/search`} className={navCls} title={t('nav.search')}>
               <Search className="h-4 w-4" />{t('nav.search')}
             </NavLink>
-            <NavLink to={`/projects/${projectId}/gallery`} className={navCls} title="Image gallery">
-              <ImageIcon className="h-4 w-4" />Gallery
+            <NavLink to={`/projects/${projectId}/gallery`} className={navCls} title={t('nav.gallery')}>
+              <ImageIcon className="h-4 w-4" />{t('nav.gallery') ?? 'Gallery'}
             </NavLink>
-            <NavLink to={`/projects/${projectId}/storyboard`} className={navCls} title="Storyboard & video">
-              <Film className="h-4 w-4" />Storyboard
+            <NavLink to={`/projects/${projectId}/storyboard`} className={navCls} title={t('nav.storyboard')}>
+              <Film className="h-4 w-4" />{t('nav.storyboard') ?? 'Storyboard'}
             </NavLink>
-            <NavLink to={`/projects/${projectId}/agent-jobs`} className={navCls} title="Background agent jobs">
+            <NavLink to={`/projects/${projectId}/agent-jobs`} className={navCls} title={t('nav.agent_jobs')}>
               <Sparkles className="h-4 w-4" />
               <span>{t('nav.agent_jobs')}</span>
               {activeJobs > 0 && (
@@ -123,7 +123,7 @@ export default function Sidebar() {
       </nav>
 
       <footer className="border-t border-slate-800 px-2 py-2">
-        <NavLink to="/settings" className={navCls} title="Application settings">
+        <NavLink to="/settings" className={navCls} title={t('nav.settings')}>
           <Settings className="h-4 w-4" />{t('nav.settings')}
         </NavLink>
         <div className="mt-1 flex items-center gap-2 px-3 py-1.5 text-xs text-slate-500">
