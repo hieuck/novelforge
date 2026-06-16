@@ -57,9 +57,10 @@ novelforge/
 ### API Routes (FastAPI, all under `/api`)
 | Router | Prefix | Description |
 |--------|--------|-------------|
-| health | `/api/health` | Health check |
+| health | `/api/health` | Health check + DB status |
+| health detail | `/api/health/db` | DB size, table count |
 | projects | `/api/projects/` | CRUD projects |
-| chapters | `/api/chapters/` | CRUD chapters + reorder |
+| chapters | `/api/chapters/` | CRUD chapters + reorder + duplicate |
 | characters | `/api/characters/` | CRUD characters |
 | lore | `/api/lore/` | CRUD lore entries |
 | timeline | `/api/timeline/` | CRUD timeline events |
@@ -70,7 +71,7 @@ novelforge/
 | jobs | `/api/jobs` | Background job management + WebSocket status |
 | export | `/api/export` | Story export (md, txt, html, zip) |
 | search | `/api/search` | FTS5 full-text search |
-| imports | `/api/imports` | Import projects/chapters |
+| imports | `/api/import` | Import projects/chapters |
 | update | `/api/update` | Self-update check + apply |
 | backup | `/api/backup` | DB backup, list, download, restore |
 
