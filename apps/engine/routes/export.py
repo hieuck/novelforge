@@ -182,6 +182,35 @@ def _build_zip(db: Session, project: Project, chapters: list[Chapter]) -> bytes:
     return buf.read()
 
 
+@router.get("/chapters/{chapter_id}/export")
+def export_single_chapter(chapter_id: str, format: str = "txt") -> Response:
+    """Export a single chapter as text or markdown."""
+    if format not in _MIME:
+        raise HTTPException(status_code=400, detail=f"Unsupported format: {format}")
+
+    db = SessionLocal()
+    try:
+        ch = db.query(Chapter).filter(Chapter.id == chapter_id).first()
+        if not ch:
+            raise HTTPException(status_code=404, detail="Chapter not found")
+
+        if format == "md":
+            content = f"# {ch.title or 'Untitled'}\n\n{ch.content or ''}"
+        else:
+            content = f"{ch.title or 'Untitled'}\n{'=' * 40}\n\n{ch.content or ''}"
+
+        filename = _safe_filename(ch.title or "chapter")
+        import urllib.parse
+        encoded = urllib.parse.quote(f"{filename}.{format}", safe="")
+        return Response(
+            content=content.encode("utf-8"),
+            media_type=_MIME[format],
+            headers={"Content-Disposition": f"attachment; filename*=UTF-8''{encoded}"},
+        )
+    finally:
+        db.close()
+
+
 @router.post("/export")
 async def export_project(payload: ProjectExportIn) -> Response:
     fmt = payload.fmt.lower()
