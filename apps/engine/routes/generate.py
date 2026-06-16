@@ -99,13 +99,16 @@ async def generate_image(payload: GenImageIn) -> dict:
 
 
 @router.get("/projects/{project_id}/images")
-def list_project_images(project_id: str) -> list[dict]:
-    """List all generated images for a project."""
+def list_project_images(project_id: str, entity_type: str | None = None, entity_id: str | None = None) -> list[dict]:
+    """List all generated images for a project. Filter by entity_type and/or entity_id."""
     db = SessionLocal()
     try:
-        items = db.query(GeneratedImage).filter(
-            GeneratedImage.project_id == project_id
-        ).order_by(GeneratedImage.created_at.desc()).all()
+        q = db.query(GeneratedImage).filter(GeneratedImage.project_id == project_id)
+        if entity_type:
+            q = q.filter(GeneratedImage.entity_type == entity_type)
+        if entity_id:
+            q = q.filter(GeneratedImage.entity_id == entity_id)
+        items = q.order_by(GeneratedImage.created_at.desc()).all()
         return [
             {
                 "id": i.id, "filename": i.filename,

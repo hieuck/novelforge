@@ -171,6 +171,9 @@ export default function Characters() {
                         ✨ Generate Portrait
                       </button>
                     </div>
+
+                    {/* Character image gallery */}
+                    <CharacterImages characterId={c.id} projectId={projectId!} onPreview={setPreview} />
                     {editId === c.id ? (
                       <div className="space-y-2">
                         <div className="grid grid-cols-2 gap-2">
@@ -227,6 +230,27 @@ export default function Characters() {
           <img src={preview} className="max-h-[90vh] max-w-[90vw] object-contain" alt="portrait preview" />
         </div>
       )}
+    </div>
+  )
+}
+
+function CharacterImages({ characterId, projectId, onPreview }: { characterId: string; projectId: string; onPreview: (url: string) => void }) {
+  const [images, setImages] = useState<Array<{ url: string; prompt?: string }>>([])
+  useEffect(() => {
+    api.get<Array<{ url: string; prompt?: string }>>(`/projects/${projectId}/images?entity_type=character&entity_id=${characterId}`)
+      .then(setImages).catch(() => {})
+  }, [characterId, projectId])
+  if (!images.length) return null
+  return (
+    <div className="mt-3 border-t border-slate-800 pt-3">
+      <div className="mb-1.5 text-[10px] uppercase tracking-wide text-slate-600">Generated Images</div>
+      <div className="flex flex-wrap gap-2">
+        {images.slice(0, 6).map((img, i) => (
+          <img key={i} src={img.url} alt={img.prompt || ''}
+            className="h-16 w-16 cursor-pointer rounded object-cover border border-slate-700 hover:border-indigo-500 transition-colors"
+            onClick={() => onPreview(img.url)} />
+        ))}
+      </div>
     </div>
   )
 }

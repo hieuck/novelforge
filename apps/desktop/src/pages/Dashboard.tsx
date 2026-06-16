@@ -31,6 +31,10 @@ export default function Dashboard() {
   const [updateMessage, setUpdateMessage] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
 
+  const totalWords = projects.reduce((sum, p) => sum + (p.word_count ?? 0), 0)
+  const projectCount = projects.length
+  const avgWords = projectCount > 0 ? Math.round(totalWords / projectCount) : 0
+
   const checkForUpdates = useCallback(async () => {
     setIsCheckingUpdate(true)
     setUpdateMessage(null)
@@ -107,6 +111,24 @@ export default function Dashboard() {
         <div className="mb-4 flex items-center gap-3 rounded-lg border border-yellow-800/60 bg-yellow-950/30 px-4 py-3 text-sm text-yellow-300">
           <RefreshCw className="h-4 w-4 shrink-0" />
           <span>{t('dashboard.update_available', { count: updateSummary.new_commits })}</span>
+        </div>
+      )}
+
+      {/* Writing stats */}
+      {projectCount > 0 && (
+        <div className="mb-4 grid grid-cols-3 gap-3">
+          <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-3 text-center">
+            <div className="text-lg font-bold text-indigo-400">{totalWords.toLocaleString()}</div>
+            <div className="text-[10px] text-slate-500 uppercase tracking-wider">Total Words</div>
+          </div>
+          <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-3 text-center">
+            <div className="text-lg font-bold text-indigo-400">{projectCount}</div>
+            <div className="text-[10px] text-slate-500 uppercase tracking-wider">Projects</div>
+          </div>
+          <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-3 text-center">
+            <div className="text-lg font-bold text-indigo-400">{avgWords.toLocaleString()}</div>
+            <div className="text-[10px] text-slate-500 uppercase tracking-wider">Avg / Project</div>
+          </div>
         </div>
       )}
 
