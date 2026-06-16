@@ -148,6 +148,22 @@ def update_project(project_id: str, payload: ProjectUpdate):
 
 @router.delete("/projects/{project_id}", status_code=204)
 def delete_project(project_id: str):
+    from datetime import UTC, datetime
+
+    # Auto-backup before destructive operation
+    try:
+        from db.paths import get_data_dir
+        from pathlib import Path
+        import shutil
+        db_path = get_data_dir() / "novelforge.db"
+        if db_path.exists():
+            backup_dir = get_data_dir() / "backups"
+            backup_dir.mkdir(parents=True, exist_ok=True)
+            ts = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+            shutil.copy2(db_path, backup_dir / f"pre_delete_{ts}.db")
+    except Exception:
+        pass  # Backup failure should not block the delete
+
     from models.chapter import Chapter
     from models.extra import Character, Job, Lore, TimelineItem
     from models.summary import Summary
