@@ -68,6 +68,25 @@ def restore_backup(filename: str) -> dict:
     return {"message": f"Restored {filename}. Restart the engine for changes to take effect."}
 
 
+@router.post("/backup/cleanup", status_code=200)
+def cleanup_old_backups(keep: int = 10) -> dict:
+    """Delete old backups, keeping only the most recent `keep` files."""
+    if not BACKUP_DIR.exists():
+        return {"deleted": 0, "kept": 0}
+    backups = sorted(BACKUP_DIR.iterdir(), key=lambda p: p.stat().st_mtime, reverse=True)
+    backups = [p for p in backups if p.suffix == ".db"]
+    if len(backups) <= keep:
+        return {"deleted": 0, "kept": len(backups)}
+    deleted = 0
+    for p in backups[keep:]:
+        try:
+            p.unlink()
+            deleted += 1
+        except Exception:
+            pass
+    return {"deleted": deleted, "kept": keep}
+
+
 @router.post("/maintenance/vacuum", status_code=200)
 def vacuum_database() -> dict:
     """VACUUM the SQLite database to reclaim space."""
