@@ -1,0 +1,66 @@
+"""Database backup and restore endpoints."""
+
+from __future__ import annotations
+
+import shutil
+import uuid
+from datetime import UTC, datetime
+
+from db.paths import get_data_dir
+from fastapi import APIRouter, HTTPException
+from fastapi.responses import FileResponse
+
+router = APIRouter()
+BACKUP_DIR = get_data_dir() / "backups"
+BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+
+
+@router.post("/backup", status_code=201)
+def create_backup() -> dict:
+    """Backup the SQLite database to a timestamped file."""
+    db_path = get_data_dir() / "novelforge.db"
+    if not db_path.exists():
+        raise HTTPException(status_code=404, detail="Database file not found")
+    ts = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+    backup_name = f"novelforge_backup_{ts}_{uuid.uuid4().hex[:8]}.db"
+    backup_path = BACKUP_DIR / backup_name
+    shutil.copy2(db_path, backup_path)
+    return {"filename": backup_name, "path": str(backup_path), "size_bytes": backup_path.stat().st_size}
+
+
+@router.get("/backups")
+def list_backups() -> list[dict]:
+    """List all available database backups."""
+    if not BACKUP_DIR.exists():
+        return []
+    backups = []
+    for f in sorted(BACKUP_DIR.iterdir(), key=lambda p: p.stat().st_mtime, reverse=True):
+        if f.suffix == ".db":
+            backups.append(
+                {
+                    "filename": f.name,
+                    "size_bytes": f.stat().st_size,
+                    "created_at": datetime.fromtimestamp(f.stat().st_mtime, tz=UTC).isoformat() + "Z",
+                }
+            )
+    return backups
+
+
+@router.get("/backup/{filename}")
+def download_backup(filename: str) -> FileResponse:
+    """Download a specific backup file."""
+    backup_path = BACKUP_DIR / filename
+    if not backup_path.exists() or backup_path.suffix != ".db":
+        raise HTTPException(status_code=404, detail="Backup not found")
+    return FileResponse(str(backup_path), media_type="application/octet-stream", filename=filename)
+
+
+@router.post("/backup/{filename}/restore", status_code=200)
+def restore_backup(filename: str) -> dict:
+    """Restore a backup. Overwrites the current database."""
+    backup_path = BACKUP_DIR / filename
+    if not backup_path.exists() or backup_path.suffix != ".db":
+        raise HTTPException(status_code=404, detail="Backup not found")
+    db_path = get_data_dir() / "novelforge.db"
+    shutil.copy2(backup_path, db_path)
+    return {"message": f"Restored {filename}. Restart the engine for changes to take effect."}

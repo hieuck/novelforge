@@ -1,7 +1,8 @@
 """Test AI WebSocket streaming endpoint with mocked engine."""
+
 from __future__ import annotations
 
-from unittest.mock import patch, AsyncMock
+from unittest.mock import AsyncMock, patch
 
 
 def test_ai_ws_health(client):
@@ -15,6 +16,7 @@ def test_ai_ws_health(client):
 
 def test_ai_ws_stream(client):
     """Test streaming response from AI WS with mocked AIEngine."""
+
     async def mock_stream_gen(*args, **kwargs):
         yield "Hello"
         yield " world"

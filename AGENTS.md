@@ -72,6 +72,7 @@ novelforge/
 | search | `/api/search` | FTS5 full-text search |
 | imports | `/api/imports` | Import projects/chapters |
 | update | `/api/update` | Self-update check + apply |
+| backup | `/api/backup` | DB backup, list, download, restore |
 
 ### Database Models (SQLAlchemy + SQLite)
 - `Project` — novel project with metadata

@@ -5,16 +5,14 @@ import platform
 import sys
 from importlib.metadata import version as pkg_version
 
+from db.session import SessionLocal
 from fastapi import APIRouter, HTTPException
 from httpx import AsyncClient, HTTPError, Timeout
-from pydantic import BaseModel
-
-from db.session import SessionLocal
-from models.extra import AppSettings, Job, Lore, TimelineItem, Character
 from models.chapter import Chapter
+from models.extra import AppSettings, Character, Job, Lore, TimelineItem
 from models.project import Project
 from models.summary import Summary
-from services.search import init_fts
+from pydantic import BaseModel
 
 logger = logging.getLogger("novelforge.settings")
 router = APIRouter()
@@ -44,7 +42,7 @@ def _row_to_dict(row: AppSettings) -> dict:
 async def current_settings() -> dict:
     db = SessionLocal()
     try:
-        row = db.query(AppSettings).filter(AppSettings.active == True).first()
+        row = db.query(AppSettings).filter(AppSettings.active).first()
         if not row:
             return {
                 "provider": "ollama",
@@ -63,7 +61,7 @@ async def current_settings() -> dict:
 async def update_settings(payload: SettingsIn) -> dict:
     db = SessionLocal()
     try:
-        row = db.query(AppSettings).filter(AppSettings.active == True).first()
+        row = db.query(AppSettings).filter(AppSettings.active).first()
         if not row:
             row = AppSettings(id="app-settings", active=True, **payload.model_dump())
             db.add(row)
@@ -131,12 +129,16 @@ async def list_models(
                 resp = await client.get(f"{_base}/api/tags", timeout=timeout)
                 resp.raise_for_status()
                 data = resp.json()
-                models = [{
-                    "name": m["name"],
-                    "size": m.get("size", 0),
-                    "parameter_size": m.get("details", {}).get("parameter_size", ""),
-                    "quantization": m.get("details", {}).get("quantization_level", ""),
-                } for m in (data.get("models") or []) if m.get("name")]
+                models = [
+                    {
+                        "name": m["name"],
+                        "size": m.get("size", 0),
+                        "parameter_size": m.get("details", {}).get("parameter_size", ""),
+                        "quantization": m.get("details", {}).get("quantization_level", ""),
+                    }
+                    for m in (data.get("models") or [])
+                    if m.get("name")
+                ]
             else:
                 resp = await client.get(
                     f"{_base}/models",
@@ -146,9 +148,7 @@ async def list_models(
                 resp.raise_for_status()
                 data = resp.json()
                 models = [
-                    m.get("id") or m.get("name")
-                    for m in (data.get("data") or [])
-                    if m.get("id") or m.get("name")
+                    m.get("id") or m.get("name") for m in (data.get("data") or []) if m.get("id") or m.get("name")
                 ]
         return {"models": sorted(models, key=lambda m: m["name"] if isinstance(m, dict) else m)}
     except HTTPError as exc:
@@ -165,13 +165,16 @@ class PullModelIn(BaseModel):
 async def pull_model(payload: PullModelIn) -> dict:
     """Pull an Ollama model by name."""
     import subprocess
+
     name = payload.name.strip()
     if not name:
         raise HTTPException(status_code=400, detail="Model name required")
     try:
         result = subprocess.run(
             ["ollama", "pull", name.strip()],
-            capture_output=True, text=True, timeout=300,
+            capture_output=True,
+            text=True,
+            timeout=300,
         )
         if result.returncode != 0:
             return {"success": False, "error": result.stderr.strip() or result.stdout.strip()}
@@ -188,12 +191,15 @@ async def pull_model(payload: PullModelIn) -> dict:
 async def delete_model(name: str) -> dict:
     """Delete an Ollama model by name."""
     import subprocess
+
     if not name.strip():
         raise HTTPException(status_code=400, detail="Model name required")
     try:
         result = subprocess.run(
             ["ollama", "rm", name.strip()],
-            capture_output=True, text=True, timeout=30,
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
         if result.returncode != 0:
             return {"success": False, "error": result.stderr.strip() or result.stdout.strip()}
@@ -248,6 +254,7 @@ async def delete_all_data() -> None:
     try:
         import sqlite3
         from pathlib import Path
+
         db_path = Path(__file__).resolve().parent.parent / "novelforge.db"
         con = sqlite3.connect(str(db_path))
         con.execute("DELETE FROM fts_chapters")

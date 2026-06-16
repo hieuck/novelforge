@@ -1,13 +1,12 @@
 import json
+import uuid
+from datetime import UTC, datetime
 
+from db.session import SessionLocal
 from fastapi import APIRouter, HTTPException
+from models.extra import TimelineItem
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
-from db.session import SessionLocal
-from models.extra import TimelineItem
-import uuid
-from datetime import datetime, timezone
-
 
 router = APIRouter()
 
@@ -66,8 +65,8 @@ def to_dict(row: TimelineItem):
         "involved_characters": _deserialize(row.involved_characters),
         "related_chapters": _deserialize(row.related_chapters),
         "metadata": _deserialize(row.meta_data),
-        "created_at": row.created_at.isoformat()+'Z' if row.created_at else None,
-        "updated_at": row.updated_at.isoformat()+'Z' if row.updated_at else None,
+        "created_at": row.created_at.isoformat() + "Z" if row.created_at else None,
+        "updated_at": row.updated_at.isoformat() + "Z" if row.updated_at else None,
     }
 
 
@@ -119,7 +118,7 @@ def update_timeline(event_id: str, payload: TimelineUpdate):
                 row.meta_data = v
             else:
                 setattr(row, k, v)
-        row.updated_at = datetime.now(timezone.utc)
+        row.updated_at = datetime.now(UTC)
         db.add(row)
         db.commit()
         db.refresh(row)
@@ -139,8 +138,3 @@ def delete_timeline(event_id: str):
         db.commit()
     finally:
         db.close()
-
-
-
-
-

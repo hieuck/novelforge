@@ -1,8 +1,8 @@
 from db.base import Base
 
-from models.project import Project
 from models.chapter import Chapter
-from models.extra import Character, Lore, TimelineItem, Job, Settings, AppSettings
+from models.extra import AppSettings, Character, Job, Lore, Settings, TimelineItem
+from models.project import Project
 from models.summary import Summary
 
 __all__ = [

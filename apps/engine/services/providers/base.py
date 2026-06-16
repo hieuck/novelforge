@@ -1,14 +1,14 @@
 from __future__ import annotations
 
+from collections.abc import AsyncGenerator
 from dataclasses import dataclass
-from typing import AsyncGenerator, Optional
 
 
 @dataclass(frozen=True)
 class ProviderSettings:
     provider: str = "ollama"
     base_url: str = "http://localhost:11434"
-    api_key: Optional[str] = None
+    api_key: str | None = None
     model: str = "gemma3:4b"
     temperature: float = 0.7
     max_tokens: int = 2048

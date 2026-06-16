@@ -250,6 +250,41 @@ export default function Settings() {
 
       {tab==='danger' && (
         <div className="space-y-4">
+          {/* Backup section */}
+          <div className="rounded-lg border border-slate-800 bg-slate-900 p-5 space-y-3">
+            <h2 className="text-sm font-semibold text-slate-100">{t('settings.backup_title')}</h2>
+            <p className="text-xs text-slate-400">{t('settings.backup_desc')}</p>
+            <div className="flex gap-2">
+              <button onClick={async () => {
+                try {
+                  const data = await api.post<{filename:string}>('/backup', {}, true)
+                  if (data) alert(`Backup created: ${data.filename}`)
+                } catch {}
+              }} className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs text-white hover:bg-indigo-700">
+                {t('settings.backup_create')}
+              </button>
+              <button onClick={async () => {
+                try {
+                  const backups = await api.get<Array<{filename:string;size_bytes:number;created_at:string}>>('/backups')
+                  if (!backups.length) { alert('No backups found'); return }
+                  const msg = backups.map((b,i) => `${i+1}. ${b.filename} (${(b.size_bytes/1024).toFixed(1)}KB) — ${new Date(b.created_at).toLocaleString()}`).join('\n')
+                  const choice = prompt(`Available backups:\n${msg}\n\nEnter number to restore, or cancel:`)
+                  if (choice) {
+                    const idx = parseInt(choice) - 1
+                    if (idx >= 0 && idx < backups.length) {
+                      if (confirm(`Restore ${backups[idx].filename}? Current data will be overwritten.`)) {
+                        await api.post(`/backup/${backups[idx].filename}/restore`, {}, true)
+                        alert('Restore complete. Restart the engine.')
+                      }
+                    }
+                  }
+                } catch {}
+              }} className="rounded-md border border-slate-700 px-3 py-1.5 text-xs text-slate-300 hover:border-slate-500">
+                {t('settings.backup_restore')}
+              </button>
+            </div>
+          </div>
+
           <div className="rounded-lg border border-red-900/60 bg-red-950/20 p-5 space-y-4">
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-red-400 flex-shrink-0"/>

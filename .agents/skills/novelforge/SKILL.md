@@ -48,7 +48,7 @@ This skill teaches you the core development patterns, coding conventions, and co
 ## Workflows
 
 ### engine-api-route-addition-or-refactor
-**Trigger:** When you want to add, update, or refactor an API endpoint in the engine backend.  
+**Trigger:** When you want to add, update, or refactor an API endpoint in the engine backend.
 **Command:** `/add-engine-api-route`
 
 1. Edit or add files in `apps/engine/routes/*.py` for endpoint logic.
@@ -72,7 +72,7 @@ def read_novel(id: int):
 ```
 
 ### desktop-feature-development
-**Trigger:** When you want to add a new feature, panel, or page to the desktop app.  
+**Trigger:** When you want to add a new feature, panel, or page to the desktop app.
 **Command:** `/new-desktop-feature`
 
 1. Add or edit React components in `apps/desktop/src/components/*.tsx`.
@@ -94,7 +94,7 @@ export default function NovelPanel() {
 ```
 
 ### engine-bootstrap-or-build-script-update
-**Trigger:** When you want to change how the engine is started, built, or bundled.  
+**Trigger:** When you want to change how the engine is started, built, or bundled.
 **Command:** `/update-engine-build`
 
 1. Edit or remove scripts in `apps/engine/_bootstrap*.py` or `scripts/build_engine.py`.

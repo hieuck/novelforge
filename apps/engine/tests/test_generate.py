@@ -1,7 +1,8 @@
 """Tests for image generation endpoints."""
+
 from __future__ import annotations
 
-from unittest.mock import patch, AsyncMock, Mock
+from unittest.mock import patch
 
 
 def test_generate_image_missing_prompt(client):
@@ -14,6 +15,7 @@ def test_generate_image_ollama(client):
     """Ollama provider should reject image gen."""
     with patch("routes.generate._get_settings") as mock_settings:
         from services.providers.base import ProviderSettings
+
         mock_settings.return_value = ProviderSettings(provider="ollama", api_key="")
         r = client.post("/api/generate/image", json={"prompt": "test"})
         assert r.status_code == 400
@@ -24,6 +26,7 @@ def test_generate_image_no_api_key(client):
     """No API key should return 400."""
     with patch("routes.generate._get_settings") as mock_settings:
         from services.providers.base import ProviderSettings
+
         mock_settings.return_value = ProviderSettings(provider="openai", api_key="")
         r = client.post("/api/generate/image", json={"prompt": "test"})
         assert r.status_code == 400

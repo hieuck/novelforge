@@ -3,13 +3,12 @@ from __future__ import annotations
 import re
 import uuid
 
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
-from sqlalchemy.orm import Session
-
 from db.session import SessionLocal
+from fastapi import APIRouter, HTTPException
 from models.chapter import Chapter
 from models.project import Project
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
 
 router = APIRouter()
 
@@ -71,8 +70,10 @@ def import_content(payload: ImportRequest) -> dict:
                 ch = Chapter(
                     id=str(uuid.uuid4()),
                     project_id=payload.project_id,
-                    title=title, content=body,
-                    scene_order=existing + i, status="draft",
+                    title=title,
+                    content=body,
+                    scene_order=existing + i,
+                    status="draft",
                     word_count=_count_words(body),
                 )
                 db.add(ch)
@@ -84,8 +85,10 @@ def import_content(payload: ImportRequest) -> dict:
             ch = Chapter(
                 id=str(uuid.uuid4()),
                 project_id=payload.project_id,
-                title=stem or "Imported", content=payload.content,
-                scene_order=existing, status="draft",
+                title=stem or "Imported",
+                content=payload.content,
+                scene_order=existing,
+                status="draft",
                 word_count=_count_words(payload.content),
             )
             db.add(ch)

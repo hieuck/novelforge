@@ -36,6 +36,7 @@ export default function Chapters() {
   const [saving, setSaving] = useState(false)
   const [sceneUrl, setSceneUrl] = useState<string | null>(null)
   const [previewImg, setPreviewImg] = useState<string | null>(null)
+  const [showShortcuts, setShowShortcuts] = useState(false)
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const mountedRef = useRef(true)
@@ -112,9 +113,26 @@ export default function Chapters() {
     })
   }, [title, status, scheduleAutosave])
 
+  // Warn on unsaved changes before closing
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (!saved) {
+        e.preventDefault()
+        e.returnValue = ''
+      }
+    }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  }, [saved])
+
   // Global keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      if (e.key === '?' && !(e.ctrlKey || e.metaKey)) {
+        e.preventDefault()
+        setShowShortcuts((v) => !v)
+        return
+      }
       const ctrl = e.ctrlKey || e.metaKey
       if (ctrl && e.key === 'n') {
         e.preventDefault()
@@ -281,6 +299,30 @@ export default function Chapters() {
           {previewImg && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80" onClick={() => setPreviewImg(null)}>
               <img src={previewImg} className="max-h-[90vh] max-w-[90vw] object-contain" alt="preview" />
+            </div>
+          )}
+
+          {showShortcuts && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setShowShortcuts(false)}>
+              <div className="w-80 rounded-lg border border-slate-700 bg-slate-900 p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+                <h3 className="mb-3 text-sm font-semibold text-slate-100">Keyboard Shortcuts</h3>
+                <div className="space-y-2 text-xs text-slate-400">
+                  {[
+                    ['Ctrl+N', 'New chapter'],
+                    ['Ctrl+E', 'Focus editor'],
+                    ['Ctrl+Shift+D', 'Delete chapter'],
+                    ['Ctrl+S', 'Save'],
+                    ['?', 'Toggle shortcuts'],
+                    ['Click Scene 🎨', 'Generate illustration'],
+                    ['Click portrait', 'Preview full size'],
+                  ].map(([key, desc]) => (
+                    <div key={key} className="flex justify-between">
+                      <kbd className="rounded border border-slate-700 bg-slate-800 px-1.5 py-0.5 font-mono text-[10px] text-slate-300">{key}</kbd>
+                      <span>{desc}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
 

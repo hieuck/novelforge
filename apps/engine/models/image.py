@@ -1,6 +1,5 @@
-from sqlalchemy import Column, String, Text, DateTime, func
-
 from db.base import Base
+from sqlalchemy import Column, DateTime, String, Text, func
 
 
 class GeneratedImage(Base):

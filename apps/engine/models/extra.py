@@ -1,6 +1,5 @@
-from sqlalchemy import Column, String, Text, DateTime, Boolean, Integer, Float, func
-
 from db.base import Base
+from sqlalchemy import Boolean, Column, DateTime, Float, Integer, String, Text, func
 
 
 class Settings(Base):

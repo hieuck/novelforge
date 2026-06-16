@@ -1,9 +1,9 @@
-from fastapi import APIRouter
-from pydantic import BaseModel
 import os
 import subprocess
 from pathlib import Path
-from typing import Optional
+
+from fastapi import APIRouter
+from pydantic import BaseModel
 
 router = APIRouter()
 
@@ -11,15 +11,15 @@ router = APIRouter()
 class UpdateCheckResponse(BaseModel):
     update_available: bool
     new_commits: int = 0
-    current_commit: Optional[str] = None
-    latest_commit: Optional[str] = None
-    error: Optional[str] = None
+    current_commit: str | None = None
+    latest_commit: str | None = None
+    error: str | None = None
 
 
 class UpdateApplyResponse(BaseModel):
     success: bool
     message: str
-    details: Optional[str] = None
+    details: str | None = None
 
 
 NOVELFORGE_ROOT = Path(__file__).resolve().parent.parent.parent.parent

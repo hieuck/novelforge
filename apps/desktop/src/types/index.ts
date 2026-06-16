@@ -112,6 +112,3 @@ export const AI_ACTIONS = [
 ] as const
 
 export type AIAction = typeof AI_ACTIONS[number]['value']
-
-
-

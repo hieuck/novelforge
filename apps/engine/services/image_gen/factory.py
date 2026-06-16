@@ -1,10 +1,11 @@
 """Image generation provider factory."""
+
 from __future__ import annotations
 
 from .base import ImageGenProvider
+from .comfy_provider import ComfyUIProvider
 from .mock_provider import MockProvider
 from .openai_provider import OpenAIProvider
-from .comfy_provider import ComfyUIProvider
 
 
 def create_provider(provider: str = "mock", api_key: str = "", model: str = "", base_url: str = "") -> ImageGenProvider:

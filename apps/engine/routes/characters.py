@@ -1,11 +1,11 @@
+import uuid
+from datetime import UTC, datetime
+
+from db.session import SessionLocal
 from fastapi import APIRouter, HTTPException
+from models.extra import Character
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
-from db.session import SessionLocal
-from models.extra import Character
-import uuid
-from datetime import datetime, timezone
-
 
 router = APIRouter()
 
@@ -63,8 +63,8 @@ def to_dict(c: Character):
         "first_appearance": c.first_appearance,
         "notes": c.notes,
         "summary": c.summary,
-        "created_at": c.created_at.isoformat()+'Z' if c.created_at else None,
-        "updated_at": c.updated_at.isoformat()+'Z' if c.updated_at else None,
+        "created_at": c.created_at.isoformat() + "Z" if c.created_at else None,
+        "updated_at": c.updated_at.isoformat() + "Z" if c.updated_at else None,
     }
 
 
@@ -113,7 +113,7 @@ def update_character(character_id: str, payload: CharacterUpdate):
         data = payload.model_dump(exclude_unset=True)
         for k, v in data.items():
             setattr(c, k, v)
-        c.updated_at = datetime.now(timezone.utc)
+        c.updated_at = datetime.now(UTC)
         db.add(c)
         db.commit()
         db.refresh(c)
@@ -133,12 +133,9 @@ def delete_character(character_id: str):
         db.commit()
         try:
             from services.search import remove_character
+
             remove_character(character_id)
         except Exception:
             pass
     finally:
         db.close()
-
-
-
-

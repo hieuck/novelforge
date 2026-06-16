@@ -15,4 +15,3 @@ def test_update_apply_unauthenticated(client):
     data = r.json()
     # In test environment (no git repo), it should return success=False
     assert "success" in data
-

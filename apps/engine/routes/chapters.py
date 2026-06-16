@@ -1,11 +1,11 @@
+import uuid
+from datetime import UTC, datetime
+
+from db.session import SessionLocal
 from fastapi import APIRouter, HTTPException
+from models.chapter import Chapter
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
-from db.session import SessionLocal
-from models.chapter import Chapter
-import uuid
-from datetime import datetime, timezone
-
 
 router = APIRouter()
 
@@ -49,8 +49,8 @@ def to_dict(c: Chapter):
         "summary": c.summary,
         "notes": c.notes,
         "illustration_url": c.illustration_url,
-        "created_at": c.created_at.isoformat()+'Z' if c.created_at else None,
-        "updated_at": c.updated_at.isoformat()+'Z' if c.updated_at else None,
+        "created_at": c.created_at.isoformat() + "Z" if c.created_at else None,
+        "updated_at": c.updated_at.isoformat() + "Z" if c.updated_at else None,
     }
 
 
@@ -58,12 +58,7 @@ def to_dict(c: Chapter):
 def list_chapters(project_id: str):
     db: Session = SessionLocal()
     try:
-        items = (
-            db.query(Chapter)
-            .filter(Chapter.project_id == project_id)
-            .order_by(Chapter.scene_order)
-            .all()
-        )
+        items = db.query(Chapter).filter(Chapter.project_id == project_id).order_by(Chapter.scene_order).all()
         return [to_dict(c) for c in items]
     finally:
         db.close()
@@ -110,7 +105,7 @@ def update_chapter(chapter_id: str, payload: ChapterUpdate):
             setattr(c, k, v)
         if "content" in data:
             c.word_count = count_words(data.get("content") or "")
-        c.updated_at = datetime.now(timezone.utc)
+        c.updated_at = datetime.now(UTC)
         db.add(c)
         db.commit()
         db.refresh(c)
@@ -131,6 +126,7 @@ def delete_chapter(chapter_id: str):
         # Remove from FTS index
         try:
             from services.search import remove_chapter
+
             remove_chapter(chapter_id)
         except Exception:
             pass
@@ -148,12 +144,8 @@ def reorder_chapters(payload: ReorderIn):
     db: Session = SessionLocal()
     try:
         for idx, ch_id in enumerate(payload.ordered_ids):
-            db.query(Chapter).filter(Chapter.id == ch_id).update(
-                {"scene_order": idx, "updated_at": datetime.now(timezone.utc)}
-            )
+            db.query(Chapter).filter(Chapter.id == ch_id).update({"scene_order": idx, "updated_at": datetime.now(UTC)})
         db.commit()
         return {"success": True, "count": len(payload.ordered_ids)}
     finally:
         db.close()
-
-

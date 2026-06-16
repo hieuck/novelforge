@@ -4,9 +4,8 @@ import logging
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
-
 from services.ai_run import run_ai
-from services.ai_service import AIEngine, _get_settings
+from services.ai_service import AIEngine
 from services.context.builder import ProjectContext
 
 logger = logging.getLogger("novelforge.ai.route")
@@ -17,6 +16,7 @@ router = APIRouter()
 def _system_prompt(ctx: ProjectContext) -> str:
     """Build a system prompt from a loaded ProjectContext (used by agent route)."""
     from services.prompts.loader import load_prompt
+
     base = load_prompt("system_base.txt")
     writing = load_prompt("writing_assistant.txt")
     parts = [base, writing]
@@ -119,10 +119,15 @@ async def ai_ws(ws: WebSocket) -> None:
         logger.error("AI stream error: %s", exc)
         msg = str(exc)
         err_lower = msg.lower()
-        if "connect" in err_lower and ("refused" in err_lower or "timed out" in err_lower or "econnrefused" in err_lower):
-            msg = f"Không thể kết nối AI provider ({msg}). Vào Settings → AI Provider để kiểm tra cấu hình (Ollama, OpenAI, v.v.)."
+        if "connect" in err_lower and (
+            "refused" in err_lower or "timed out" in err_lower or "econnrefused" in err_lower
+        ):
+            msg = (
+                f"Không thể kết nối AI provider ({msg}). "
+                f"Vào Settings \u2192 AI Provider để kiểm tra cấu hình (Ollama, OpenAI, v.v.)."
+            )
         elif "404" in msg:
-            msg = f"AI provider trả về 404 — endpoint API không đúng. Kiểm tra Base URL trong Settings → AI Provider."
+            msg = "AI provider trả về 404 — endpoint API không đúng. Kiểm tra Base URL trong Settings → AI Provider."
         try:
             await ws.send_json({"error": msg})
         except Exception:

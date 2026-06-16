@@ -1,12 +1,12 @@
+import uuid
+from datetime import UTC, datetime
+
+from db.session import SessionLocal
 from fastapi import APIRouter, HTTPException
+from models.project import Project
 from pydantic import BaseModel, Field
 from sqlalchemy import func
 from sqlalchemy.orm import Session
-from db.session import SessionLocal
-from models.project import Project
-import uuid
-from datetime import datetime, timezone
-
 
 router = APIRouter()
 
@@ -38,9 +38,10 @@ def to_dict(p: Project):
         "language": p.language,
         "style_guide": p.style_guide,
         "summary": p.summary,
-        "created_at": p.created_at.isoformat()+'Z' if p.created_at else None,
-        "updated_at": p.updated_at.isoformat()+'Z' if p.updated_at else None,
+        "created_at": p.created_at.isoformat() + "Z" if p.created_at else None,
+        "updated_at": p.updated_at.isoformat() + "Z" if p.updated_at else None,
     }
+
 
 def to_dict_with_stats(p: Project, db=None):
     """Project dict with computed word_count."""
@@ -52,9 +53,8 @@ def to_dict_with_stats(p: Project, db=None):
         close_db = False
     try:
         from models.chapter import Chapter
-        total = db.query(func.coalesce(func.sum(Chapter.word_count), 0)).filter(
-            Chapter.project_id == p.id
-        ).scalar()
+
+        total = db.query(func.coalesce(func.sum(Chapter.word_count), 0)).filter(Chapter.project_id == p.id).scalar()
         d["word_count"] = total or 0
     except Exception:
         d["word_count"] = 0
@@ -109,7 +109,7 @@ def update_project(project_id: str, payload: ProjectUpdate):
         data = payload.model_dump(exclude_unset=True)
         for k, v in data.items():
             setattr(p, k, v)
-        p.updated_at = datetime.now(timezone.utc)
+        p.updated_at = datetime.now(UTC)
         db.add(p)
         db.commit()
         db.refresh(p)
@@ -121,7 +121,7 @@ def update_project(project_id: str, payload: ProjectUpdate):
 @router.delete("/projects/{project_id}", status_code=204)
 def delete_project(project_id: str):
     from models.chapter import Chapter
-    from models.extra import Character, Lore, TimelineItem, Job
+    from models.extra import Character, Job, Lore, TimelineItem
     from models.summary import Summary
     from services.search import remove_chapter, remove_character, remove_lore
 
@@ -169,7 +169,3 @@ def delete_project(project_id: str):
                 pass
     finally:
         db.close()
-
-
-
-

@@ -3,25 +3,24 @@ from __future__ import annotations
 import io
 import json
 import zipfile
-from datetime import datetime, timezone
-
-from fastapi import APIRouter, HTTPException
-from fastapi.responses import Response
-from pydantic import BaseModel
-from sqlalchemy.orm import Session
+from datetime import UTC, datetime
 
 from db.session import SessionLocal
+from fastapi import APIRouter, HTTPException
+from fastapi.responses import Response
 from models.chapter import Chapter
 from models.extra import Character, Lore, TimelineItem
 from models.project import Project
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
 
 router = APIRouter()
 
 _MIME: dict[str, str] = {
-    "md":   "text/markdown",
-    "txt":  "text/plain",
+    "md": "text/markdown",
+    "txt": "text/plain",
     "html": "text/html",
-    "zip":  "application/zip",
+    "zip": "application/zip",
 }
 
 HTML_TEMPLATE = """<!DOCTYPE html>
@@ -57,12 +56,7 @@ def _load_data(db: Session, project_id: str) -> tuple[Project, list[Chapter]]:
     project = db.query(Project).filter(Project.id == project_id).first()
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    chapters = (
-        db.query(Chapter)
-        .filter(Chapter.project_id == project_id)
-        .order_by(Chapter.scene_order)
-        .all()
-    )
+    chapters = db.query(Chapter).filter(Chapter.project_id == project_id).order_by(Chapter.scene_order).all()
     return project, chapters
 
 
@@ -98,9 +92,7 @@ def _build_html(project: Project, chapters: list[Chapter]) -> str:
     ch_html_parts: list[str] = []
     for ch in chapters:
         content = ch.content or ""
-        paragraphs = "".join(
-            f"<p>{line}</p>" for line in content.split("\n") if line.strip()
-        )
+        paragraphs = "".join(f"<p>{line}</p>" for line in content.split("\n") if line.strip())
         ch_html_parts.append(f"<h2>{ch.title or 'Untitled'}</h2>\n{paragraphs}")
 
     genre_str = f"{project.genre} · " if project.genre else ""
@@ -139,17 +131,23 @@ def _build_zip(db: Session, project: Project, chapters: list[Chapter]) -> bytes:
             "language": project.language,
             "summary": project.summary,
             "style_guide": project.style_guide,
-            "exported_at": datetime.now(timezone.utc).isoformat(),
+            "exported_at": datetime.now(UTC).isoformat(),
         }
         zf.writestr("project.json", json.dumps(meta, ensure_ascii=False, indent=2))
 
         # Characters
         char_data = [
             {
-                "id": c.id, "name": c.name, "alias": c.alias,
-                "role": c.role, "age": c.age, "personality": c.personality,
-                "appearance": c.appearance, "goals": c.goals,
-                "secrets": c.secrets, "notes": c.notes,
+                "id": c.id,
+                "name": c.name,
+                "alias": c.alias,
+                "role": c.role,
+                "age": c.age,
+                "personality": c.personality,
+                "appearance": c.appearance,
+                "goals": c.goals,
+                "secrets": c.secrets,
+                "notes": c.notes,
             }
             for c in characters
         ]
@@ -158,8 +156,10 @@ def _build_zip(db: Session, project: Project, chapters: list[Chapter]) -> bytes:
         # Lore
         lore_data = [
             {
-                "id": item.id, "name": item.name,
-                "lore_type": item.lore_type, "description": item.description,
+                "id": item.id,
+                "name": item.name,
+                "lore_type": item.lore_type,
+                "description": item.description,
                 "tags": item.tags,
             }
             for item in lore_items
@@ -169,8 +169,10 @@ def _build_zip(db: Session, project: Project, chapters: list[Chapter]) -> bytes:
         # Timeline
         timeline_data = [
             {
-                "id": ev.id, "title": ev.title,
-                "event_date": ev.event_date, "description": ev.description,
+                "id": ev.id,
+                "title": ev.title,
+                "event_date": ev.event_date,
+                "description": ev.description,
             }
             for ev in timeline
         ]
@@ -204,12 +206,10 @@ async def export_project(payload: ProjectExportIn) -> Response:
 
     filename = f"{safe_title}.{fmt}"
     import urllib.parse
-    encoded = urllib.parse.quote(filename, safe='')
+
+    encoded = urllib.parse.quote(filename, safe="")
     return Response(
         content=content_bytes,
         media_type=_MIME[fmt],
         headers={"Content-Disposition": f"attachment; filename*=UTF-8''{encoded}"},
     )
-
-
-

@@ -123,7 +123,7 @@ Place code in the appropriate type folder (components/, services/, utils/, etc.)
 ## Evidence
 
 - Type-based module organization detected
-- Folders: 
+- Folders:
 
 ---
 id: novelforge-test-separate
@@ -618,4 +618,3 @@ Edit/remove scripts in apps/engine/_bootstrap*.py or scripts/build_engine.py, up
 
 - Workflow: engine-bootstrap-or-build-script-update
 - Example commit sequences and file patterns
-

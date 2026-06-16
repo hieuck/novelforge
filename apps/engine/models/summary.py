@@ -1,6 +1,6 @@
-from sqlalchemy import Column, String, Text, DateTime, ForeignKey
-from sqlalchemy.sql import func
 from db.base import Base
+from sqlalchemy import Column, DateTime, ForeignKey, String, Text
+from sqlalchemy.sql import func
 
 
 class Summary(Base):

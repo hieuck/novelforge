@@ -1,10 +1,12 @@
 """Schema migration: add columns added after initial release."""
-import sys, os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from sqlalchemy import inspect, text
+import os
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
 from db.base import engine
-
+from sqlalchemy import inspect, text
 
 ADD_COLUMNS: dict[str, list[tuple[str, str]]] = {
     "chapters": [

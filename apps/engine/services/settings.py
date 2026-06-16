@@ -1,15 +1,11 @@
 import logging
-import os
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Tuple
-
-from pydantic import ValidationError
 
 try:
     from pydantic_settings import BaseSettings, SettingsConfigDict
 except Exception:  # pragma: no cover - fallback when pydantic-settings is missing
     try:
         from pydantic import BaseSettings
+
         SettingsConfigDict = dict  # type: ignore[misc,assignment]
     except Exception as exc:  # pragma: no cover
         raise ImportError("Pydantic is required for application settings") from exc
@@ -25,7 +21,7 @@ class ServiceSettings(BaseSettings):
     default_locale: str = "vi"
 
 
-_service_settings: Optional[ServiceSettings] = None
+_service_settings: ServiceSettings | None = None
 
 
 def get_service_settings() -> ServiceSettings:

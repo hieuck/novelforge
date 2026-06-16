@@ -4,13 +4,12 @@ import asyncio
 import json
 import logging
 import uuid
-from datetime import datetime, timezone
-
-from fastapi import APIRouter, BackgroundTasks, HTTPException, WebSocket, WebSocketDisconnect
-from pydantic import BaseModel
+from datetime import UTC, datetime
 
 from db.session import SessionLocal
+from fastapi import APIRouter, BackgroundTasks, HTTPException, WebSocket, WebSocketDisconnect
 from models.extra import Job
+from pydantic import BaseModel
 
 logger = logging.getLogger("novelforge.jobs")
 router = APIRouter()
@@ -40,8 +39,8 @@ def _to_dict(j: Job) -> dict:
         "params": params,
         "result": result,
         "error": j.error,
-        "created_at": j.created_at.isoformat()+'Z' if j.created_at else None,
-        "updated_at": j.updated_at.isoformat()+'Z' if j.updated_at else None,
+        "created_at": j.created_at.isoformat() + "Z" if j.created_at else None,
+        "updated_at": j.updated_at.isoformat() + "Z" if j.updated_at else None,
     }
 
 
@@ -115,7 +114,7 @@ def cancel_job(job_id: str) -> dict:
         if job.status in ("done", "failed", "cancelled"):
             return _to_dict(job)
         job.status = "cancelled"
-        job.updated_at = datetime.now(timezone.utc)
+        job.updated_at = datetime.now(UTC)
         db.commit()
         db.refresh(job)
         # Signal the background task if running
@@ -193,7 +192,7 @@ async def _run_agent_job(job_id: str) -> None:
         project_id: str = job.project_id
 
         job.status = "running"
-        job.updated_at = datetime.now(timezone.utc)
+        job.updated_at = datetime.now(UTC)
         db.commit()
     except Exception as exc:
         logger.error("Job %s startup failed: %s", job_id, exc)
@@ -253,15 +252,16 @@ def _update_job(
         if not job:
             return
         job.status = status
-        job.result = json.dumps({
-            "logs": logs,
-            "output": {"summary": summary, "steps_completed": steps_completed},
-        })
+        job.result = json.dumps(
+            {
+                "logs": logs,
+                "output": {"summary": summary, "steps_completed": steps_completed},
+            }
+        )
         job.error = error
-        job.updated_at = datetime.now(timezone.utc)
+        job.updated_at = datetime.now(UTC)
         db.commit()
     except Exception as exc:
         logger.error("Failed to update job %s: %s", job_id, exc)
     finally:
         db.close()
-

@@ -1,6 +1,6 @@
 """Tests for /api/settings/* endpoints."""
-from __future__ import annotations
 
+from __future__ import annotations
 
 _DEFAULT_SETTINGS = {
     "provider": "ollama",

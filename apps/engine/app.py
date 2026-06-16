@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from routes.agent import router as agent_router
 from routes.ai import router as ai_router
+from routes.backup import router as backup_router
 from routes.chapters import router as chapters_router
 from routes.characters import router as characters_router
 from routes.export import router as export_router
@@ -31,6 +32,7 @@ def create_app() -> FastAPI:
 
     # Schema migration: add columns added after initial release
     from scripts.migrate import run as run_migration
+
     run_migration()
 
     # Initialise FTS5 virtual tables (idempotent)
@@ -55,6 +57,7 @@ def create_app() -> FastAPI:
     )
 
     import time as _time
+
     @application.middleware("http")
     async def request_logging(request: Request, call_next):
         start = _time.perf_counter()
@@ -88,6 +91,7 @@ def create_app() -> FastAPI:
         agent_router,
         update_router,
         generate_router,
+        backup_router,
     ]:
         application.include_router(rtr, prefix="/api")
 

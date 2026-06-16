@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import json
-from typing import Any, AsyncGenerator
+from collections.abc import AsyncGenerator
+from typing import Any
 
-from httpx import AsyncClient, HTTPError, Timeout
+from httpx import AsyncClient, Timeout
+
 from services.providers.base import LLMClient, ProviderSettings
 
 
@@ -102,10 +104,7 @@ class OpenAIClient(LLMClient):
                         break
                     try:
                         data = json.loads(chunk)
-                        delta = (
-                            ((data.get("choices") or [{}])[0].get("delta") or {})
-                            .get("content") or ""
-                        )
+                        delta = ((data.get("choices") or [{}])[0].get("delta") or {}).get("content") or ""
                         if delta:
                             yield delta
                     except (json.JSONDecodeError, IndexError, KeyError):

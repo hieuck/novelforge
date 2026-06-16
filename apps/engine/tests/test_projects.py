@@ -1,7 +1,6 @@
 """Tests for /api/projects/* endpoints."""
-from __future__ import annotations
 
-import pytest
+from __future__ import annotations
 
 
 def test_list_projects_empty(client):

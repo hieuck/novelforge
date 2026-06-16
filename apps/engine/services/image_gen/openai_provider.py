@@ -1,9 +1,8 @@
 """OpenAI DALL-E image generation provider."""
+
 from __future__ import annotations
 
-import json
 import logging
-from typing import Optional
 
 from httpx import AsyncClient, Timeout
 
@@ -41,4 +40,5 @@ class OpenAIProvider(ImageGenProvider):
             data = resp.json()
             b64 = data["data"][0]["b64_json"]
             import base64
+
             return base64.b64decode(b64), "image/png"

@@ -88,6 +88,3 @@ export interface AppInfo {
   repo: string
   error?: string
 }
-
-
-

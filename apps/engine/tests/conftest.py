@@ -1,4 +1,5 @@
 """Shared test fixtures for NovelForge engine tests."""
+
 from __future__ import annotations
 
 import os
@@ -15,13 +16,13 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from db.base import Base
 from db.session import SessionLocal as _RealSession
+from models.chapter import Chapter  # noqa: F401
+from models.extra import Character, Job, Lore, TimelineItem  # noqa: F401
+from models.image import GeneratedImage  # noqa: F401
 
 # Import all models so they register on Base.metadata
 from models.project import Project  # noqa: F401
-from models.chapter import Chapter  # noqa: F401
-from models.extra import Character, Lore, TimelineItem, Job  # noqa: F401
 from models.summary import Summary  # noqa: F401
-from models.image import GeneratedImage  # noqa: F401
 
 # ── File-based SQLite for tests ────────────────────────────────────────────────
 # NOT :memory: — TestClient runs route handlers in a thread pool, and each thread
@@ -51,8 +52,8 @@ def setup_db(monkeypatch):
     """Create all tables and patch SessionLocal for every test."""
     Base.metadata.create_all(bind=test_engine)
 
-    import db.session as session_mod
     import db.base as base_mod
+    import db.session as session_mod
 
     monkeypatch.setattr(session_mod, "SessionLocal", TestingSession)
     monkeypatch.setattr(base_mod, "engine", test_engine)
@@ -71,16 +72,20 @@ def setup_db(monkeypatch):
 @pytest.fixture
 def client():
     """FastAPI test client with a fresh app instance."""
-    import services.search as search_mod
     from unittest.mock import patch
 
-    with patch.object(search_mod, "init_fts", return_value=None), \
-         patch.object(search_mod, "index_chapter", return_value=None), \
-         patch.object(search_mod, "index_lore", return_value=None), \
-         patch.object(search_mod, "index_character", return_value=None), \
-         patch.object(search_mod, "remove_chapter", return_value=None), \
-         patch.object(search_mod, "remove_lore", return_value=None), \
-         patch.object(search_mod, "remove_character", return_value=None):
+    import services.search as search_mod
+
+    with (
+        patch.object(search_mod, "init_fts", return_value=None),
+        patch.object(search_mod, "index_chapter", return_value=None),
+        patch.object(search_mod, "index_lore", return_value=None),
+        patch.object(search_mod, "index_character", return_value=None),
+        patch.object(search_mod, "remove_chapter", return_value=None),
+        patch.object(search_mod, "remove_lore", return_value=None),
+        patch.object(search_mod, "remove_character", return_value=None),
+    ):
         from app import create_app
+
         app = create_app()
         yield TestClient(app)

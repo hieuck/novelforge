@@ -4,8 +4,8 @@ import json
 from typing import Any
 
 from db.session import SessionLocal
-from models.extra import Character, Lore, TimelineItem
 from models.chapter import Chapter
+from models.extra import Character, Lore, TimelineItem
 from models.project import Project
 
 
@@ -31,10 +31,7 @@ class ProjectContext:
                 .all()
             )
             self.characters = (
-                db.query(Character)
-                .filter(Character.project_id == self.project_id)
-                .order_by(Character.name.asc())
-                .all()
+                db.query(Character).filter(Character.project_id == self.project_id).order_by(Character.name.asc()).all()
             )
             self.lore_items = (
                 db.query(Lore)
@@ -69,7 +66,7 @@ class ProjectContext:
         parts: list[str] = []
         for chapter in selected:
             marker = " [CURRENT]" if chapter.id == chapter_id else ""
-            heading = chapter.title or f"Chương không tên"
+            heading = chapter.title or "Chương không tên"
             summary = _clean(chapter.summary)
             content = _clean(chapter.content)
             parts.append(
@@ -82,9 +79,7 @@ class ProjectContext:
     def character_context(self) -> str:
         if not self.characters:
             return ""
-        return "\n".join(
-            _character_block(character) for character in self.characters[:40]
-        )
+        return "\n".join(_character_block(character) for character in self.characters[:40])
 
     def lore_context(self) -> str:
         if not self.lore_items:
@@ -107,8 +102,7 @@ class ProjectContext:
         if not self.timeline_items:
             return ""
         return "\n".join(
-            f"- {item.title} ({item.event_date or item.relative_order or '...'}): "
-            + _clean(item.description)
+            f"- {item.title} ({item.event_date or item.relative_order or '...'}): " + _clean(item.description)
             for item in self.timeline_items[:50]
         )
 

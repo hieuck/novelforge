@@ -1,7 +1,6 @@
-from sqlalchemy import Column, String, Text, DateTime, ForeignKey, Integer, Float
-from sqlalchemy.orm import relationship
-from sqlalchemy.sql import func
 from db.base import Base
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy.sql import func
 
 
 class Chapter(Base):

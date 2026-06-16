@@ -1,13 +1,12 @@
 import json
+import uuid
+from datetime import UTC, datetime
 
+from db.session import SessionLocal
 from fastapi import APIRouter, HTTPException
+from models.extra import Lore
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
-from db.session import SessionLocal
-from models.extra import Lore
-import uuid
-from datetime import datetime, timezone
-
 
 router = APIRouter()
 
@@ -56,8 +55,8 @@ def to_dict(row: Lore):
         "related_chapters": _deserialize(row.related_chapters),
         "related_characters": _deserialize(row.related_characters),
         "metadata": _deserialize(row.meta_data),
-        "created_at": row.created_at.isoformat()+'Z' if row.created_at else None,
-        "updated_at": row.updated_at.isoformat()+'Z' if row.updated_at else None,
+        "created_at": row.created_at.isoformat() + "Z" if row.created_at else None,
+        "updated_at": row.updated_at.isoformat() + "Z" if row.updated_at else None,
     }
 
 
@@ -121,7 +120,7 @@ def update_lore(lore_id: str, payload: LoreUpdate):
                 row.meta_data = v
             else:
                 setattr(row, k, v)
-        row.updated_at = datetime.now(timezone.utc)
+        row.updated_at = datetime.now(UTC)
         db.add(row)
         db.commit()
         db.refresh(row)
@@ -141,13 +140,9 @@ def delete_lore(lore_id: str):
         db.commit()
         try:
             from services.search import remove_lore
+
             remove_lore(lore_id)
         except Exception:
             pass
     finally:
         db.close()
-
-
-
-
-
