@@ -6,6 +6,6 @@ python-dotenv>=1.0.1
 pydantic>=2.13.4
 httpx>=0.28.1
 aiohttp>=3.9.5
-aiosqlite>=0.20.0
+aiosqlite>=0.22.1
 python-multipart>=0.0.32
 websockets>=16.0
