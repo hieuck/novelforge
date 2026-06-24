@@ -195,6 +195,7 @@ def export_single_chapter(chapter_id: str, format: str = "txt") -> Response:
         if not ch:
             raise HTTPException(status_code=404, detail="Chapter not found")
 
+        summary_block = f"> {ch.summary}\n\n" if ch.summary else ""
         if format == "json":
             content = json.dumps({
                 "id": ch.id,
@@ -203,24 +204,26 @@ def export_single_chapter(chapter_id: str, format: str = "txt") -> Response:
                 "word_count": ch.word_count,
                 "status": ch.status,
                 "scene_order": ch.scene_order,
+                "summary": ch.summary,
                 "created_at": ch.created_at.isoformat() if ch.created_at else None,
                 "updated_at": ch.updated_at.isoformat() if ch.updated_at else None,
             }, ensure_ascii=False, indent=2)
         elif format == "md":
-            content = f"# {ch.title or 'Untitled'}\n\n{ch.content or ''}"
+            content = f"# {ch.title or 'Untitled'}\n\n{summary_block}{ch.content or ''}"
         elif format == "html":
             title = ch.title or "Untitled"
+            summary_html = f"<blockquote>{ch.summary}</blockquote>\n" if ch.summary else ""
             body = "".join(f"<p>{line}</p>" for line in (ch.content or "").split("\n") if line.strip())
             content = (
                 f"<!DOCTYPE html><html><head><meta charset='utf-8'>"
                 f"<title>{title}</title>"
                 f"<style>body{{max-width:780px;margin:2rem auto;font-family:Georgia,serif;line-height:1.8;color:#222;padding:0 1rem}}"
-                f"h1{{font-size:2rem}}</style></head><body>"
-                f"<h1>{title}</h1>\n{body}"
+                f"h1{{font-size:2rem}} blockquote{{border-left:3px solid #ccc;margin:1rem 0;padding:0.5rem 1rem;color:#666}}</style></head><body>"
+                f"<h1>{title}</h1>\n{summary_html}{body}"
                 f"</body></html>"
             )
         else:
-            content = f"{ch.title or 'Untitled'}\n{'=' * 40}\n\n{ch.content or ''}"
+            content = f"{ch.title or 'Untitled'}\n{'=' * 40}\n\n{summary_block}{ch.content or ''}"
 
         filename = _safe_filename(ch.title or "chapter")
         import urllib.parse
