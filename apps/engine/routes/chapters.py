@@ -93,6 +93,26 @@ def get_chapter(chapter_id: str):
         db.close()
 
 
+@router.get("/chapters/{chapter_id}/stats")
+def get_chapter_stats(chapter_id: str) -> dict:
+    db: Session = SessionLocal()
+    try:
+        ch = db.query(Chapter).filter(Chapter.id == chapter_id).first()
+        if not ch:
+            raise HTTPException(status_code=404, detail="Not found")
+        content = ch.content or ""
+        words = [w for w in content.replace("\n", " ").split() if w]
+        return {
+            "id": ch.id,
+            "word_count": len(words),
+            "char_count": len(content),
+            "sentence_count": len([s for s in content.replace("!", ".").replace("?", ".").split(".") if s.strip()]),
+            "paragraph_count": len([p for p in content.split("\n\n") if p.strip()]),
+        }
+    finally:
+        db.close()
+
+
 @router.post("/chapters/{chapter_id}/duplicate", status_code=201)
 def duplicate_chapter(chapter_id: str):
     db: Session = SessionLocal()
