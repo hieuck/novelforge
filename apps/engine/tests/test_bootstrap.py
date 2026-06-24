@@ -1,6 +1,7 @@
 """Tests that the engine boots correctly (regression: Unicode stdout fix)."""
 from __future__ import annotations
 
+
 def test_create_app_imports_and_runs(client):
     """Engine boots without errors (regression: Windows Unicode stdout)."""
     # If we got here, the fixture already called create_app() successfully
