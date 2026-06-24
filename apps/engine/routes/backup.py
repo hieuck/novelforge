@@ -123,3 +123,16 @@ def cleanup_orphaned_images() -> dict:
         return {"message": f"Cleaned up {removed} orphaned images."}
     finally:
         db.close()
+
+
+@router.delete("/backup/{filename}", status_code=204)
+def delete_single_backup(filename: str) -> None:
+    """Delete a specific backup file."""
+    import ntpath
+    safe_name = ntpath.basename(filename)
+    if not safe_name or ".." in safe_name or "/" in safe_name:
+        raise HTTPException(status_code=404, detail="Invalid backup filename")
+    backup_path = BACKUP_DIR / safe_name
+    if not backup_path.exists() or backup_path.suffix != ".db":
+        raise HTTPException(status_code=404, detail="Backup not found")
+    backup_path.unlink()
