@@ -102,12 +102,17 @@ def get_chapter_stats(chapter_id: str) -> dict:
             raise HTTPException(status_code=404, detail="Not found")
         content = ch.content or ""
         words = [w for w in content.replace("\n", " ").split() if w]
+        word_count = len(words)
+        wpm = 200  # average reading speed
+        reading_time_s = round(word_count / wpm * 60) if word_count > 0 else 0
         return {
             "id": ch.id,
-            "word_count": len(words),
+            "word_count": word_count,
             "char_count": len(content),
             "sentence_count": len([s for s in content.replace("!", ".").replace("?", ".").split(".") if s.strip()]),
             "paragraph_count": len([p for p in content.split("\n\n") if p.strip()]),
+            "reading_time_seconds": reading_time_s,
+            "reading_time_minutes": max(1, round(reading_time_s / 60)) if reading_time_s > 0 else 0,
         }
     finally:
         db.close()
