@@ -70,7 +70,7 @@ novelforge/
 | generate | `/api/generate` + `/api/projects/.../images` | Image generation + gallery + video export |
 | jobs | `/api/jobs` | Background job management + WebSocket status |
 | export | `/api/export` | Story export (md, txt, html, zip) |
-| search | `/api/search` | FTS5 full-text search |
+| search | `/api/search` | FTS5 full-text search (supports ?type=chapter\|lore\|character) |
 | search count | `/api/projects/{id}/search/count` | Search result count |
 | chapter stats | `/api/chapters/{id}/stats` | Per-chapter word/char/sentence stats |
 | word counts | `/api/projects/{id}/word-counts` | Word counts per chapter |
