@@ -1,6 +1,11 @@
 from __future__ import annotations
 
 import logging
+import sys
+
+# Ensure UTF-8 output on Windows (cp1252 can't encode → ✓ etc.)
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[union-attr]
 
 import db.base
 from _version import VERSION

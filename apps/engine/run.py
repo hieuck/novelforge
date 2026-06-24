@@ -1,6 +1,9 @@
 import os
 import sys
 
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[union-attr]
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 try:

@@ -45,7 +45,7 @@ def _auto_backup():
     ts = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
     backup_path = backup_dir / f"pre_migration_{ts}.db"
     shutil.copy2(db_path, backup_path)
-    print(f"  → pre-migration backup saved: {backup_path.name}")
+    print(f"  [backup] pre-migration backup saved: {backup_path.name}")
 
 
 def run():
