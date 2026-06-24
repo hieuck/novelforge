@@ -215,6 +215,10 @@ class ReorderIn(BaseModel):
     ordered_ids: list[str]
 
 
+class BatchDeleteIn(BaseModel):
+    ids: list[str]
+
+
 @router.post("/chapters/reorder", status_code=200)
 def reorder_chapters(payload: ReorderIn):
     """Batch update scene_order based on the provided ID order."""
@@ -224,5 +228,29 @@ def reorder_chapters(payload: ReorderIn):
             db.query(Chapter).filter(Chapter.id == ch_id).update({"scene_order": idx, "updated_at": datetime.now(UTC)})
         db.commit()
         return {"success": True, "count": len(payload.ordered_ids)}
+    finally:
+        db.close()
+
+
+@router.post("/chapters/batch-delete", status_code=200)
+def batch_delete_chapters(payload: BatchDeleteIn) -> dict:
+    """Delete multiple chapters at once."""
+    if not payload.ids:
+        return {"deleted": 0}
+    db: Session = SessionLocal()
+    try:
+        from services.search import remove_chapter
+        deleted = 0
+        for ch_id in payload.ids:
+            ch = db.query(Chapter).filter(Chapter.id == ch_id).first()
+            if ch:
+                db.delete(ch)
+                try:
+                    remove_chapter(ch_id)
+                except Exception:
+                    pass
+                deleted += 1
+        db.commit()
+        return {"deleted": deleted}
     finally:
         db.close()
