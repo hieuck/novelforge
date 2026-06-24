@@ -127,6 +127,29 @@ def get_project_stats(project_id: str) -> dict:
         db.close()
 
 
+@router.get("/projects/{project_id}/word-counts")
+def get_project_word_counts(project_id: str) -> list[dict]:
+    db: Session = SessionLocal()
+    try:
+        p = db.query(Project).filter(Project.id == project_id).first()
+        if not p:
+            raise HTTPException(status_code=404, detail="Not found")
+        chapters = db.query(Chapter).filter(
+            Chapter.project_id == project_id
+        ).order_by(Chapter.scene_order).all()
+        return [
+            {
+                "id": ch.id,
+                "title": ch.title,
+                "word_count": ch.word_count or 0,
+                "scene_order": ch.scene_order or 0,
+            }
+            for ch in chapters
+        ]
+    finally:
+        db.close()
+
+
 @router.patch("/projects/{project_id}")
 def update_project(project_id: str, payload: ProjectUpdate):
     db: Session = SessionLocal()
