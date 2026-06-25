@@ -1,11 +1,10 @@
 from __future__ import annotations
 
+from db.base import engine
+from db.paths import get_data_dir
 from fastapi import APIRouter, Request
 from pydantic import BaseModel
 from sqlalchemy import text
-
-from db.base import engine
-from db.paths import get_data_dir
 
 router = APIRouter()
 
