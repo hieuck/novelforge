@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from _version import VERSION
 from db.base import engine
 from db.paths import get_data_dir
 from fastapi import APIRouter, Request
@@ -11,6 +12,7 @@ router = APIRouter()
 
 class HealthResponse(BaseModel):
     status: str
+    version: str = VERSION
     db: str = "ok"
 
 
@@ -19,9 +21,9 @@ async def health() -> HealthResponse:
     try:
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
-        return HealthResponse(status="ok", db="ok")
+        return HealthResponse(status="ok", version=VERSION, db="ok")
     except Exception as e:
-        return HealthResponse(status="degraded", db=str(e))
+        return HealthResponse(status="degraded", version=VERSION, db=str(e))
 
 
 @router.get("/health/db")
