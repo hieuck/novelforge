@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from db.base import engine
-from db.paths import get_data_dir
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from pydantic import BaseModel
 from sqlalchemy import text
+
+from db.base import engine
+from db.paths import get_data_dir
 
 router = APIRouter()
 
@@ -46,3 +47,20 @@ async def health_db() -> dict:
             "tables": 0,
             "error": str(e),
         }
+
+
+@router.api_route("/tools/echo", methods=["GET", "POST"])
+async def echo(request: Request) -> dict:
+    """Debug endpoint that echoes request info."""
+    body = None
+    if request.method == "POST":
+        try:
+            body = await request.json()
+        except Exception:
+            body = {"error": "invalid json"}
+    return {
+        "ok": True,
+        "method": request.method,
+        "path": request.url.path,
+        "body": body,
+    }
