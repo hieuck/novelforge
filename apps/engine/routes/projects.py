@@ -241,10 +241,11 @@ def delete_project(project_id: str):
     # Auto-backup before destructive operation
     try:
         import shutil
+        from pathlib import Path as _Path
 
-        from db.paths import get_data_dir
-        db_path = get_data_dir() / "novelforge.db"
-        if db_path.exists():
+        from db.base import engine as _engine
+        db_path = _Path(_engine.url.database) if _engine.url.database else None
+        if db_path and db_path.exists():
             backup_dir = get_data_dir() / "backups"
             backup_dir.mkdir(parents=True, exist_ok=True)
             ts = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")

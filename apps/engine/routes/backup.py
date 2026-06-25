@@ -5,6 +5,7 @@ from __future__ import annotations
 import shutil
 import uuid
 from datetime import UTC, datetime
+from pathlib import Path
 
 from db.base import engine
 from db.paths import get_data_dir
@@ -20,7 +21,8 @@ BACKUP_DIR.mkdir(parents=True, exist_ok=True)
 @router.post("/backup", status_code=201)
 def create_backup() -> dict:
     """Backup the SQLite database to a timestamped file."""
-    db_path = get_data_dir() / "novelforge.db"
+    from db.base import engine as _engine
+    db_path = Path(_engine.url.database) if _engine.url.database else get_data_dir() / "novelforge.db"
     if not db_path.exists():
         raise HTTPException(status_code=404, detail="Database file not found")
     ts = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
@@ -63,7 +65,8 @@ def restore_backup(filename: str) -> dict:
     backup_path = BACKUP_DIR / filename
     if not backup_path.exists() or backup_path.suffix != ".db":
         raise HTTPException(status_code=404, detail="Backup not found")
-    db_path = get_data_dir() / "novelforge.db"
+    from db.base import engine as _engine
+    db_path = Path(_engine.url.database) if _engine.url.database else get_data_dir() / "novelforge.db"
     shutil.copy2(backup_path, db_path)
     return {"message": f"Restored {filename}. Restart the engine for changes to take effect."}
 
