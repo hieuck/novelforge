@@ -174,6 +174,21 @@ def get_chapter_status_counts(project_id: str) -> dict:
         db.close()
 
 
+@router.get("/projects/{project_id}/settings")
+def get_project_settings(project_id: str) -> dict:
+    from models.extra import Settings as SettingsModel
+
+    db: Session = SessionLocal()
+    try:
+        p = db.query(Project).filter(Project.id == project_id).first()
+        if not p:
+            raise HTTPException(status_code=404, detail="Not found")
+        rows = db.query(SettingsModel).filter(SettingsModel.project_id == project_id).all()
+        return {row.key: row.value for row in rows}
+    finally:
+        db.close()
+
+
 @router.patch("/projects/{project_id}")
 def update_project(project_id: str, payload: ProjectUpdate):
     db: Session = SessionLocal()
