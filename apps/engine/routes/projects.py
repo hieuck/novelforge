@@ -216,6 +216,21 @@ def put_project_settings(project_id: str, payload: dict) -> dict:
         db.close()
 
 
+@router.delete("/projects/{project_id}/settings", status_code=204)
+def delete_project_settings(project_id: str) -> None:
+    from models.extra import Settings as SettingsModel
+
+    db: Session = SessionLocal()
+    try:
+        p = db.query(Project).filter(Project.id == project_id).first()
+        if not p:
+            raise HTTPException(status_code=404, detail="Not found")
+        db.query(SettingsModel).filter(SettingsModel.project_id == project_id).delete()
+        db.commit()
+    finally:
+        db.close()
+
+
 @router.patch("/projects/{project_id}")
 def update_project(project_id: str, payload: ProjectUpdate):
     db: Session = SessionLocal()
