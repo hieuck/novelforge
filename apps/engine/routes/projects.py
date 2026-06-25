@@ -150,6 +150,30 @@ def get_project_word_counts(project_id: str) -> list[dict]:
         db.close()
 
 
+@router.get("/projects/{project_id}/chapter-status-counts")
+def get_chapter_status_counts(project_id: str) -> dict:
+    db: Session = SessionLocal()
+    try:
+        p = db.query(Project).filter(Project.id == project_id).first()
+        if not p:
+            raise HTTPException(status_code=404, detail="Not found")
+        from sqlalchemy import func as _func
+        rows = db.query(Chapter.status, _func.count(Chapter.id)).filter(
+            Chapter.project_id == project_id
+        ).group_by(Chapter.status).all()
+        counts = {"draft": 0, "revised": 0, "final": 0}
+        total = 0
+        for status, cnt in rows:
+            s = status or "draft"
+            if s in counts:
+                counts[s] = cnt
+            total += cnt
+        counts["total"] = total
+        return counts
+    finally:
+        db.close()
+
+
 @router.patch("/projects/{project_id}")
 def update_project(project_id: str, payload: ProjectUpdate):
     db: Session = SessionLocal()
