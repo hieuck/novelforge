@@ -189,6 +189,32 @@ def get_project_settings(project_id: str) -> dict:
         db.close()
 
 
+@router.put("/projects/{project_id}/settings")
+def put_project_settings(project_id: str, payload: dict) -> dict:
+    from models.extra import Settings as SettingsModel
+
+    db: Session = SessionLocal()
+    try:
+        p = db.query(Project).filter(Project.id == project_id).first()
+        if not p:
+            raise HTTPException(status_code=404, detail="Not found")
+        # Delete existing settings for this project
+        db.query(SettingsModel).filter(SettingsModel.project_id == project_id).delete()
+        # Insert new settings
+        for key, value in payload.items():
+            s = SettingsModel(
+                id=str(uuid.uuid4()),
+                project_id=project_id,
+                key=str(key),
+                value=str(value),
+            )
+            db.add(s)
+        db.commit()
+        return dict(payload)
+    finally:
+        db.close()
+
+
 @router.patch("/projects/{project_id}")
 def update_project(project_id: str, payload: ProjectUpdate):
     db: Session = SessionLocal()
