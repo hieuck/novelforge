@@ -81,6 +81,21 @@ def create_chapter(payload: ChapterIn):
         db.close()
 
 
+@router.get("/chapters/recent")
+def list_recent_chapters(limit: int = 10) -> list[dict]:
+    db: Session = SessionLocal()
+    try:
+        items = (
+            db.query(Chapter)
+            .order_by(Chapter.updated_at.desc())
+            .limit(min(limit, 50))
+            .all()
+        )
+        return [to_dict(c) for c in items]
+    finally:
+        db.close()
+
+
 @router.get("/chapters/{chapter_id}")
 def get_chapter(chapter_id: str):
     db: Session = SessionLocal()
