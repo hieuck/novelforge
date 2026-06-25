@@ -1,6 +1,7 @@
 import uuid
 from datetime import UTC, datetime
 
+from db.paths import get_data_dir
 from db.session import SessionLocal
 from fastapi import APIRouter, HTTPException
 from models.chapter import Chapter
