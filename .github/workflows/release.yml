@@ -24,7 +24,7 @@ jobs:
         working-directory: apps/desktop
       - run: npx electron-builder --win --x64
         working-directory: apps/desktop
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: NovelForge-Installer
           path: apps/desktop/release/*.exe
