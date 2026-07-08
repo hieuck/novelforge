@@ -52,6 +52,15 @@ export async function safeReq<T>(label: string, fn: () => Promise<T>): Promise<T
   }
 }
 
+export type WritingStats = {
+  project_id: string
+  daily_goal: number
+  today_words: number
+  total_words: number
+  streak: { current: number; longest: number }
+  history: { date: string; words_added: number; words_total: number }[]
+}
+
 export function wsUrl(path: string): string {
   const port = window.__NOVELFORGE__?.enginePort ?? 9000
   const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:'

@@ -190,7 +190,9 @@ def get_project_settings(project_id: str) -> dict:
         if not p:
             raise HTTPException(status_code=404, detail="Not found")
         rows = db.query(SettingsModel).filter(SettingsModel.project_id == project_id).all()
-        return {row.key: row.value for row in rows}
+        result = {row.key: row.value for row in rows}
+        result["daily_goal"] = str(p.daily_goal)
+        return result
     finally:
         db.close()
 
@@ -204,10 +206,16 @@ def put_project_settings(project_id: str, payload: dict) -> dict:
         p = db.query(Project).filter(Project.id == project_id).first()
         if not p:
             raise HTTPException(status_code=404, detail="Not found")
+        data = dict(payload)
+        if "daily_goal" in data:
+            try:
+                p.daily_goal = max(0, int(data.pop("daily_goal")))
+            except (TypeError, ValueError):
+                raise HTTPException(status_code=400, detail="daily_goal must be an integer")
         # Delete existing settings for this project
         db.query(SettingsModel).filter(SettingsModel.project_id == project_id).delete()
         # Insert new settings
-        for key, value in payload.items():
+        for key, value in data.items():
             s = SettingsModel(
                 id=str(uuid.uuid4()),
                 project_id=project_id,
@@ -216,7 +224,8 @@ def put_project_settings(project_id: str, payload: dict) -> dict:
             )
             db.add(s)
         db.commit()
-        return dict(payload)
+        db.refresh(p)
+        return {**data, "daily_goal": str(p.daily_goal)}
     finally:
         db.close()
 

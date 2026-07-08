@@ -4,11 +4,11 @@ from __future__ import annotations
 
 
 def test_project_settings_empty(client):
-    """Returns empty dict when no settings exist."""
+    """Returns default daily_goal when no other settings exist."""
     proj = client.post("/api/projects/", json={"title": "Test"}).json()
     r = client.get(f"/api/projects/{proj['id']}/settings")
     assert r.status_code == 200
-    assert r.json() == {}
+    assert r.json() == {"daily_goal": "500"}
 
 
 def test_project_settings_not_found(client):

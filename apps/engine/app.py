@@ -29,6 +29,7 @@ from routes.settings import router as settings_router
 from routes.stats import router as stats_router
 from routes.timeline import router as timeline_router
 from routes.update import router as update_router
+from routes.writing_stats import router as writing_stats_router
 from services.search import init_fts
 
 
@@ -99,6 +100,7 @@ def create_app() -> FastAPI:
         generate_router,
         backup_router,
         stats_router,
+        writing_stats_router,
     ]:
         application.include_router(rtr, prefix="/api")
 
