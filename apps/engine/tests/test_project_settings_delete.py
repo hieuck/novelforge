@@ -4,7 +4,7 @@ from __future__ import annotations
 
 
 def test_delete_project_settings(client):
-    """Deleting settings removes all settings for a project."""
+    """Deleting settings removes custom settings but keeps project-level daily_goal."""
     proj = client.post("/api/projects/", json={"title": "Test"}).json()
     client.put(f"/api/projects/{proj['id']}/settings", json={"goal": "500", "theme": "dark"})
 
@@ -13,7 +13,7 @@ def test_delete_project_settings(client):
 
     get_r = client.get(f"/api/projects/{proj['id']}/settings")
     assert get_r.status_code == 200
-    assert get_r.json() == {}
+    assert get_r.json() == {"daily_goal": "500"}
 
 
 def test_delete_project_settings_not_found(client):

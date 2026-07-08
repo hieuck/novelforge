@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Loader2, RefreshCw, BookOpen, Plus, Trash2 } from 'lucide-react'
 import { api } from '../lib/api'
 import { useProjectStore } from '../stores/projectStore'
+import { WritingStats } from '../components/WritingStats'
 
 type AppInfo = {
   app: string
@@ -112,24 +113,28 @@ export default function Dashboard() {
 
       {/* Writing stats */}
       {projectCount > 0 && (
-        <div className="mb-4 grid grid-cols-4 gap-3">
-          <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-3 text-center">
-            <div className="text-lg font-bold text-indigo-400">{totalWords.toLocaleString()}</div>
-            <div className="text-[10px] text-slate-500 uppercase tracking-wider">Words</div>
+        <>
+          <div className="mb-4 grid grid-cols-4 gap-3">
+            <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-3 text-center">
+              <div className="text-lg font-bold text-indigo-400">{totalWords.toLocaleString()}</div>
+              <div className="text-[10px] text-slate-500 uppercase tracking-wider">Words</div>
+            </div>
+            <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-3 text-center">
+              <div className="text-lg font-bold text-indigo-400">{projectCount}</div>
+              <div className="text-[10px] text-slate-500 uppercase tracking-wider">Projects</div>
+            </div>
+            <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-3 text-center">
+              <div className="text-lg font-bold text-indigo-400">{stats.total_images ?? '...'}</div>
+              <div className="text-[10px] text-slate-500 uppercase tracking-wider">Images</div>
+            </div>
+            <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-3 text-center">
+              <div className="text-lg font-bold text-indigo-400">{avgWords.toLocaleString()}</div>
+              <div className="text-[10px] text-slate-500 uppercase tracking-wider">Avg/Project</div>
+            </div>
           </div>
-          <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-3 text-center">
-            <div className="text-lg font-bold text-indigo-400">{projectCount}</div>
-            <div className="text-[10px] text-slate-500 uppercase tracking-wider">Projects</div>
-          </div>
-          <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-3 text-center">
-            <div className="text-lg font-bold text-indigo-400">{stats.total_images ?? '...'}</div>
-            <div className="text-[10px] text-slate-500 uppercase tracking-wider">Images</div>
-          </div>
-          <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-3 text-center">
-            <div className="text-lg font-bold text-indigo-400">{avgWords.toLocaleString()}</div>
-            <div className="text-[10px] text-slate-500 uppercase tracking-wider">Avg/Project</div>
-          </div>
-        </div>
+          <WritingStats projectId={projects[0].id} />
+          <div className="mb-4" />
+        </>
       )}
 
       {/* Project list */}

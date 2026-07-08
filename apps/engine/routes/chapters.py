@@ -4,6 +4,7 @@ from datetime import UTC, datetime
 from db.session import SessionLocal
 from fastapi import APIRouter, HTTPException
 from models.chapter import Chapter
+from models.writing_session import WritingSession
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -185,6 +186,30 @@ def move_chapter(chapter_id: str, position: int = 0):
         db.close()
 
 
+def _record_writing_session(db: Session, project_id: str, old_word_count: int, new_word_count: int) -> None:
+    """Upsert today's writing session with the positive word-count delta."""
+    import uuid
+    from datetime import date
+
+    delta = max(0, new_word_count - old_word_count)
+    today = date.today()
+    session = (
+        db.query(WritingSession).filter(WritingSession.project_id == project_id, WritingSession.date == today).first()
+    )
+    if session:
+        session.words_added += delta
+        session.words_total = new_word_count
+    else:
+        session = WritingSession(
+            id=str(uuid.uuid4()),
+            project_id=project_id,
+            date=today,
+            words_added=delta,
+            words_total=new_word_count,
+        )
+        db.add(session)
+
+
 @router.patch("/chapters/{chapter_id}")
 def update_chapter(chapter_id: str, payload: ChapterUpdate):
     db: Session = SessionLocal()
@@ -192,6 +217,7 @@ def update_chapter(chapter_id: str, payload: ChapterUpdate):
         c = db.query(Chapter).filter(Chapter.id == chapter_id).first()
         if not c:
             raise HTTPException(status_code=404, detail="Not found")
+        old_word_count = c.word_count or 0
         data = payload.model_dump(exclude_unset=True)
         for k, v in data.items():
             setattr(c, k, v)
@@ -199,6 +225,8 @@ def update_chapter(chapter_id: str, payload: ChapterUpdate):
             c.word_count = count_words(data.get("content") or "")
         c.updated_at = datetime.now(UTC)
         db.add(c)
+        if "content" in data:
+            _record_writing_session(db, c.project_id, old_word_count, c.word_count)
         db.commit()
         db.refresh(c)
         return to_dict(c)

@@ -18,7 +18,23 @@ ADD_COLUMNS: dict[str, list[tuple[str, str]]] = {
         ("gender", "VARCHAR"),
         ("portrait_url", "VARCHAR"),
     ],
+    "projects": [
+        ("daily_goal", "INTEGER"),
+    ],
 }
+
+CREATE_TABLES: list[str] = [
+    """
+    CREATE TABLE IF NOT EXISTS writing_sessions (
+        id VARCHAR PRIMARY KEY,
+        project_id VARCHAR NOT NULL,
+        date DATE NOT NULL,
+        words_added INTEGER NOT NULL DEFAULT 0,
+        words_total INTEGER NOT NULL DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+    """,
+]
 
 ADD_INDEXES: dict[str, list[tuple[str, str]]] = {
     "chapters": [
@@ -29,6 +45,10 @@ ADD_INDEXES: dict[str, list[tuple[str, str]]] = {
     ],
     "settings": [
         ("ix_settings_project_id", "project_id"),
+    ],
+    "writing_sessions": [
+        ("ix_writing_sessions_project_id", "project_id"),
+        ("ix_writing_sessions_date", "date"),
     ],
 }
 
@@ -52,6 +72,9 @@ def run():
     _auto_backup()
     inspector = inspect(engine)
     with engine.connect() as conn:
+        for stmt in CREATE_TABLES:
+            conn.execute(text(stmt))
+            print("  + ensured table exists")
         for table, cols in ADD_COLUMNS.items():
             existing = {c["name"] for c in inspector.get_columns(table)}
             for col_name, col_type in cols:
