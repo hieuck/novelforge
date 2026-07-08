@@ -2,9 +2,9 @@
 
 ## In Progress / Continuous Mode
 
-- [ ] Process open dependency-update PRs (#20-#31)
+- [x] Process open dependency-update PRs (#20-#31)
   - Merged #20, #21, #22, #23, #24, #25, #26, #28, #29, #30, #31 on 2026-07-08.
-  - #27 blocked: `@vitejs/plugin-react` v6 imports `vite/internal`, requiring a Vite upgrade before it can merge.
+  - #27 closed as superseded by PR #35 (Vite ^8.0.0 + @vitejs/plugin-react ^6.0.3 migration).
 
 ## Product Gaps (Roadmap)
 
