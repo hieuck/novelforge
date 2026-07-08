@@ -1,4 +1,5 @@
 """Tests for auto-backup before destructive operations."""
+
 from __future__ import annotations
 
 

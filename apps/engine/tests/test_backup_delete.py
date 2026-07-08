@@ -1,4 +1,5 @@
 """Tests for DELETE /api/backup/{filename} endpoint."""
+
 from __future__ import annotations
 
 

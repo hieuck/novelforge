@@ -1,4 +1,5 @@
 """Tests for PUT /api/projects/{id}/settings endpoint."""
+
 from __future__ import annotations
 
 

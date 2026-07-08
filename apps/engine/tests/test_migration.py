@@ -1,4 +1,5 @@
 """Integration tests for the schema migration script."""
+
 from __future__ import annotations
 
 import sqlite3

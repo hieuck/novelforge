@@ -197,17 +197,21 @@ def export_single_chapter(chapter_id: str, format: str = "txt") -> Response:
 
         summary_block = f"> {ch.summary}\n\n" if ch.summary else ""
         if format == "json":
-            content = json.dumps({
-                "id": ch.id,
-                "title": ch.title,
-                "content": ch.content,
-                "word_count": ch.word_count,
-                "status": ch.status,
-                "scene_order": ch.scene_order,
-                "summary": ch.summary,
-                "created_at": ch.created_at.isoformat() if ch.created_at else None,
-                "updated_at": ch.updated_at.isoformat() if ch.updated_at else None,
-            }, ensure_ascii=False, indent=2)
+            content = json.dumps(
+                {
+                    "id": ch.id,
+                    "title": ch.title,
+                    "content": ch.content,
+                    "word_count": ch.word_count,
+                    "status": ch.status,
+                    "scene_order": ch.scene_order,
+                    "summary": ch.summary,
+                    "created_at": ch.created_at.isoformat() if ch.created_at else None,
+                    "updated_at": ch.updated_at.isoformat() if ch.updated_at else None,
+                },
+                ensure_ascii=False,
+                indent=2,
+            )
         elif format == "md":
             content = f"# {ch.title or 'Untitled'}\n\n{summary_block}{ch.content or ''}"
         elif format == "html":
@@ -227,6 +231,7 @@ def export_single_chapter(chapter_id: str, format: str = "txt") -> Response:
 
         filename = _safe_filename(ch.title or "chapter")
         import urllib.parse
+
         encoded = urllib.parse.quote(f"{filename}.{format}", safe="")
         return Response(
             content=content.encode("utf-8"),
@@ -252,38 +257,51 @@ async def export_project(payload: ProjectExportIn) -> Response:
             characters = db.query(Character).filter(Character.project_id == payload.project_id).all()
             lore_items = db.query(Lore).filter(Lore.project_id == payload.project_id).all()
             timeline = db.query(TimelineItem).filter(TimelineItem.project_id == payload.project_id).all()
-            content_bytes = json.dumps({
-                "id": project.id,
-                "title": project.title,
-                "description": project.description,
-                "genre": project.genre,
-                "language": project.language,
-                "summary": project.summary,
-                "style_guide": project.style_guide,
-                "created_at": project.created_at.isoformat() if project.created_at else None,
-                "updated_at": project.updated_at.isoformat() if project.updated_at else None,
-                "chapters": [
-                    {
-                        "id": ch.id, "title": ch.title, "content": ch.content,
-                        "word_count": ch.word_count, "status": ch.status,
-                        "scene_order": ch.scene_order,
-                    }
-                    for ch in chapters
-                ],
-                "characters": [
-                    {"id": c.id, "name": c.name, "role": c.role, "gender": c.gender,
-                     "personality": c.personality, "appearance": c.appearance}
-                    for c in characters
-                ],
-                "lore": [
-                    {"id": li.id, "name": li.name, "lore_type": li.lore_type, "description": li.description}
-                    for li in lore_items
-                ],
-                "timeline": [
-                    {"id": t.id, "title": t.title, "event_date": t.event_date, "description": t.description}
-                    for t in timeline
-                ],
-            }, ensure_ascii=False, indent=2).encode("utf-8")
+            content_bytes = json.dumps(
+                {
+                    "id": project.id,
+                    "title": project.title,
+                    "description": project.description,
+                    "genre": project.genre,
+                    "language": project.language,
+                    "summary": project.summary,
+                    "style_guide": project.style_guide,
+                    "created_at": project.created_at.isoformat() if project.created_at else None,
+                    "updated_at": project.updated_at.isoformat() if project.updated_at else None,
+                    "chapters": [
+                        {
+                            "id": ch.id,
+                            "title": ch.title,
+                            "content": ch.content,
+                            "word_count": ch.word_count,
+                            "status": ch.status,
+                            "scene_order": ch.scene_order,
+                        }
+                        for ch in chapters
+                    ],
+                    "characters": [
+                        {
+                            "id": c.id,
+                            "name": c.name,
+                            "role": c.role,
+                            "gender": c.gender,
+                            "personality": c.personality,
+                            "appearance": c.appearance,
+                        }
+                        for c in characters
+                    ],
+                    "lore": [
+                        {"id": li.id, "name": li.name, "lore_type": li.lore_type, "description": li.description}
+                        for li in lore_items
+                    ],
+                    "timeline": [
+                        {"id": t.id, "title": t.title, "event_date": t.event_date, "description": t.description}
+                        for t in timeline
+                    ],
+                },
+                ensure_ascii=False,
+                indent=2,
+            ).encode("utf-8")
         elif fmt == "md":
             content_bytes = _build_md(project, chapters).encode("utf-8")
         elif fmt == "txt":

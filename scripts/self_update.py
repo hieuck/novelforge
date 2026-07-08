@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 """Cross-platform self-updater for NovelForge, inspired by Hermes update flow."""
+
 from __future__ import annotations
 
 import os
-import platform
 import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import List
 
 NOVELFORGE_ROOT = Path(__file__).resolve().parent.parent
 REMOTE_URL = os.environ.get("NOVELFORGE_REMOTE", "https://github.com/hieuck/novelforge.git")
@@ -17,7 +16,7 @@ HISTORY_FILE = Path(os.environ.get("NOVELFORGE_HISTORY_PATH", NOVELFORGE_ROOT / 
 LOCK_FILE = Path(os.environ.get("NOVELFORGE_LOCK_PATH", NOVELFORGE_ROOT / ".novelforge-update.lock"))
 
 
-def run(args: List[str]) -> subprocess.CompletedProcess:
+def run(args: list[str]) -> subprocess.CompletedProcess:
     return subprocess.run(
         args,
         cwd=str(NOVELFORGE_ROOT),
@@ -124,7 +123,16 @@ def main() -> int:
             print(f"Updating to {final_commit} ...")
             if last_commit:
                 run(["git", "show", "-s", "--stat", "--oneline", last_commit])
-            run(["git", "log", f"{last_commit or 'HEAD'}..origin/{branch()}", "--oneline", "--decorate", "--max-count=5"])
+            run(
+                [
+                    "git",
+                    "log",
+                    f"{last_commit or 'HEAD'}..origin/{branch()}",
+                    "--oneline",
+                    "--decorate",
+                    "--max-count=5",
+                ]
+            )
             if last_commit:
                 run(["git", "diff", "--stat", f"{last_commit}..origin/{branch()}"])
 

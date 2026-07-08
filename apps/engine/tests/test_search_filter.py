@@ -1,4 +1,5 @@
 """Tests for search type filter (new feature)."""
+
 from __future__ import annotations
 
 

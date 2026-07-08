@@ -1,4 +1,5 @@
 """Tests for POST /api/chapters/{id}/move endpoint."""
+
 from __future__ import annotations
 
 

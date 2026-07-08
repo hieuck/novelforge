@@ -1,4 +1,5 @@
 """Tests for /api/lore/* endpoints."""
+
 from __future__ import annotations
 
 
@@ -35,7 +36,9 @@ def test_list_lore_after_create(client):
 
 def test_get_lore(client):
     proj = _create_project(client)
-    created = client.post("/api/lore/", json={"project_id": proj["id"], "lore_type": "location", "name": "Castle"}).json()
+    created = client.post(
+        "/api/lore/", json={"project_id": proj["id"], "lore_type": "location", "name": "Castle"}
+    ).json()
     r = client.get(f"/api/lore/{created['id']}")
     assert r.status_code == 200
     assert r.json()["id"] == created["id"]
@@ -58,7 +61,9 @@ def test_update_lore(client):
 
 def test_delete_lore(client):
     proj = _create_project(client)
-    created = client.post("/api/lore/", json={"project_id": proj["id"], "lore_type": "location", "name": "ToDelete"}).json()
+    created = client.post(
+        "/api/lore/", json={"project_id": proj["id"], "lore_type": "location", "name": "ToDelete"}
+    ).json()
     r = client.delete(f"/api/lore/{created['id']}")
     assert r.status_code == 204
     r2 = client.get(f"/api/lore/{created['id']}")

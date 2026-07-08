@@ -21,8 +21,8 @@ def test_ai_ws_stream(client):
         yield "Hello"
         yield " world"
 
-    with patch("routes.ai.AIEngine") as MockEngine:
-        instance = MockEngine.return_value
+    with patch("routes.ai.AIEngine") as mock_engine:
+        instance = mock_engine.return_value
         instance.prepare = AsyncMock()
         instance.stream = mock_stream_gen
 
@@ -45,8 +45,8 @@ def test_ai_ws_stream(client):
 
 def test_ai_ws_error_on_prepare(client):
     """Test that engine prepare failure returns error."""
-    with patch("routes.ai.AIEngine") as MockEngine:
-        instance = MockEngine.return_value
+    with patch("routes.ai.AIEngine") as mock_engine:
+        instance = mock_engine.return_value
         instance.prepare = AsyncMock(side_effect=Exception("Context load failed"))
 
         with client.websocket_connect("/api/ws/ai") as ws:

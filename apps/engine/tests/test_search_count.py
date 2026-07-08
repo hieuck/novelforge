@@ -1,4 +1,5 @@
 """Tests for GET /api/projects/{id}/search/count endpoint."""
+
 from __future__ import annotations
 
 

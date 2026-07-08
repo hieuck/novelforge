@@ -1,4 +1,5 @@
 """Dashboard statistics endpoint."""
+
 from __future__ import annotations
 
 from db.session import SessionLocal

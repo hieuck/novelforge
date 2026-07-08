@@ -85,12 +85,7 @@ def create_chapter(payload: ChapterIn):
 def list_recent_chapters(limit: int = 10) -> list[dict]:
     db: Session = SessionLocal()
     try:
-        items = (
-            db.query(Chapter)
-            .order_by(Chapter.updated_at.desc())
-            .limit(min(limit, 50))
-            .all()
-        )
+        items = db.query(Chapter).order_by(Chapter.updated_at.desc()).limit(min(limit, 50)).all()
         return [to_dict(c) for c in items]
     finally:
         db.close()
@@ -260,6 +255,7 @@ def batch_delete_chapters(payload: BatchDeleteIn) -> dict:
     db: Session = SessionLocal()
     try:
         from services.search import remove_chapter
+
         deleted = 0
         for ch_id in payload.ids:
             ch = db.query(Chapter).filter(Chapter.id == ch_id).first()

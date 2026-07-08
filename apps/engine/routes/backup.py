@@ -22,6 +22,7 @@ BACKUP_DIR.mkdir(parents=True, exist_ok=True)
 def create_backup() -> dict:
     """Backup the SQLite database to a timestamped file."""
     from db.base import engine as _engine
+
     db_path = Path(_engine.url.database) if _engine.url.database else get_data_dir() / "novelforge.db"
     if not db_path.exists():
         raise HTTPException(status_code=404, detail="Database file not found")
@@ -66,6 +67,7 @@ def restore_backup(filename: str) -> dict:
     if not backup_path.exists() or backup_path.suffix != ".db":
         raise HTTPException(status_code=404, detail="Backup not found")
     from db.base import engine as _engine
+
     db_path = Path(_engine.url.database) if _engine.url.database else get_data_dir() / "novelforge.db"
     shutil.copy2(backup_path, db_path)
     return {"message": f"Restored {filename}. Restart the engine for changes to take effect."}
@@ -132,6 +134,7 @@ def cleanup_orphaned_images() -> dict:
 def delete_single_backup(filename: str) -> None:
     """Delete a specific backup file."""
     import ntpath
+
     safe_name = ntpath.basename(filename)
     if not safe_name or ".." in safe_name or "/" in safe_name:
         raise HTTPException(status_code=404, detail="Invalid backup filename")
