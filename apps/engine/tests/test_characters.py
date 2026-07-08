@@ -1,4 +1,5 @@
 """Tests for /api/characters/* endpoints."""
+
 from __future__ import annotations
 
 

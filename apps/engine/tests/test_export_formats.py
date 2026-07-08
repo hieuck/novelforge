@@ -1,13 +1,12 @@
 """Tests for export with various formats."""
+
 from __future__ import annotations
 
 
 def _create_project_with_chapter(client):
     r = client.post("/api/projects/", json={"title": "Export Format Test"})
     pid = r.json()["id"]
-    client.post("/api/chapters/", json={
-        "project_id": pid, "title": "Ch1", "content": "Hello world."
-    })
+    client.post("/api/chapters/", json={"project_id": pid, "title": "Ch1", "content": "Hello world."})
     return pid
 
 

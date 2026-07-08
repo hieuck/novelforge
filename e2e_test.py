@@ -1,12 +1,11 @@
 """End-to-end test: create a real story via the API."""
+
 import json
-import os
-import sys
-import time
-import urllib.request
 import urllib.error
+import urllib.request
 
 API = "http://127.0.0.1:9000/api"
+
 
 def req(method, path, body=None):
     url = f"{API}{path}"
@@ -24,9 +23,11 @@ def req(method, path, body=None):
         body = e.read().decode("utf-8", errors="replace")
         return e.code, json.loads(body) if body else {}
 
+
 def test(label, ok):
     print(f"  {'PASS' if ok else 'FAIL'} {label}")
     return ok
+
 
 print("=" * 50)
 print("  E2E Story Creation Test")
@@ -47,20 +48,24 @@ s, d = req("GET", "/projects/")
 assert test("List projects", s == 200 and len(d) >= 1)
 
 # 4. Create chapter
-s, d = req("POST", "/chapters/", {
-    "project_id": pid,
-    "title": "Chương 1: Đêm",
-    "content": "Đêm tối. Tiếng gió rít bên ngoài. Linh ngồi trong góc phòng, tim đập thình thịch."
-})
+s, d = req(
+    "POST",
+    "/chapters/",
+    {
+        "project_id": pid,
+        "title": "Chương 1: Đêm",
+        "content": "Đêm tối. Tiếng gió rít bên ngoài. Linh ngồi trong góc phòng, tim đập thình thịch.",
+    },
+)
 assert test("Create chapter", s == 201 and "id" in d)
 ch1_id = d["id"]
 
 # 5. Create another chapter
-s, d = req("POST", "/chapters/", {
-    "project_id": pid,
-    "title": "Chương 2: Cánh cửa",
-    "content": '"Ai đó?" Linh thì thầm. Cánh cửa từ từ mở ra.'
-})
+s, d = req(
+    "POST",
+    "/chapters/",
+    {"project_id": pid, "title": "Chương 2: Cánh cửa", "content": '"Ai đó?" Linh thì thầm. Cánh cửa từ từ mở ra.'},
+)
 assert test("Create chapter 2", s == 201)
 
 # 6. List chapters
@@ -72,17 +77,21 @@ s, d = req("GET", f"/chapters/{ch1_id}")
 assert test("Get chapter", s == 200 and d["id"] == ch1_id)
 
 # 8. Update chapter
-s, d = req("PATCH", f"/chapters/{ch1_id}", {"content": "Đêm tối. Tiếng gió rít bên ngoài. Linh ngồi trong góc phòng, tim đập thình thịch. Cô biết có ai đó đang ở ngoài cửa."})
+s, d = req(
+    "PATCH",
+    f"/chapters/{ch1_id}",
+    {
+        "content": "Đêm tối. Tiếng gió rít bên ngoài. Linh ngồi trong góc phòng, tim đập thình thịch. Cô biết có ai đó đang ở ngoài cửa."
+    },
+)
 assert test("Update chapter", s == 200)
 
 # 9. Create character
-s, d = req("POST", "/characters/", {
-    "project_id": pid,
-    "name": "Linh",
-    "role": "Nhân vật chính",
-    "age": "25",
-    "personality": "Dũng cảm, tò mò"
-})
+s, d = req(
+    "POST",
+    "/characters/",
+    {"project_id": pid, "name": "Linh", "role": "Nhân vật chính", "age": "25", "personality": "Dũng cảm, tò mò"},
+)
 assert test("Create character", s == 201)
 char_id = d["id"]
 
@@ -95,12 +104,16 @@ s, d = req("GET", f"/characters/{char_id}")
 assert test("Get character", s == 200 and d["id"] == char_id)
 
 # 12. Create lore
-s, d = req("POST", "/lore/", {
-    "project_id": pid,
-    "lore_type": "location",
-    "name": "Ngôi nhà hoang",
-    "description": "Một ngôi nhà bỏ hoang ở cuối làng, nơi đồn đại có ma."
-})
+s, d = req(
+    "POST",
+    "/lore/",
+    {
+        "project_id": pid,
+        "lore_type": "location",
+        "name": "Ngôi nhà hoang",
+        "description": "Một ngôi nhà bỏ hoang ở cuối làng, nơi đồn đại có ma.",
+    },
+)
 assert test("Create lore", s == 201)
 lore_id = d["id"]
 
@@ -109,11 +122,11 @@ s, d = req("GET", f"/projects/{pid}/lore")
 assert test("List lore", s == 200 and len(d) >= 1)
 
 # 14. Create timeline
-s, d = req("POST", "/timeline/", {
-    "project_id": pid,
-    "title": "Linh vào nhà hoang",
-    "description": "Đêm đầu tiên Linh bước vào ngôi nhà hoang."
-})
+s, d = req(
+    "POST",
+    "/timeline/",
+    {"project_id": pid, "title": "Linh vào nhà hoang", "description": "Đêm đầu tiên Linh bước vào ngôi nhà hoang."},
+)
 assert test("Create timeline", s == 201)
 tl_id = d["id"]
 

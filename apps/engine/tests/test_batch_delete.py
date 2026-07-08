@@ -1,4 +1,5 @@
 """Tests for POST /api/chapters/batch-delete endpoint."""
+
 from __future__ import annotations
 
 

@@ -1,4 +1,5 @@
 """Tests for /api/chapters/* endpoints."""
+
 from __future__ import annotations
 
 
@@ -48,7 +49,9 @@ def test_get_chapter_not_found(client):
 
 def test_update_chapter(client):
     proj = _create_project(client)
-    created = client.post("/api/chapters/", json={"project_id": proj["id"], "title": "Old", "content": "Old text"}).json()
+    created = client.post(
+        "/api/chapters/", json={"project_id": proj["id"], "title": "Old", "content": "Old text"}
+    ).json()
     r = client.patch(f"/api/chapters/{created['id']}", json={"title": "New", "content": "New text"})
     assert r.status_code == 200
     data = r.json()
@@ -68,9 +71,9 @@ def test_delete_chapter(client):
 def test_chapter_word_count_on_create(client):
     """word_count is auto-calculated on create."""
     proj = _create_project(client)
-    r = client.post("/api/chapters/", json={
-        "project_id": proj["id"], "title": "WC", "content": "one two three four five"
-    })
+    r = client.post(
+        "/api/chapters/", json={"project_id": proj["id"], "title": "WC", "content": "one two three four five"}
+    )
     assert r.status_code == 201
     assert r.json()["word_count"] == 5
 
@@ -78,9 +81,7 @@ def test_chapter_word_count_on_create(client):
 def test_chapter_word_count_on_update(client):
     """word_count is recalculated when content changes."""
     proj = _create_project(client)
-    created = client.post("/api/chapters/", json={
-        "project_id": proj["id"], "title": "WC", "content": "one two"
-    }).json()
+    created = client.post("/api/chapters/", json={"project_id": proj["id"], "title": "WC", "content": "one two"}).json()
     assert created["word_count"] == 2
     r = client.patch(f"/api/chapters/{created['id']}", json={"content": "a b c d e f g h"})
     assert r.status_code == 200

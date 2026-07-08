@@ -15,6 +15,6 @@ repos:
     rev: v0.11.0
     hooks:
       - id: ruff
-        args: ["--fix"]
+        args: ["--fix", "--ignore=E501"]
         exclude: apps/engine/tests/test_ai_ws\.py
       - id: ruff-format

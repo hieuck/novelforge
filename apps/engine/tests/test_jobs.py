@@ -1,4 +1,5 @@
 """Tests for /api/agent/jobs and related endpoints."""
+
 from __future__ import annotations
 
 from unittest.mock import patch

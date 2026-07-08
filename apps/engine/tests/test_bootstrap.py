@@ -1,4 +1,5 @@
 """Tests that the engine boots correctly (regression: Unicode stdout fix)."""
+
 from __future__ import annotations
 
 

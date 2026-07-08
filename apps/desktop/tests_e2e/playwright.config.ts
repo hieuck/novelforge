@@ -14,9 +14,27 @@ function findPython(root: string): string {
   return 'python3'
 }
 
-const root = path.resolve(__dirname, '..', '..')
+function findRepoRoot(start: string): string {
+  let dir = start
+  while (dir !== path.dirname(dir)) {
+    const pkg = path.join(dir, 'package.json')
+    if (fs.existsSync(pkg)) {
+      try {
+        const content = JSON.parse(fs.readFileSync(pkg, 'utf-8'))
+        if (Array.isArray(content.workspaces)) return dir
+      } catch {
+        // ignore malformed package.json
+      }
+    }
+    dir = path.dirname(dir)
+  }
+  return path.resolve(__dirname, '..', '..', '..')
+}
+
+const root = findRepoRoot(__dirname)
 const python = findPython(root)
 const isWin = process.platform === 'win32'
+const devScript = path.join(root, 'scripts', 'dev.py')
 
 export default defineConfig({
   testDir: '.',
@@ -30,11 +48,11 @@ export default defineConfig({
   webServer: [
     {
       command: isWin
-        ? `start /B ${python} scripts\\dev.py`
-        : `${python} scripts/dev.py &`,
+        ? `start /B ${python} "${devScript}"`
+        : `${python} "${devScript}"`,
       port: 5173,
       cwd: root,
-      timeout: 45000,
+      timeout: 120000,
       reuseExistingServer: process.env.CI ? false : true,
       env: { PYTHONUNBUFFERED: '1' },
     },

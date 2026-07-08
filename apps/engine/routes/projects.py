@@ -111,7 +111,10 @@ def get_project_stats(project_id: str) -> dict:
         if not p:
             raise HTTPException(status_code=404, detail="Not found")
         chapters = db.query(func.count(Chapter.id)).filter(Chapter.project_id == project_id).scalar() or 0
-        words = db.query(func.coalesce(func.sum(Chapter.word_count), 0)).filter(Chapter.project_id == project_id).scalar() or 0
+        words = (
+            db.query(func.coalesce(func.sum(Chapter.word_count), 0)).filter(Chapter.project_id == project_id).scalar()
+            or 0
+        )
         characters = db.query(func.count(Character.id)).filter(Character.project_id == project_id).scalar() or 0
         images = db.query(func.count(GeneratedImage.id)).filter(GeneratedImage.project_id == project_id).scalar() or 0
         lore = db.query(func.count(Lore.id)).filter(Lore.project_id == project_id).scalar() or 0
@@ -135,9 +138,7 @@ def get_project_word_counts(project_id: str) -> list[dict]:
         p = db.query(Project).filter(Project.id == project_id).first()
         if not p:
             raise HTTPException(status_code=404, detail="Not found")
-        chapters = db.query(Chapter).filter(
-            Chapter.project_id == project_id
-        ).order_by(Chapter.scene_order).all()
+        chapters = db.query(Chapter).filter(Chapter.project_id == project_id).order_by(Chapter.scene_order).all()
         return [
             {
                 "id": ch.id,
@@ -159,9 +160,13 @@ def get_chapter_status_counts(project_id: str) -> dict:
         if not p:
             raise HTTPException(status_code=404, detail="Not found")
         from sqlalchemy import func as _func
-        rows = db.query(Chapter.status, _func.count(Chapter.id)).filter(
-            Chapter.project_id == project_id
-        ).group_by(Chapter.status).all()
+
+        rows = (
+            db.query(Chapter.status, _func.count(Chapter.id))
+            .filter(Chapter.project_id == project_id)
+            .group_by(Chapter.status)
+            .all()
+        )
         counts = {"draft": 0, "revised": 0, "final": 0}
         total = 0
         for status, cnt in rows:
@@ -260,6 +265,7 @@ def delete_project(project_id: str):
         from pathlib import Path as _Path
 
         from db.base import engine as _engine
+
         db_path = _Path(_engine.url.database) if _engine.url.database else None
         if db_path and db_path.exists():
             backup_dir = get_data_dir() / "backups"

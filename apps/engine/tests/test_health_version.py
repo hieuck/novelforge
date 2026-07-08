@@ -1,4 +1,5 @@
 """Tests for version info in health endpoint."""
+
 from __future__ import annotations
 
 

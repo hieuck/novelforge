@@ -1,4 +1,5 @@
 """Tests for DB layer utilities."""
+
 from __future__ import annotations
 
 import os
@@ -7,6 +8,7 @@ import os
 def test_db_paths_default():
     """get_data_dir returns a reasonable default."""
     from db.paths import get_data_dir
+
     d = get_data_dir()
     assert d is not None
     assert d.exists()
@@ -15,6 +17,7 @@ def test_db_paths_default():
 def test_db_paths_env_override():
     """NOVELFORGE_DATA_DIR env var overrides default."""
     from db.paths import get_data_dir
+
     os.environ["NOVELFORGE_DATA_DIR"] = os.path.abspath(".")
     try:
         d = get_data_dir()
@@ -26,9 +29,11 @@ def test_db_paths_env_override():
 def test_db_session():
     """SessionLocal produces a working session."""
     from db.session import SessionLocal
+
     db = SessionLocal()
     try:
         from sqlalchemy import text
+
         r = db.execute(text("SELECT 1")).scalar()
         assert r == 1
     finally:
@@ -38,10 +43,12 @@ def test_db_session():
 def test_get_db():
     """get_db generator yields a working session."""
     from db.session import get_db
+
     gen = get_db()
     db = next(gen)
     try:
         from sqlalchemy import text
+
         r = db.execute(text("SELECT 1")).scalar()
         assert r == 1
     finally:

@@ -1,15 +1,19 @@
 """Tests for GET /api/chapters/{id}/stats endpoint."""
+
 from __future__ import annotations
 
 
 def test_chapter_stats(client):
     """Returns detailed stats for a chapter."""
     proj = client.post("/api/projects/", json={"title": "Test"}).json()
-    ch = client.post("/api/chapters/", json={
-        "project_id": proj["id"],
-        "title": "Ch1",
-        "content": "Hello world. This is a test.\n\nSecond paragraph here!",
-    }).json()
+    ch = client.post(
+        "/api/chapters/",
+        json={
+            "project_id": proj["id"],
+            "title": "Ch1",
+            "content": "Hello world. This is a test.\n\nSecond paragraph here!",
+        },
+    ).json()
 
     r = client.get(f"/api/chapters/{ch['id']}/stats")
     assert r.status_code == 200
@@ -23,11 +27,14 @@ def test_chapter_stats(client):
 def test_chapter_stats_empty(client):
     """Returns zero stats for empty chapter."""
     proj = client.post("/api/projects/", json={"title": "Test"}).json()
-    ch = client.post("/api/chapters/", json={
-        "project_id": proj["id"],
-        "title": "Empty",
-        "content": "",
-    }).json()
+    ch = client.post(
+        "/api/chapters/",
+        json={
+            "project_id": proj["id"],
+            "title": "Empty",
+            "content": "",
+        },
+    ).json()
 
     r = client.get(f"/api/chapters/{ch['id']}/stats")
     assert r.status_code == 200

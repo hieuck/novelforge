@@ -1,4 +1,5 @@
 """Tests for GET/POST /api/tools/echo endpoint."""
+
 from __future__ import annotations
 
 

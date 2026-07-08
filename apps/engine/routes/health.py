@@ -32,9 +32,7 @@ async def health_db() -> dict:
     size = db_path.stat().st_size if db_path.exists() else 0
     try:
         with engine.connect() as conn:
-            tables = conn.execute(
-                text("SELECT count(*) FROM sqlite_master WHERE type='table'")
-            ).scalar() or 0
+            tables = conn.execute(text("SELECT count(*) FROM sqlite_master WHERE type='table'")).scalar() or 0
             return {
                 "status": "ok",
                 "size_bytes": size,

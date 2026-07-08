@@ -1,4 +1,5 @@
-﻿"""AI Agent - agentic loop: plan → execute tools (with memory) → adapt → stream."""
+"""AI Agent - agentic loop: plan → execute tools (with memory) → adapt → stream."""
+
 from __future__ import annotations
 
 import asyncio
@@ -114,6 +115,7 @@ Be critical. If the result is vague, too short, or doesn't match the task requir
 
 # ── Tool implementations ──────────────────────────────────────────────────────
 
+
 def _serialize_field(val):
     """Convert a list to JSON string for Text columns, pass through otherwise."""
     if isinstance(val, list):
@@ -123,13 +125,18 @@ def _serialize_field(val):
 
 def _create_char(pid: str, p: dict) -> dict:
     from services.search import index_character
+
     db = SessionLocal()
     try:
         c = Character(
-            id=str(uuid.uuid4()), project_id=pid,
-            name=p.get("name", "?"), gender=p.get("gender"), role=p.get("role"),
+            id=str(uuid.uuid4()),
+            project_id=pid,
+            name=p.get("name", "?"),
+            gender=p.get("gender"),
+            role=p.get("role"),
             age=str(p["age"]) if p.get("age") else None,
-            personality=p.get("personality"), appearance=p.get("appearance"),
+            personality=p.get("personality"),
+            appearance=p.get("appearance"),
             goals=_serialize_field(p.get("goals")),
             secrets=_serialize_field(p.get("secrets")),
             portrait_url=p.get("portrait_url"),
@@ -145,14 +152,13 @@ def _create_char(pid: str, p: dict) -> dict:
 
 def _update_character(pid: str, p: dict) -> dict:
     from services.search import index_character
+
     character_id = p.get("character_id", "")
     if not character_id:
         return {"error": "character_id required"}
     db = SessionLocal()
     try:
-        c = db.query(Character).filter(
-            Character.id == character_id, Character.project_id == pid
-        ).first()
+        c = db.query(Character).filter(Character.id == character_id, Character.project_id == pid).first()
         if not c:
             return {"error": f"Character {character_id} not found"}
         for field in ("name", "role", "personality", "appearance", "goals", "secrets", "notes"):
@@ -174,15 +180,19 @@ def _update_character(pid: str, p: dict) -> dict:
 
 def _create_lore(pid: str, p: dict) -> dict:
     from services.search import index_lore
+
     db = SessionLocal()
     tags_val = p.get("tags", [])
     if isinstance(tags_val, list):
         tags_val = json.dumps(tags_val, ensure_ascii=False)
     try:
         lore_obj = Lore(
-            id=str(uuid.uuid4()), project_id=pid,
-            name=p.get("name", "?"), lore_type=p.get("lore_type", "term"),
-            description=p.get("description"), tags=tags_val,
+            id=str(uuid.uuid4()),
+            project_id=pid,
+            name=p.get("name", "?"),
+            lore_type=p.get("lore_type", "term"),
+            description=p.get("description"),
+            tags=tags_val,
         )
         db.add(lore_obj)
         db.commit()
@@ -195,14 +205,19 @@ def _create_lore(pid: str, p: dict) -> dict:
 
 def _create_chapter(pid: str, p: dict) -> dict:
     from services.search import index_chapter
+
     db = SessionLocal()
     try:
         ct = p.get("content", "")
         wc = len(ct.split())
         c = Chapter(
-            id=str(uuid.uuid4()), project_id=pid,
-            title=p.get("title", "Chapter"), content=ct,
-            scene_order=p.get("scene_order", 0), status="draft", word_count=wc,
+            id=str(uuid.uuid4()),
+            project_id=pid,
+            title=p.get("title", "Chapter"),
+            content=ct,
+            scene_order=p.get("scene_order", 0),
+            status="draft",
+            word_count=wc,
         )
         db.add(c)
         db.commit()
@@ -215,14 +230,13 @@ def _create_chapter(pid: str, p: dict) -> dict:
 
 def _update_chapter(pid: str, p: dict) -> dict:
     from services.search import index_chapter
+
     chapter_id = p.get("chapter_id", "")
     if not chapter_id:
         return {"error": "chapter_id required"}
     db = SessionLocal()
     try:
-        c = db.query(Chapter).filter(
-            Chapter.id == chapter_id, Chapter.project_id == pid
-        ).first()
+        c = db.query(Chapter).filter(Chapter.id == chapter_id, Chapter.project_id == pid).first()
         if not c:
             return {"error": f"Chapter {chapter_id} not found"}
         if "title" in p:
@@ -251,24 +265,29 @@ def _edit_chapter_section(pid: str, p: dict) -> dict:
     if not old_excerpt or not new_text:
         return {"error": "old_text_excerpt and new_text required"}
     from services.search import index_chapter
+
     db = SessionLocal()
     try:
-        c = db.query(Chapter).filter(
-            Chapter.id == chapter_id, Chapter.project_id == pid
-        ).first()
+        c = db.query(Chapter).filter(Chapter.id == chapter_id, Chapter.project_id == pid).first()
         if not c:
             return {"error": f"Chapter {chapter_id} not found"}
         content = c.content or ""
         idx = content.find(old_excerpt)
         if idx == -1:
             return {"error": "old_text_excerpt not found in chapter"}
-        c.content = content[:idx] + new_text + content[idx + len(old_excerpt):]
+        c.content = content[:idx] + new_text + content[idx + len(old_excerpt) :]
         c.word_count = len(c.content.split())
         c.updated_at = datetime.now(UTC)
         db.commit()
         db.refresh(c)
         index_chapter(c.id, pid, c.title or "", c.content or "")
-        return {"id": c.id, "title": c.title, "word_count": c.word_count, "updated": True, "section_length": len(new_text)}
+        return {
+            "id": c.id,
+            "title": c.title,
+            "word_count": c.word_count,
+            "updated": True,
+            "section_length": len(new_text),
+        }
     finally:
         db.close()
 
@@ -290,18 +309,8 @@ def _analyze_consistency(pid: str) -> dict:
     """Load all chapters and return their titles + first 800 chars for LLM analysis."""
     db = SessionLocal()
     try:
-        chapters = (
-            db.query(Chapter)
-            .filter(Chapter.project_id == pid)
-            .order_by(Chapter.scene_order.asc())
-            .all()
-        )
-        characters = (
-            db.query(Character)
-            .filter(Character.project_id == pid)
-            .order_by(Character.name.asc())
-            .all()
-        )
+        chapters = db.query(Chapter).filter(Chapter.project_id == pid).order_by(Chapter.scene_order.asc()).all()
+        characters = db.query(Character).filter(Character.project_id == pid).order_by(Character.name.asc()).all()
         return {
             "chapters": [
                 {
@@ -313,8 +322,7 @@ def _analyze_consistency(pid: str) -> dict:
                 for c in chapters
             ],
             "characters": [
-                {"id": c.id, "name": c.name, "role": c.role, "personality": c.personality}
-                for c in characters[:20]
+                {"id": c.id, "name": c.name, "role": c.role, "personality": c.personality} for c in characters[:20]
             ],
             "chapter_count": len(chapters),
             "character_count": len(characters),
@@ -326,6 +334,7 @@ def _analyze_consistency(pid: str) -> dict:
 def _search_content(pid: str, p: dict) -> dict:
     """FTS5 search across chapters, characters, and lore for the project."""
     from services.search import search_project
+
     query = (p.get("query") or "").strip()
     if not query:
         return {"error": "query required"}
@@ -351,14 +360,13 @@ def _search_content(pid: str, p: dict) -> dict:
 
 def _update_lore(pid: str, p: dict) -> dict:
     from services.search import index_lore
+
     lore_id = p.get("lore_id", "")
     if not lore_id:
         return {"error": "lore_id required"}
     db = SessionLocal()
     try:
-        item = db.query(Lore).filter(
-            Lore.id == lore_id, Lore.project_id == pid
-        ).first()
+        item = db.query(Lore).filter(Lore.id == lore_id, Lore.project_id == pid).first()
         if not item:
             return {"error": f"Lore {lore_id} not found"}
         if "name" in p:
@@ -381,10 +389,7 @@ def _read_timeline(pid: str) -> dict:
     db = SessionLocal()
     try:
         items = (
-            db.query(TimelineItem)
-            .filter(TimelineItem.project_id == pid)
-            .order_by(TimelineItem.created_at.asc())
-            .all()
+            db.query(TimelineItem).filter(TimelineItem.project_id == pid).order_by(TimelineItem.created_at.asc()).all()
         )
         return {
             "events": [
@@ -414,7 +419,8 @@ def _create_timeline_event(pid: str, p: dict) -> dict:
         rel_chapters = json.dumps(rel_chapters, ensure_ascii=False)
     try:
         item = TimelineItem(
-            id=str(uuid.uuid4()), project_id=pid,
+            id=str(uuid.uuid4()),
+            project_id=pid,
             title=p.get("title", "Event"),
             event_date=p.get("event_date"),
             relative_order=p.get("relative_order"),
@@ -436,9 +442,7 @@ def _read_chapter(pid: str, p: dict) -> dict:
         return {"error": "chapter_id required"}
     db = SessionLocal()
     try:
-        c = db.query(Chapter).filter(
-            Chapter.id == chapter_id, Chapter.project_id == pid
-        ).first()
+        c = db.query(Chapter).filter(Chapter.id == chapter_id, Chapter.project_id == pid).first()
         if not c:
             return {"error": f"Chapter {chapter_id} not found"}
         return {
@@ -456,12 +460,7 @@ def _read_chapter(pid: str, p: dict) -> dict:
 def _read_characters(pid: str) -> dict:
     db = SessionLocal()
     try:
-        chars = (
-            db.query(Character)
-            .filter(Character.project_id == pid)
-            .order_by(Character.name.asc())
-            .all()
-        )
+        chars = db.query(Character).filter(Character.project_id == pid).order_by(Character.name.asc()).all()
         return {
             "characters": [
                 {
@@ -483,12 +482,7 @@ def _read_characters(pid: str) -> dict:
 def _read_lore(pid: str) -> dict:
     db = SessionLocal()
     try:
-        items = (
-            db.query(Lore)
-            .filter(Lore.project_id == pid)
-            .order_by(Lore.lore_type.asc(), Lore.name.asc())
-            .all()
-        )
+        items = db.query(Lore).filter(Lore.project_id == pid).order_by(Lore.lore_type.asc(), Lore.name.asc()).all()
         return {
             "lore": [
                 {
@@ -512,12 +506,7 @@ def _read_project_summary(pid: str) -> dict:
         proj = db.query(Project).filter(Project.id == pid).first()
         if not proj:
             return {"error": "Project not found"}
-        chapters = (
-            db.query(Chapter)
-            .filter(Chapter.project_id == pid)
-            .order_by(Chapter.scene_order.asc())
-            .all()
-        )
+        chapters = db.query(Chapter).filter(Chapter.project_id == pid).order_by(Chapter.scene_order.asc()).all()
         return {
             "title": proj.title,
             "description": proj.description,
@@ -526,8 +515,7 @@ def _read_project_summary(pid: str) -> dict:
             "language": proj.language,
             "chapter_count": len(chapters),
             "chapters": [
-                {"id": c.id, "title": c.title, "scene_order": c.scene_order, "status": c.status}
-                for c in chapters[:20]
+                {"id": c.id, "title": c.title, "scene_order": c.scene_order, "status": c.status} for c in chapters[:20]
             ],
         }
     finally:
@@ -535,6 +523,7 @@ def _read_project_summary(pid: str) -> dict:
 
 
 # ── Plan / adapt parsers ──────────────────────────────────────────────────────
+
 
 def _parse_json(raw: str) -> dict | None:
     """Parse a JSON object from LLM output."""
@@ -577,6 +566,7 @@ def _renumber(steps: list[dict], start: int = 1) -> list[dict]:
 
 # ── Streaming helper ──────────────────────────────────────────────────────────
 
+
 async def _stream_generation(
     client,
     messages: list[dict],
@@ -595,6 +585,7 @@ async def _stream_generation(
 
 # ── Agent memory helpers ──────────────────────────────────────────────────────
 
+
 def _tool_result_summary(tool: str, result: dict) -> str:
     """Compact human-readable summary of a tool result for injection into agent memory."""
     if result.get("error"):
@@ -607,45 +598,32 @@ def _tool_result_summary(tool: str, result: dict) -> str:
             f"Content: {preview}"
         )
     if tool == "read_characters":
-        entries = ", ".join(
-            f"{c.get('name','?')} (id={c.get('id','')})"
-            for c in (result.get("characters") or [])
-        )
+        entries = ", ".join(f"{c.get('name', '?')} (id={c.get('id', '')})" for c in (result.get("characters") or []))
         return f"[read_characters] Found {result.get('count', 0)}: {entries}"
     if tool == "read_lore":
         entries = ", ".join(
-            f"{item.get('name','?')} ({item.get('lore_type','?')}, id={item.get('id','')})"
+            f"{item.get('name', '?')} ({item.get('lore_type', '?')}, id={item.get('id', '')})"
             for item in (result.get("lore") or [])[:20]
         )
         return f"[read_lore] Found {result.get('count', 0)}: {entries}"
     if tool == "read_project_summary":
-        chaps = ", ".join(
-            f'"{c.get("title","?")} (id={c.get("id","")})'
-            for c in (result.get("chapters") or [])[:10]
-        )
+        chaps = ", ".join(f'"{c.get("title", "?")} (id={c.get("id", "")})' for c in (result.get("chapters") or [])[:10])
         return (
-            f"[read_project_summary] Title: {result.get('title')}, "
-            f"Chapters ({result.get('chapter_count',0)}): {chaps}"
+            f"[read_project_summary] Title: {result.get('title')}, Chapters ({result.get('chapter_count', 0)}): {chaps}"
         )
     if tool == "analyze_consistency":
         preview = (result.get("report") or "")[:200]
-        return (
-            f"[analyze_consistency] Analyzed {result.get('chapter_count',0)} chapters. "
-            f"Report preview: {preview}"
-        )
+        return f"[analyze_consistency] Analyzed {result.get('chapter_count', 0)} chapters. Report preview: {preview}"
     if tool == "search_content":
         hits = ", ".join(
-            f"{r.get('title','?')} ({r.get('kind','?')}, id={r.get('id','')})"
+            f"{r.get('title', '?')} ({r.get('kind', '?')}, id={r.get('id', '')})"
             for r in (result.get("results") or [])[:8]
         )
-        return f"[search_content] query='{result.get('query')}' found {result.get('count',0)}: {hits}"
+        return f"[search_content] query='{result.get('query')}' found {result.get('count', 0)}: {hits}"
     if tool == "update_lore":
         return f"[update_lore] Updated '{result.get('name')}' id={result.get('id')}"
     if tool == "read_timeline":
-        entries = ", ".join(
-            f"{e.get('title','?')} (id={e.get('id','')})"
-            for e in (result.get("events") or [])[:10]
-        )
+        entries = ", ".join(f"{e.get('title', '?')} (id={e.get('id', '')})" for e in (result.get("events") or [])[:10])
         return f"[read_timeline] Found {result.get('count', 0)}: {entries}"
     if tool == "ask_user":
         return f"[ask_user] Asked: {result.get('question', '')} → Answer: {result.get('answer', '(no answer)')}"
@@ -656,11 +634,15 @@ def _tool_result_summary(tool: str, result: dict) -> str:
     if tool == "create_lore":
         return f"[create_lore] Created '{result.get('name')}' ({result.get('lore_type')}) id={result.get('id')}"
     if tool == "create_chapter":
-        return f"[create_chapter] Created '{result.get('title')}' id={result.get('id')} words={result.get('word_count')}"
+        return (
+            f"[create_chapter] Created '{result.get('title')}' id={result.get('id')} words={result.get('word_count')}"
+        )
     if tool == "edit_chapter_section":
         return f"[edit_chapter_section] Replaced section in '{result.get('title')}' id={result.get('id')} (section_length={result.get('section_length', 0)})"
     if tool == "update_chapter":
-        return f"[update_chapter] Updated '{result.get('title')}' id={result.get('id')} words={result.get('word_count')}"
+        return (
+            f"[update_chapter] Updated '{result.get('title')}' id={result.get('id')} words={result.get('word_count')}"
+        )
     if tool == "update_summary":
         return "[update_summary] Project summary updated."
     if tool == "create_timeline_event":
@@ -679,11 +661,12 @@ def _extract_chapter_content_from_memory(memory: list[str], chapter_id: str) -> 
         content_marker = "\nContent: "
         idx = entry.find(content_marker)
         if idx != -1:
-            return entry[idx + len(content_marker):]
+            return entry[idx + len(content_marker) :]
     return None
 
 
 # ── WebSocket handler ─────────────────────────────────────────────────────────
+
 
 @router.websocket("/ws/agent")
 async def agent_ws(ws: WebSocket) -> None:
@@ -718,7 +701,9 @@ async def agent_ws(ws: WebSocket) -> None:
 
         settings = await _get_settings()
         if not settings.base_url or not settings.model:
-            await send({"type": "error", "message": "AI provider chưa được cấu hình. Vào Settings → AI Provider để thiết lập."})
+            await send(
+                {"type": "error", "message": "AI provider chưa được cấu hình. Vào Settings → AI Provider để thiết lập."}
+            )
             return
         client = build_client(settings)
 
@@ -739,9 +724,11 @@ async def agent_ws(ws: WebSocket) -> None:
                 + "\n"
             )
         if ctx.chapters:
-            ctx_summary += f"Chapters ({len(ctx.chapters)}): " + ", ".join(
-                f'"{c.title}" (id={c.id})' for c in ctx.chapters[:5]
-            ) + "\n"
+            ctx_summary += (
+                f"Chapters ({len(ctx.chapters)}): "
+                + ", ".join(f'"{c.title}" (id={c.id})' for c in ctx.chapters[:5])
+                + "\n"
+            )
 
         await send({"type": "status", "message": "Planning..."})
 
@@ -789,14 +776,18 @@ async def agent_ws(ws: WebSocket) -> None:
             # ── THINK: Reason about this step before executing ──────────────
             think_msgs: list[dict] = [
                 {"role": "system", "content": THINK_SYSTEM},
-                {"role": "user", "content": (
-                    f"Original task: {task}\n\n"
-                    f"Project context: {ctx_summary[:500]}\n\n"
-                    f"Completed steps:\n" + ("\n".join(memory[-5:]) or "None yet") +
-                    f"\n\nCurrent step to execute: {tool} — {desc}\n"
-                    f"Params: {json.dumps(params, ensure_ascii=False)[:300]}\n\n"
-                    "Explain your reasoning for this step and confirm/adjust the parameters."
-                )},
+                {
+                    "role": "user",
+                    "content": (
+                        f"Original task: {task}\n\n"
+                        f"Project context: {ctx_summary[:500]}\n\n"
+                        f"Completed steps:\n"
+                        + ("\n".join(memory[-5:]) or "None yet")
+                        + f"\n\nCurrent step to execute: {tool} — {desc}\n"
+                        f"Params: {json.dumps(params, ensure_ascii=False)[:300]}\n\n"
+                        "Explain your reasoning for this step and confirm/adjust the parameters."
+                    ),
+                },
             ]
             try:
                 think_raw = await client.chat_messages(think_msgs)
@@ -812,13 +803,15 @@ async def agent_ws(ws: WebSocket) -> None:
                 pass  # If thinking fails, continue with original plan
 
             await send({"type": "status", "message": f"⚡ {desc}..."})
-            await send({
-                "type": "step_start",
-                "step": step["step"],
-                "total": len(steps),
-                "tool": tool,
-                "description": desc,
-            })
+            await send(
+                {
+                    "type": "step_start",
+                    "step": step["step"],
+                    "total": len(steps),
+                    "tool": tool,
+                    "description": desc,
+                }
+            )
 
             # ── Execute step ──────────────────────────────────────────────────
             result: dict = {}
@@ -840,7 +833,7 @@ async def agent_ws(ws: WebSocket) -> None:
                                 f"(timeline contradictions, character behavior, plot holes).\n\n"
                                 f"Chapters ({raw_data['chapter_count']}):\n"
                                 + "\n".join(
-                                    f"- Ch{c['scene_order']+1} '{c['title']}': {c['preview'][:300]}"
+                                    f"- Ch{c['scene_order'] + 1} '{c['title']}': {c['preview'][:300]}"
                                     for c in raw_data["chapters"]
                                 )
                                 + "\n\nCharacters:\n"
@@ -920,11 +913,16 @@ async def agent_ws(ws: WebSocket) -> None:
                     if result.get("error") and "not found" in result["error"].lower():
                         fresh = _read_characters(pid)
                         if fresh and not fresh.get("error"):
-                            memory.append("[read_characters] Refreshed list: " + json.dumps(fresh, ensure_ascii=False)[:500])
+                            memory.append(
+                                "[read_characters] Refreshed list: " + json.dumps(fresh, ensure_ascii=False)[:500]
+                            )
                             name_hint2 = (params.get("name") or "").strip()
                             if name_hint2:
-                                for item in (fresh.get("characters") or fresh if isinstance(fresh, list) else []):
-                                    if isinstance(item, dict) and name_hint2.lower() in (item.get("name") or "").lower():
+                                for item in fresh.get("characters") or fresh if isinstance(fresh, list) else []:
+                                    if (
+                                        isinstance(item, dict)
+                                        and name_hint2.lower() in (item.get("name") or "").lower()
+                                    ):
                                         params["character_id"] = item["id"]
                                         result = _update_character(pid, params)
                                         break
@@ -988,8 +986,7 @@ async def agent_ws(ws: WebSocket) -> None:
                         chapter_msgs: list[dict] = [
                             {
                                 "role": "system",
-                                "content": exec_system
-                                + (f"\nCharacters:\n{char_ctx[:2000]}" if char_ctx else ""),
+                                "content": exec_system + (f"\nCharacters:\n{char_ctx[:2000]}" if char_ctx else ""),
                             },
                             *_memory_msgs(memory),
                             {
@@ -1020,8 +1017,7 @@ async def agent_ws(ws: WebSocket) -> None:
                                     (
                                         re.search(r"Title: (.+?),", e).group(1)
                                         for e in memory
-                                        if "[read_chapter]" in e and chapter_id in e
-                                        and re.search(r"Title: (.+?),", e)
+                                        if "[read_chapter]" in e and chapter_id in e and re.search(r"Title: (.+?),", e)
                                     ),
                                     "Chapter",
                                 ),
@@ -1126,10 +1122,13 @@ async def agent_ws(ws: WebSocket) -> None:
                 try:
                     reflect_msgs: list[dict] = [
                         {"role": "system", "content": REFLECT_SYSTEM},
-                        {"role": "user", "content": (
-                            f"Task: {desc}\n\nResult:\n{json.dumps(result, ensure_ascii=False)[:1000]}\n\n"
-                            "Evaluate this result. Is it good enough?"
-                        )},
+                        {
+                            "role": "user",
+                            "content": (
+                                f"Task: {desc}\n\nResult:\n{json.dumps(result, ensure_ascii=False)[:1000]}\n\n"
+                                "Evaluate this result. Is it good enough?"
+                            ),
+                        },
                     ]
                     reflect_raw = await client.chat_messages(reflect_msgs)
                     reflect_data = _parse_json(reflect_raw)
@@ -1143,13 +1142,15 @@ async def agent_ws(ws: WebSocket) -> None:
             memory.append(_tool_result_summary(tool, result))
 
             completed.append({**step, "result": result})
-            await send({
-                "type": "step_done",
-                "step": step["step"],
-                "tool": tool,
-                "description": desc,
-                "result": result,
-            })
+            await send(
+                {
+                    "type": "step_done",
+                    "step": step["step"],
+                    "tool": tool,
+                    "description": desc,
+                    "result": result,
+                }
+            )
             await asyncio.sleep(0.05)
 
             # ── Adaptive re-planning after read tools ──────────────────────
@@ -1174,32 +1175,48 @@ async def agent_ws(ws: WebSocket) -> None:
         lores_updated = [s for s in completed if s["tool"] == "update_lore" and s.get("result", {}).get("updated")]
         chaps = [s for s in completed if s["tool"] == "create_chapter" and "error" not in s.get("result", {})]
         upds = [s for s in completed if s["tool"] == "update_chapter" and s.get("result", {}).get("updated")]
-        timeline_events = [s for s in completed if s["tool"] == "create_timeline_event" and "error" not in s.get("result", {})]
+        timeline_events = [
+            s for s in completed if s["tool"] == "create_timeline_event" and "error" not in s.get("result", {})
+        ]
         reads = [s for s in completed if s["tool"].startswith("read_")]
 
         parts: list[str] = []
         if chars_created:
-            parts.append(f"Created {len(chars_created)} character(s): {', '.join(s['result'].get('name', '?') for s in chars_created)}")
+            parts.append(
+                f"Created {len(chars_created)} character(s): {', '.join(s['result'].get('name', '?') for s in chars_created)}"
+            )
         if chars_updated:
-            parts.append(f"Updated {len(chars_updated)} character(s): {', '.join(s['result'].get('name', '?') for s in chars_updated)}")
+            parts.append(
+                f"Updated {len(chars_updated)} character(s): {', '.join(s['result'].get('name', '?') for s in chars_updated)}"
+            )
         if lores_created:
-            parts.append(f"Created {len(lores_created)} lore item(s): {', '.join(s['result'].get('name', '?') for s in lores_created)}")
+            parts.append(
+                f"Created {len(lores_created)} lore item(s): {', '.join(s['result'].get('name', '?') for s in lores_created)}"
+            )
         if lores_updated:
-            parts.append(f"Updated {len(lores_updated)} lore item(s): {', '.join(s['result'].get('name', '?') for s in lores_updated)}")
+            parts.append(
+                f"Updated {len(lores_updated)} lore item(s): {', '.join(s['result'].get('name', '?') for s in lores_updated)}"
+            )
         if chaps:
             parts.append(f"Created {len(chaps)} chapter(s): {', '.join(s['result'].get('title', '?') for s in chaps)}")
         if upds:
             parts.append(f"Updated {len(upds)} chapter(s): {', '.join(s['result'].get('title', '?') for s in upds)}")
         if timeline_events:
-            parts.append(f"Created {len(timeline_events)} timeline event(s): {', '.join(s['result'].get('title', '?') for s in timeline_events)}")
-        if reads and not (chars_created or chars_updated or lores_created or lores_updated or chaps or upds or timeline_events):
+            parts.append(
+                f"Created {len(timeline_events)} timeline event(s): {', '.join(s['result'].get('title', '?') for s in timeline_events)}"
+            )
+        if reads and not (
+            chars_created or chars_updated or lores_created or lores_updated or chaps or upds or timeline_events
+        ):
             parts.append(f"Read {len(reads)} item(s) from project.")
 
-        await send({
-            "type": "done",
-            "summary": ". ".join(parts) + "." if parts else "Agent completed.",
-            "steps_completed": len(completed),
-        })
+        await send(
+            {
+                "type": "done",
+                "summary": ". ".join(parts) + "." if parts else "Agent completed.",
+                "steps_completed": len(completed),
+            }
+        )
 
     except WebSocketDisconnect:
         pass
@@ -1207,7 +1224,9 @@ async def agent_ws(ws: WebSocket) -> None:
         logger.error("Agent: %s", e, exc_info=True)
         msg = str(e)
         err_lower = msg.lower()
-        if "connect" in err_lower and ("refused" in err_lower or "timed out" in err_lower or "econnrefused" in err_lower):
+        if "connect" in err_lower and (
+            "refused" in err_lower or "timed out" in err_lower or "econnrefused" in err_lower
+        ):
             msg = f"Không thể kết nối AI provider ({msg}). Vào Settings → AI Provider để kiểm tra cấu hình (Ollama, OpenAI, v.v.)."
         elif "404" in msg:
             msg = f"AI provider trả về 404 — endpoint API không đúng. Kiểm tra Base URL trong Settings → AI Provider. ({msg})"
@@ -1225,6 +1244,7 @@ async def agent_ws(ws: WebSocket) -> None:
 
 
 # ── Adaptive re-planning ──────────────────────────────────────────────────────
+
 
 async def _adapt_plan(
     client,
@@ -1267,6 +1287,7 @@ async def _adapt_plan(
 
 
 # ── Memory helpers ────────────────────────────────────────────────────────────
+
 
 def _memory_msgs(memory: list[str]) -> list[dict]:
     """Inject accumulated tool results as a single assistant context message."""

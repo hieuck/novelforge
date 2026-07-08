@@ -1,4 +1,5 @@
 """Full tests for jobs endpoints."""
+
 from __future__ import annotations
 
 
@@ -9,6 +10,7 @@ def _create_project(client):
 
 def _create_job(client, pid, task="Test job"):
     from unittest.mock import patch
+
     with patch("routes.jobs._run_agent_job"):
         r = client.post("/api/agent/jobs", json={"project_id": pid, "task": task})
         return r

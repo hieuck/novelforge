@@ -1,4 +1,5 @@
 """Tests for search count with type filter."""
+
 from __future__ import annotations
 
 

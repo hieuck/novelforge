@@ -1,4 +1,5 @@
 """Tests for GET /api/health/db endpoint."""
+
 from __future__ import annotations
 
 

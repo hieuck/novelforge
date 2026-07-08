@@ -1,4 +1,5 @@
 """Full tests for settings endpoints — save, load, test connection."""
+
 from __future__ import annotations
 
 

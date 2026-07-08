@@ -1,4 +1,5 @@
 """Tests for /api/chapters/{id}/export endpoint."""
+
 from __future__ import annotations
 
 
@@ -9,9 +10,14 @@ def _make_project(client):
 def test_export_single_chapter_txt(client):
     """Export a single chapter as plain text."""
     proj = _make_project(client)
-    ch = client.post("/api/chapters/", json={
-        "project_id": proj["id"], "title": "Ch1", "content": "Hello world.",
-    }).json()
+    ch = client.post(
+        "/api/chapters/",
+        json={
+            "project_id": proj["id"],
+            "title": "Ch1",
+            "content": "Hello world.",
+        },
+    ).json()
 
     r = client.get(f"/api/chapters/{ch['id']}/export?format=txt")
     assert r.status_code == 200
@@ -23,9 +29,14 @@ def test_export_single_chapter_txt(client):
 def test_export_single_chapter_md(client):
     """Export a single chapter as markdown."""
     proj = _make_project(client)
-    ch = client.post("/api/chapters/", json={
-        "project_id": proj["id"], "title": "Chapter One", "content": "Some **bold** text.",
-    }).json()
+    ch = client.post(
+        "/api/chapters/",
+        json={
+            "project_id": proj["id"],
+            "title": "Chapter One",
+            "content": "Some **bold** text.",
+        },
+    ).json()
 
     r = client.get(f"/api/chapters/{ch['id']}/export?format=md")
     assert r.status_code == 200
@@ -43,9 +54,14 @@ def test_export_single_chapter_not_found(client):
 def test_export_single_chapter_json(client):
     """Export a single chapter as JSON (not yet implemented)."""
     proj = _make_project(client)
-    ch = client.post("/api/chapters/", json={
-        "project_id": proj["id"], "title": "Ch1", "content": "Hello.",
-    }).json()
+    ch = client.post(
+        "/api/chapters/",
+        json={
+            "project_id": proj["id"],
+            "title": "Ch1",
+            "content": "Hello.",
+        },
+    ).json()
 
     r = client.get(f"/api/chapters/{ch['id']}/export?format=json")
     assert r.status_code == 200
@@ -59,9 +75,14 @@ def test_export_single_chapter_json(client):
 def test_export_project_json(client):
     """Export entire project as JSON (not yet implemented)."""
     proj = _make_project(client)
-    client.post("/api/chapters/", json={
-        "project_id": proj["id"], "title": "Ch1", "content": "A B C",
-    })
+    client.post(
+        "/api/chapters/",
+        json={
+            "project_id": proj["id"],
+            "title": "Ch1",
+            "content": "A B C",
+        },
+    )
 
     r = client.post("/api/export", json={"project_id": proj["id"], "fmt": "json"})
     assert r.status_code == 200

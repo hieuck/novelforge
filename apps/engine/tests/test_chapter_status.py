@@ -1,4 +1,5 @@
 """Tests for GET /api/projects/{id}/chapter-status-counts."""
+
 from __future__ import annotations
 
 

@@ -38,3 +38,8 @@ apps/desktop/release/
 # Generated images
 apps/engine/data/generated/
 test-results/
+
+# Kimchi worktrees
+.kimchi/worktrees/
+.worktrees/
+worktrees/

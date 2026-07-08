@@ -1,15 +1,23 @@
 """Quick smoke test — runs against a running engine on localhost:9090."""
-import json, subprocess, sys, time, urllib.request, urllib.error
+
+import json
+import subprocess
+import sys
+import time
+import urllib.error
+import urllib.request
+
 
 def start_engine():
     proc = subprocess.Popen(
-        [sys.executable, '-m', 'uvicorn', 'app:app',
-         '--host', '127.0.0.1', '--port', '9090', '--log-level', 'error'],
-        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-        cwd=str(__import__('pathlib').Path(__file__).resolve().parent.parent / 'apps' / 'engine'),
+        [sys.executable, "-m", "uvicorn", "app:app", "--host", "127.0.0.1", "--port", "9090", "--log-level", "error"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        cwd=str(__import__("pathlib").Path(__file__).resolve().parent.parent / "apps" / "engine"),
     )
     time.sleep(4)
     return proc
+
 
 def req(method, path, body=None, raw=False):
     url = f"http://127.0.0.1:9090/api{path}"
@@ -25,9 +33,11 @@ def req(method, path, body=None, raw=False):
     except urllib.error.HTTPError as e:
         return {"_status": e.code, "_error": e.read().decode()}
 
+
 def check(n, label, ok, detail=""):
     m = "✅" if ok else "❌"
     print(f"{m} {n:2d}. {label}" + (f" — {detail}" if detail else ""))
+
 
 proc = start_engine()
 try:
@@ -56,8 +66,8 @@ try:
     check(6, "Create character", bool(ch.get("id")))
 
     # Lore
-    l = req("POST", "/lore/", {"project_id": p["id"], "name": "World", "lore_type": "location"})
-    check(7, "Create lore", bool(l.get("id")))
+    lore = req("POST", "/lore/", {"project_id": p["id"], "name": "World", "lore_type": "location"})
+    check(7, "Create lore", bool(lore.get("id")))
 
     # Dashboard
     d = req("GET", "/stats/dashboard")
@@ -103,7 +113,7 @@ try:
     pg = req("GET", f"/projects/{p['id']}")
     check(18, "Verify deleted", pg.get("_status") == 404)
 
-    print(f"\n✅ All 18 checks passed!")
+    print("\n✅ All 18 checks passed!")
 except Exception as e:
     print(f"\n❌ FAILED: {e}")
     sys.exit(1)

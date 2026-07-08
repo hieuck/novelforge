@@ -1,4 +1,5 @@
 """Mock image provider returning SVG placeholders for testing."""
+
 from __future__ import annotations
 
 from .base import ImageGenProvider

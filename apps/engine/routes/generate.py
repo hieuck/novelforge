@@ -1,4 +1,5 @@
 """Image generation routes."""
+
 from __future__ import annotations
 
 import json
@@ -27,7 +28,7 @@ class GenImageIn(BaseModel):
     size: str = "medium"
     provider: str = ""
     project_id: str = ""
-    entity_type: str = ""   # 'character', 'chapter', 'scene'
+    entity_type: str = ""  # 'character', 'chapter', 'scene'
     entity_id: str = ""
 
 
@@ -56,7 +57,10 @@ async def generate_image(payload: GenImageIn) -> dict:
 
     needs_key = provider_name not in ("mock", "comfyui")
     if needs_key and not api_key:
-        raise HTTPException(status_code=400, detail=f"API key required for {provider_name}. Use 'mock' for placeholder or configure an API key.")
+        raise HTTPException(
+            status_code=400,
+            detail=f"API key required for {provider_name}. Use 'mock' for placeholder or configure an API key.",
+        )
 
     try:
         provider = create_provider(provider_name, api_key, model, base_url)
@@ -76,11 +80,14 @@ async def generate_image(payload: GenImageIn) -> dict:
     db = SessionLocal()
     try:
         img = GeneratedImage(
-            id=img_id, project_id=payload.project_id or "",
-            filename=filename, prompt=payload.prompt,
+            id=img_id,
+            project_id=payload.project_id or "",
+            filename=filename,
+            prompt=payload.prompt,
             entity_type=payload.entity_type or None,
             entity_id=payload.entity_id or None,
-            mime=mime, file_size=str(len(image_bytes)),
+            mime=mime,
+            file_size=str(len(image_bytes)),
         )
         db.add(img)
         db.commit()
@@ -111,10 +118,13 @@ def list_project_images(project_id: str, entity_type: str | None = None, entity_
         items = q.order_by(GeneratedImage.created_at.desc()).all()
         return [
             {
-                "id": i.id, "filename": i.filename,
+                "id": i.id,
+                "filename": i.filename,
                 "url": f"/api/generated/{i.filename}",
-                "prompt": i.prompt, "entity_type": i.entity_type,
-                "entity_id": i.entity_id, "mime": i.mime,
+                "prompt": i.prompt,
+                "entity_type": i.entity_type,
+                "entity_id": i.entity_id,
+                "mime": i.mime,
                 "file_size": i.file_size,
                 "created_at": i.created_at.isoformat() + "Z" if i.created_at else None,
             }
@@ -129,10 +139,14 @@ def delete_project_image(project_id: str, image_id: str) -> None:
     """Delete a generated image."""
     db = SessionLocal()
     try:
-        img = db.query(GeneratedImage).filter(
-            GeneratedImage.id == image_id,
-            GeneratedImage.project_id == project_id,
-        ).first()
+        img = (
+            db.query(GeneratedImage)
+            .filter(
+                GeneratedImage.id == image_id,
+                GeneratedImage.project_id == project_id,
+            )
+            .first()
+        )
         if not img:
             raise HTTPException(status_code=404, detail="Image not found")
         filepath = DATA_DIR / img.filename
@@ -157,7 +171,9 @@ async def serve_generated(filename: str):
             raise HTTPException(status_code=404, detail="Image not found")
 
     ext = filepath.suffix.lower()
-    media_type = {"png": "image/png", "jpg": "image/jpeg", "jpeg": "image/jpeg", "webp": "image/webp"}.get(ext, "application/octet-stream")
+    media_type = {"png": "image/png", "jpg": "image/jpeg", "jpeg": "image/jpeg", "webp": "image/webp"}.get(
+        ext, "application/octet-stream"
+    )
     return FileResponse(str(filepath), media_type=media_type)
 
 
@@ -192,11 +208,11 @@ async def _run_video_export(job_id: str) -> None:
     import shutil
     import tempfile
 
-    from db.session import SessionLocal as _session_local
+    from db.session import SessionLocal
     from models.chapter import Chapter as ChapterModel
     from models.extra import Job as JobModel
 
-    db = _session_local()
+    db = SessionLocal()
     try:
         job = db.query(JobModel).filter(JobModel.id == job_id).first()
         if not job or job.status == "cancelled":
@@ -205,10 +221,15 @@ async def _run_video_export(job_id: str) -> None:
         params = json.loads(job.params or "{}")
         project_id = params["project_id"]
 
-        chapters = db.query(ChapterModel).filter(
-            ChapterModel.project_id == project_id,
-            ChapterModel.illustration_url.isnot(None),
-        ).order_by(ChapterModel.scene_order).all()
+        chapters = (
+            db.query(ChapterModel)
+            .filter(
+                ChapterModel.project_id == project_id,
+                ChapterModel.illustration_url.isnot(None),
+            )
+            .order_by(ChapterModel.scene_order)
+            .all()
+        )
     finally:
         db.close()
 
@@ -222,7 +243,9 @@ async def _run_video_export(job_id: str) -> None:
     output_path = DATA_DIR / f"storyboard_{uuid.uuid4()}.mp4"
 
     try:
-        db2 = _session_local()
+        from db.session import SessionLocal
+
+        db2 = SessionLocal()
         try:
             j = db2.query(JobModel).filter(JobModel.id == job_id_local).first()
             if j:
@@ -252,14 +275,26 @@ async def _run_video_export(job_id: str) -> None:
         concat_file.write_text("".join(concat_lines))
 
         cmd = [
-            "ffmpeg", "-y", "-f", "concat", "-safe", "0",
-            "-i", str(concat_file),
-            "-vf", "fps=24,format=yuv420p",
-            "-c:v", "libx264", "-preset", "fast",
+            "ffmpeg",
+            "-y",
+            "-f",
+            "concat",
+            "-safe",
+            "0",
+            "-i",
+            str(concat_file),
+            "-vf",
+            "fps=24,format=yuv420p",
+            "-c:v",
+            "libx264",
+            "-preset",
+            "fast",
             str(output_path),
         ]
         proc = await asyncio.create_subprocess_exec(
-            *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
         )
         try:
             await asyncio.wait_for(proc.communicate(), timeout=120)
@@ -286,6 +321,7 @@ async def _run_video_export(job_id: str) -> None:
 def download_video(job_id: str) -> FileResponse:
     """Download the completed video export."""
     from models.extra import Job as JobModel
+
     db = SessionLocal()
     try:
         job = db.query(JobModel).filter(JobModel.id == job_id).first()
@@ -303,9 +339,10 @@ def download_video(job_id: str) -> FileResponse:
 
 
 def _update_job(job_id: str, status: str, message: str = "") -> None:
-    from db.session import SessionLocal as _session_local
+    from db.session import SessionLocal
     from models.extra import Job as JobModel
-    db = _session_local()
+
+    db = SessionLocal()
     try:
         job = db.query(JobModel).filter(JobModel.id == job_id).first()
         if not job:
@@ -321,9 +358,10 @@ def _update_job(job_id: str, status: str, message: str = "") -> None:
 
 
 def _update_job_progress(job_id: str, current: int, total: int) -> None:
-    from db.session import SessionLocal as _session_local
+    from db.session import SessionLocal
     from models.extra import Job as JobModel
-    db = _session_local()
+
+    db = SessionLocal()
     try:
         job = db.query(JobModel).filter(JobModel.id == job_id).first()
         if not job:

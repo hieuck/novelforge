@@ -1,4 +1,5 @@
 """Tests for GET /api/projects/{id}/word-counts endpoint."""
+
 from __future__ import annotations
 
 
@@ -13,14 +14,24 @@ def test_word_counts_empty(client):
 def test_word_counts_with_chapters(client):
     """Returns word count for each chapter ordered by scene_order."""
     proj = client.post("/api/projects/", json={"title": "Test"}).json()
-    client.post("/api/chapters/", json={
-        "project_id": proj["id"], "title": "Ch1", "content": "one two three",
-        "scene_order": 0,
-    })
-    client.post("/api/chapters/", json={
-        "project_id": proj["id"], "title": "Ch2", "content": "four five",
-        "scene_order": 1,
-    })
+    client.post(
+        "/api/chapters/",
+        json={
+            "project_id": proj["id"],
+            "title": "Ch1",
+            "content": "one two three",
+            "scene_order": 0,
+        },
+    )
+    client.post(
+        "/api/chapters/",
+        json={
+            "project_id": proj["id"],
+            "title": "Ch2",
+            "content": "four five",
+            "scene_order": 1,
+        },
+    )
 
     r = client.get(f"/api/projects/{proj['id']}/word-counts")
     assert r.status_code == 200

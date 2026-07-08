@@ -1,4 +1,5 @@
 """Tests for /api/timeline/* endpoints."""
+
 from __future__ import annotations
 
 

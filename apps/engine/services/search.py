@@ -4,6 +4,7 @@ Full-text search service using SQLite FTS5.
 Creates virtual FTS tables alongside the main tables and provides
 a clean interface so it can be swapped for a vector DB later.
 """
+
 from __future__ import annotations
 
 import logging
@@ -89,8 +90,12 @@ def index_lore(lore_id: str, project_id: str, name: str, description: str) -> No
 
 
 def index_character(
-    character_id: str, project_id: str,
-    name: str, personality: str, goals: str, notes: str,
+    character_id: str,
+    project_id: str,
+    name: str,
+    personality: str,
+    goals: str,
+    notes: str,
 ) -> None:
     try:
         con = _conn()
