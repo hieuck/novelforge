@@ -65,6 +65,46 @@ def _safe_filename(title: str) -> str:
     return "".join(c if c.isalnum() or c in " _-" else "_" for c in title).strip() or "export"
 
 
+def _markdown_to_html(text: str) -> str:
+    """Convert a small subset of Markdown to HTML.
+
+    Supports **bold**, *italic*, ## headings and ### subheadings.
+    Blank lines split paragraphs.
+    """
+    import re
+
+    lines = text.split("\n")
+    out: list[str] = []
+    buffer: list[str] = []
+
+    def _inline(s: str) -> str:
+        s = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", s)
+        s = re.sub(r"\*(.+?)\*", r"<em>\1</em>", s)
+        return s
+
+    def _flush() -> None:
+        if buffer:
+            joined = " ".join(buffer)
+            out.append(f"<p>{_inline(joined)}</p>")
+            buffer.clear()
+
+    for raw in lines:
+        line = raw.rstrip()
+        if not line.strip():
+            _flush()
+            continue
+        if line.startswith("### "):
+            _flush()
+            out.append(f"<h3>{_inline(line[4:].strip())}</h3>")
+        elif line.startswith("## "):
+            _flush()
+            out.append(f"<h2>{_inline(line[3:].strip())}</h2>")
+        else:
+            buffer.append(line)
+    _flush()
+    return "\n".join(out)
+
+
 def _build_md(project: Project, chapters: list[Chapter]) -> str:
     lines: list[str] = [f"# {project.title}"]
     if project.description:
@@ -93,8 +133,7 @@ def _build_html(project: Project, chapters: list[Chapter]) -> str:
     ch_html_parts: list[str] = []
     for ch in chapters:
         content = ch.content or ""
-        paragraphs = "".join(f"<p>{line}</p>" for line in content.split("\n") if line.strip())
-        ch_html_parts.append(f"<h2>{ch.title or 'Untitled'}</h2>\n{paragraphs}")
+        ch_html_parts.append(f"<h2>{ch.title or 'Untitled'}</h2>\n{_markdown_to_html(content)}")
 
     genre_str = f"{project.genre} · " if project.genre else ""
     desc_str = project.description or ""
@@ -217,7 +256,7 @@ def export_single_chapter(chapter_id: str, format: str = "txt") -> Response:
         elif format == "html":
             title = ch.title or "Untitled"
             summary_html = f"<blockquote>{ch.summary}</blockquote>\n" if ch.summary else ""
-            body = "".join(f"<p>{line}</p>" for line in (ch.content or "").split("\n") if line.strip())
+            body = _markdown_to_html(ch.content or "")
             content = (
                 f"<!DOCTYPE html><html><head><meta charset='utf-8'>"
                 f"<title>{title}</title>"

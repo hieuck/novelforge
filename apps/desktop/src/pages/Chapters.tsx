@@ -7,6 +7,8 @@ import {
 } from 'lucide-react'
 import { api } from '../lib/api'
 import { useChapterStore } from '../stores/chapterStore'
+import { MarkdownToolbar } from '../components/MarkdownToolbar'
+import { renderMarkdownToHtml, stripMarkdown } from '../lib/markdown'
 
 import type { Chapter } from '../types'
 
@@ -205,8 +207,9 @@ export default function Chapters() {
     if (id === chapterId) navigate(`/projects/${projectId}/chapters`)
   }
 
-  const wordCount = content.split(/\s+/).filter(Boolean).length
-  const charCount = content.length
+  const plainContent = stripMarkdown(content)
+  const wordCount = plainContent.split(/\s+/).filter(Boolean).length
+  const charCount = plainContent.length
 
   return (
     <div className={`flex h-full overflow-hidden ${zenMode ? 'bg-black' : ''}`}>
@@ -373,10 +376,20 @@ export default function Chapters() {
           )}
 
           {/* Writing area */}
+          {!preview && (
+            <MarkdownToolbar
+              textareaRef={textareaRef}
+              content={content}
+              onContentChange={onContentChange}
+            />
+          )}
           {preview ? (
-            <div className="flex-1 overflow-y-auto px-6 py-5 font-serif text-[15px] leading-relaxed text-slate-200 whitespace-pre-wrap">
-              {content || <span className="text-slate-600 italic">No content</span>}
-            </div>
+            <div
+              className="flex-1 overflow-y-auto px-6 py-5 font-serif text-[15px] leading-relaxed text-slate-200"
+              dangerouslySetInnerHTML={{
+                __html: renderMarkdownToHtml(content) || '<span class="text-slate-600 italic">No content</span>',
+              }}
+            />
           ) : (
             <textarea
               ref={textareaRef}
