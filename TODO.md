@@ -12,9 +12,10 @@
   - Track daily word-count progress.
   - Add per-project daily goals.
   - Surface streaks / history in Dashboard.
-- [ ] v0.10 Rich text chapter editor
-  - Bold, italic, headings in chapter content.
-  - Preserve plain-text fallback for export.
+- [x] v0.10 Rich text chapter editor (merged via PR #36)
+  - Markdown toolbar: bold, italic, H1, H2.
+  - Markdown preview in editor.
+  - Render Markdown in HTML export; preserve plain text for md/txt export.
 - [ ] v0.11 Multi-format export
   - EPUB export.
   - PDF export.

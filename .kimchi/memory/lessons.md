@@ -42,3 +42,8 @@ Keywords: lesson, learned, mistake, gotcha, tip, best-practice
 
 - Storing a setting like `daily_goal` in the generic `Settings` key/value table keeps strings, but features that need typed values are cleaner as typed columns on `Project`.
 - **Best practice**: use typed project columns for core metadata/behavior and keep the generic settings table for open-ended plugin-like config. Update existing tests when defaults change.
+
+## Markdown as a lightweight rich-text format
+
+- Using Markdown syntax stored as plain text avoids new dependencies, keeps the DB schema unchanged, and preserves plain-text fallbacks for `md`/`txt` exports.
+- **Best practice**: when adding rich text, prefer a simple markup language over a full editor library unless complex formatting is required; provide a minimal renderer for preview/export.

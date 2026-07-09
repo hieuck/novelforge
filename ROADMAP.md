@@ -10,8 +10,8 @@
 - ✅ v0.7: i18n (vi/en), @novelforge/shared package, language switcher
 - ✅ v0.8: CI/CD (GitHub Actions), fix Python integration tests, E2E tests
 - ✅ v0.9: Writing statistics (daily word tracking, goals, dashboard widget)
+- ✅ v0.10: Rich text editor (Markdown toolbar, preview, HTML export)
 
 ## Kế hoạch
-- v0.10: Rich text editor (bold, italic, headings)
 - v0.11: Multi-format export (EPUB, PDF)
 - v0.12: Cloud sync (optional, self-hosted)

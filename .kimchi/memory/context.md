@@ -35,5 +35,6 @@ Keywords: project, purpose, tech-stack, default-branch, package-manager, build, 
 - Pre-commit hook enforces ruff format; CI ignores `E501` so pre-commit config must match.
 - `@novelforge/shared` must be declared as a dependency of `apps/desktop` and must use `i18next` + `react-i18next` as peer dependencies to avoid duplicate i18next instances.
 - Writing statistics (v0.9) added: `WritingSession` model, `GET /api/projects/{id}/writing-stats`, Dashboard widget, daily goal in project settings.
-- Dependency PR #27 (`@vitejs/plugin-react` 4.7.0 → 6.0.3) is blocked until Vite is upgraded to a compatible version.
+- Rich text editor (v0.10) added: Markdown toolbar in chapter editor, Markdown preview, and Markdown rendering in HTML export.
+- Dependency PR #27 (`@vitejs/plugin-react` 4.7.0 → 6.0.3) resolved by migrating to Vite 8 (PR #35).
 - Worktrees should be created under `.kimchi/worktrees/<branch>/` (already ignored).
