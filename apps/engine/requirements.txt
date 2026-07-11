@@ -8,4 +8,4 @@ httpx>=0.28.1
 aiohttp>=3.9.5
 aiosqlite>=0.22.1
 python-multipart>=0.0.32
-websockets>=16.0
+websockets>=16.1
