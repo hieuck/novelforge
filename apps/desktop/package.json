@@ -85,7 +85,7 @@
     "@vitest/coverage-v8": "^4.1.10",
     "@vitest/ui": "^4.1.8",
     "autoprefixer": "^10.4.20",
-    "concurrently": "^9.2.1",
+    "concurrently": "^10.0.3",
     "electron": "^33.2.1",
     "electron-builder": "^26.15.3",
     "eslint": "^10.5.0",
